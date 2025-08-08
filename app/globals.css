@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 20%;
+    --primary: 245 45% 17%;
+    --primary-foreground: 0 0% 96%;
+    --secondary: 0 100% 20%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 39%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 245 45% 17%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 245 45% 17%;
+    --foreground: 0 0% 96%;
+    --card: 245 45% 17%;
+    --card-foreground: 0 0% 96%;
+    --popover: 245 45% 17%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 245 45% 17%;
+    --primary-foreground: 0 0% 96%;
+    --secondary: 0 100% 20%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 245 20% 25%;
+    --muted-foreground: 220 9% 65%;
+    --accent: 245 20% 25%;
+    --accent-foreground: 220 9% 65%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 245 20% 25%;
+    --input: 245 20% 25%;
+    --ring: 245 45% 17%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* MCC Brand-specific styles */
+.mcc-primary {
+  background-color: #1c1b3b;
+  color: #f5f5f5;
+}
+
+.mcc-accent {
+  background-color: #640000;
+  color: #f5f5f5;
+}
+
+.mcc-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(28, 27, 59, 0.1), 0 2px 4px -1px rgba(28, 27, 59, 0.06);
+}
+
+.mcc-text-primary {
+  color: #1c1b3b;
+}
+
+.mcc-text-accent {
+  color: #640000;
+}
+
+.institutional-shadow {
+  box-shadow: 0 10px 25px -5px rgba(28, 27, 59, 0.1), 0 10px 10px -5px rgba(28, 27, 59, 0.04);
+}

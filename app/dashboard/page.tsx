@@ -64,8 +64,8 @@ export default function DashboardPage() {
           setLostItems(items.filter(item => item.type === 'lost'));
           setFoundItems(items.filter(item => item.type === 'found'));
           setError('');
-        } catch (err: any) {
-          setError(err.message);
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'An error occurred');
           console.error(err);
         } finally {
           setLoading(false);

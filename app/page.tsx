@@ -237,7 +237,7 @@ const recentActivity = [
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [selectedItem, setSelectedItem] = useState<Record<string, unknown> | null>(null)
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set())
   const [liveUpdates, setLiveUpdates] = useState(recentActivity)
   const [showQuickActions, setShowQuickActions] = useState(true)

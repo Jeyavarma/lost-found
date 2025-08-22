@@ -104,7 +104,7 @@ export default function AdminPage() {
   const [userName, setUserName] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [selectedItem, setSelectedItem] = useState<Record<string, unknown> | null>(null)
 
   useEffect(() => {
     // Check if user is authenticated as admin

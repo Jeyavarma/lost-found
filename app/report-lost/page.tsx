@@ -74,7 +74,7 @@ export default function ReportLostPage() {
     alert("Lost item reported successfully! We'll notify you if someone finds it.")
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     if (field === 'location') {

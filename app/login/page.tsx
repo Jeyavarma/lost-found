@@ -355,7 +355,7 @@ export default function LoginPage() {
 
                   {selectedPortal === "student" && (
                     <div className="pt-4 border-t border-gray-200">
-                      <p className="text-sm text-brand-text-dark mb-3">Don't have an account?</p>
+                      <p className="text-sm text-brand-text-dark mb-3">Don&apos;t have an account?</p>
                       <Link href="/register">
                         <Button
                           variant="outline"

@@ -70,6 +70,8 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
+    "eslint": "^9.33.0",
+    "eslint-config-next": "^15.5.0",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
     "install": "^0.13.0",

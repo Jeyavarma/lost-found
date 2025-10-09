@@ -50,7 +50,7 @@ export default function MccCampusMap() {
       </CardHeader>
       <CardContent className="grid md:grid-cols-5 gap-6 p-4">
         {/* Map Area */}
-                <div className="md:col-span-4 relative w-full h-96 rounded-xl overflow-hidden group shadow-inner bg-gray-100">
+        <div className="md:col-span-4 relative w-full h-96 rounded-xl overflow-hidden group shadow-inner bg-gray-100">
           <Image
             src="/mcc map.jpeg"
             alt="MCC Campus Map"
@@ -62,7 +62,7 @@ export default function MccCampusMap() {
               transform: selectedLocation ? 'scale(2.5)' : 'scale(1)',
             }}
           />
-                    <div className={cn(
+          <div className={cn(
             "absolute inset-0 bg-black/40 transition-opacity duration-700",
             selectedLocation ? "opacity-100" : "opacity-0"
           )} />

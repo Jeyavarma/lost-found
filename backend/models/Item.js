@@ -1,53 +1,26 @@
-const { DataTypes } = require('sequelize');
+const mongoose = require('mongoose');
 
-module.exports = (sequelize) => {
-  const Item = sequelize.define('Item', {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-      allowNull: false
-    },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    category: {
-      type: DataTypes.ENUM('lost', 'found'),
-      allowNull: false
-    },
-    date: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    image: {
-      type: DataTypes.STRING, // URL to the uploaded image
-      allowNull: true
-    },
-        location: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    isClaimed: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false
-    }
-  });
+const itemSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true },
+  location: { type: String, required: true },
+  status: { type: String, enum: ['lost', 'found', 'resolved'], default: 'lost' },
+  reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  contactInfo: { type: String, required: true },
+  imageUrl: String,
+  locationImageUrl: String,
+  dateReported: { type: Date, default: Date.now },
+  timeReported: { type: String, required: true },
+  timeLostFound: { type: String }, // When item was lost/found
+  dateLostFound: { type: Date }, // Date item was lost/found
+  locationDetails: {
+    building: String,
+    floor: String,
+    room: String
+  },
+  culturalEvent: String,
+  culturalEventOther: String
+}, { timestamps: true });
 
-  Item.associate = (models) => {
-    Item.belongsTo(models.User, {
-      foreignKey: {
-        name: 'userId',
-        allowNull: false,
-      },
-      as: 'user',
-    });
-  };
-
-  return Item;
-};
+module.exports = mongoose.model('Item', itemSchema);

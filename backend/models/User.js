@@ -1,80 +1,27 @@
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-module.exports = (sequelize, DataTypes) => {
-  const User = sequelize.define('User', {
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-      validate: {
-        isEmail: true,
-      },
-    },
-    phone: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    studentId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    shift: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    department: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    year: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    rollNumber: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  }, {
-        hooks: {
-      beforeValidate: (user) => {
-        if (user.email) {
-          user.email = user.email.toLowerCase();
-        }
-        if (user.rollNumber) {
-          user.rollNumber = user.rollNumber.toUpperCase();
-        }
-        if (user.studentId) {
-          user.studentId = user.studentId.toUpperCase();
-        }
-      },
-      beforeCreate: async (user) => {
-        if (user.password) {
-          const salt = await bcrypt.genSalt(10);
-          user.password = await bcrypt.hash(user.password, salt);
-        }
-      }
-    }
-  });
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['student', 'staff', 'admin'], default: 'student' },
+  phone: String,
+  studentId: String,
+  shift: String,
+  department: String,
+  year: String,
+  rollNumber: String
+}, { timestamps: true });
 
-  // Method to compare passwords
-  User.prototype.isValidPassword = async function(password) {
-    return await bcrypt.compare(password, this.password);
-  };
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
 
-  User.associate = (models) => {
-    User.hasMany(models.Item, { foreignKey: 'userId', as: 'items' });
-    User.hasMany(models.Notification, { foreignKey: 'userId', as: 'notifications' });
-  };
-
-  return User;
+userSchema.methods.comparePassword = async function(password) {
+  return bcrypt.compare(password, this.password);
 };
+
+module.exports = mongoose.model('User', userSchema);

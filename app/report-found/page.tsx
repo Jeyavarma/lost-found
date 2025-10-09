@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Image from "next/image"
-import MccCampusMap from "@/components/mcc-campus-map"
 import { ArrowLeft, Upload, Search, User, GraduationCap } from "lucide-react"
 
 const categories = ["ID Card", "Mobile Phone", "Laptop", "Wallet", "Keys", "Books", "Clothing", "Jewelry", "Other"]
@@ -36,9 +35,47 @@ const locations = [
   "Other",
 ];
 
+const departments = [
+  "Computer Science",
+  "Physics",
+  "Chemistry",
+  "Mathematics",
+  "Biology",
+  "English",
+  "History",
+  "Economics",
+  "Commerce",
+  "Other"
+];
+
+const hostels = [
+  "Bishop Heber Hall",
+  "Selaiyur Hall", 
+  "St. Thomas's Hall",
+  "Barnes Hall",
+  "Martin Hall",
+  "Margaret Hall"
+];
+
+const culturalEvents = [
+  "Madras Day Celebrations",
+  "Annual Sports Meet",
+  "Cultural Festival",
+  "Freshers Day",
+  "College Day",
+  "Department Symposium",
+  "Other"
+];
+
 export default function ReportFoundPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showOptionalLogin, setShowOptionalLogin] = useState(true)
+
+  const [itemImage, setItemImage] = useState<File | null>(null)
+  const [locationImage, setLocationImage] = useState<File | null>(null)
+  const [itemImagePreview, setItemImagePreview] = useState<string>("") 
+  const [locationImagePreview, setLocationImagePreview] = useState<string>("") 
+  const [hasCulturalEvent, setHasCulturalEvent] = useState(false)
 
   // Check if user is authenticated
   useEffect(() => {
@@ -52,27 +89,129 @@ export default function ReportFoundPage() {
   const [formData, setFormData] = useState({
     title: "",
     category: "",
+    categoryOther: "",
     description: "",
     location: "",
     date: "",
+    time: "",
     contactName: "",
     contactEmail: "",
     contactPhone: "",
     currentLocation: "",
-    department: "",
-    hostel: "",
     culturalEvent: "",
+    culturalEventOther: "",
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    console.log("Found item reported:", formData)
-    alert("Found item reported successfully! The owner will be notified.")
+    
+    const submitData = new FormData()
+    submitData.append('status', 'found') // Add status to differentiate lost vs found
+    Object.entries(formData).forEach(([key, value]) => {
+      submitData.append(key, value)
+    })
+    
+    if (itemImage) {
+      submitData.append('itemImage', itemImage)
+    }
+    if (locationImage) {
+      submitData.append('locationImage', locationImage)
+    }
+    
+    console.log('🔵 FOUND ITEM REQUEST - Sending to backend:')
+    console.log('📍 URL: http://localhost:5000/api/items')
+    console.log('📝 Method: POST')
+    console.log('📦 Form Data:', Object.fromEntries(submitData.entries()))
+    console.log('🖼️ Images:', { itemImage: !!itemImage, locationImage: !!locationImage })
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/items', {
+        method: 'POST',
+        body: submitData
+      })
+      
+      console.log('✅ FOUND ITEM RESPONSE:', response.status, response.statusText)
+      
+      if (response.ok) {
+        alert('Found item reported successfully! The owner will be notified.')
+        window.location.href = '/'
+      } else {
+        console.error('❌ Backend error:', await response.text())
+        alert('Error submitting report. Please try again.')
+      }
+    } catch (error) {
+      console.error('❌ Network error:', error)
+      alert('Error connecting to server. Please try again.')
+    }
   }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleCulturalEventChange = (checked: boolean) => {
+    setHasCulturalEvent(checked)
+    if (!checked) {
+      setFormData(prev => ({ ...prev, culturalEvent: "", culturalEventOther: "" }))
+    }
+  }
+
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      const img = new Image()
+      
+      img.onload = () => {
+        const maxWidth = 600
+        const maxHeight = 400
+        let { width, height } = img
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        canvas.toBlob((blob) => {
+          const compressedFile = new File([blob!], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          })
+          resolve(compressedFile)
+        }, 'image/jpeg', 0.7)
+      }
+      
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'item' | 'location') => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const compressedFile = await compressImage(file)
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (type === 'item') {
+          setItemImage(compressedFile)
+          setItemImagePreview(reader.result as string)
+        } else {
+          setLocationImage(compressedFile)
+          setLocationImagePreview(reader.result as string)
+        }
+      }
+      reader.readAsDataURL(compressedFile)
+    }
   }
 
   return (
@@ -124,14 +263,7 @@ export default function ReportFoundPage() {
                     Login
                   </Button>
                 </Link>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowOptionalLogin(false)}
-                  className="border-green-300 text-green-700 hover:bg-green-50"
-                >
-                  Continue Without Login
-                </Button>
+
               </div>
             </CardContent>
           </Card>
@@ -140,8 +272,8 @@ export default function ReportFoundPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Card className="mcc-card border-2 border-brand-primary/20">
-          <CardHeader className="bg-gray-50/50">
-            <CardTitle className="text-2xl sm:text-3xl mcc-text-primary font-serif">Report a Found Item</CardTitle>
+          <CardHeader className="bg-green-50/50">
+            <CardTitle className="text-2xl sm:text-3xl text-green-700 font-serif">Report a Found Item</CardTitle>
             <CardDescription className="text-brand-text-dark">Found something? Help reunite it with its owner by filling out this form.</CardDescription>
           </CardHeader>
           <CardContent className="p-4 sm:p-8">
@@ -170,18 +302,29 @@ export default function ReportFoundPage() {
                     <p className="text-xs text-gray-500 mt-1">Helps in classifying the item.</p>
                   </div>
                   <div className="md:col-span-2">
-                    <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-3">
+                      <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {formData.category === "Other" && (
+                        <Input
+                          value={formData.categoryOther}
+                          onChange={(e) => handleInputChange("categoryOther", e.target.value)}
+                          placeholder="Please specify the category"
+                          required
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -202,17 +345,65 @@ export default function ReportFoundPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
-                  <div className="md:col-span-1">
-                    <Label htmlFor="image" className="font-medium">Upload Image</Label>
-                    <p className="text-xs text-gray-500 mt-1">A picture can be very helpful.</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-brand-primary transition-colors">
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">Click to upload or drag and drop</p>
-                      <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
-                      <Input id="image" type="file" className="hidden" accept="image/*" />
+                <div className="border-t border-gray-200/80 pt-6 mt-6">
+                  <Label className="font-medium mb-4 block">Upload Images</Label>
+                  <p className="text-xs text-gray-500 mb-4">Photos help identify the item and location.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Item Photo */}
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Item Photo</Label>
+                      <label htmlFor="itemImage" className="cursor-pointer block">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
+                          {itemImagePreview ? (
+                            <>
+                              <img src={itemImagePreview} alt="Item Preview" className="h-32 w-full object-cover rounded-lg mb-2" />
+                              <p className="text-xs text-gray-500">Click to change</p>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                              <p className="text-xs text-gray-600">Click to upload</p>
+                              <p className="text-xs text-gray-500">Auto-compressed &lt; 1MB</p>
+                            </>
+                          )}
+                        </div>
+                        <Input 
+                          id="itemImage" 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*" 
+                          onChange={(e) => handleImageChange(e, 'item')}
+                        />
+                      </label>
+                    </div>
+                    
+                    {/* Location Photo */}
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Location Photo</Label>
+                      <label htmlFor="locationImage" className="cursor-pointer block">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
+                          {locationImagePreview ? (
+                            <>
+                              <img src={locationImagePreview} alt="Location Preview" className="h-32 w-full object-cover rounded-lg mb-2" />
+                              <p className="text-xs text-gray-500">Click to change</p>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                              <p className="text-xs text-gray-600">Click to upload</p>
+                              <p className="text-xs text-gray-500">Auto-compressed &lt; 1MB</p>
+                            </>
+                          )}
+                        </div>
+                        <Input 
+                          id="locationImage" 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*" 
+                          onChange={(e) => handleImageChange(e, 'location')}
+                        />
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -224,33 +415,46 @@ export default function ReportFoundPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-1">
                     <Label htmlFor="location" className="font-medium">Found Location *</Label>
+                    <p className="text-xs text-gray-500 mt-1">Where was the item found?</p>
                   </div>
                   <div className="md:col-span-2">
-                    <Select value={formData.location} onValueChange={(value) => handleInputChange("location", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations.map((location) => (
-                          <SelectItem key={location} value={location}>{location}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="location"
+                      value={formData.location}
+                      onChange={(e) => handleInputChange("location", e.target.value)}
+                      placeholder="e.g., Near Library Entrance, Cafeteria Table 5, Physics Lab"
+                      required
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="date" className="font-medium">Date Found *</Label>
+                    <Label className="font-medium">Date & Time Found *</Label>
+                    <p className="text-xs text-gray-500 mt-1">When was it found?</p>
                   </div>
                   <div className="md:col-span-2">
-                    <Input
-                      id="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => handleInputChange("date", e.target.value)}
-                      required
-                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="date" className="text-sm">Date *</Label>
+                        <Input
+                          id="date"
+                          type="date"
+                          value={formData.date}
+                          onChange={(e) => handleInputChange("date", e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="time" className="text-sm">Time (Around)</Label>
+                        <Input
+                          id="time"
+                          type="time"
+                          value={formData.time}
+                          onChange={(e) => handleInputChange("time", e.target.value)}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -272,130 +476,113 @@ export default function ReportFoundPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="department" className="font-medium">Associated Department</Label>
-                     <p className="text-xs text-gray-500 mt-1">If relevant.</p>
+                    <Label className="font-medium">Related Cultural Event</Label>
+                    <p className="text-xs text-gray-500 mt-1">Was this found during an event?</p>
                   </div>
                   <div className="md:col-span-2">
-                    <Select value={formData.department} onValueChange={(value) => handleInputChange("department", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[
-                          "Computer Science", "Mathematics", "Physics", "Chemistry", "Biology",
-                          "Tamil Literature", "English Literature", "Economics", "Commerce",
-                          "Psychology", "History", "Philosophy", "Sociology", "Physical Education", "Not Applicable"
-                        ].map((dept) => (
-                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="hasCulturalEvent"
+                          checked={hasCulturalEvent}
+                          onChange={(e) => handleCulturalEventChange(e.target.checked)}
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor="hasCulturalEvent" className="text-sm">Yes, found during a cultural event</Label>
+                      </div>
+                      
+                      {hasCulturalEvent && (
+                        <div className="space-y-3">
+                          <Select value={formData.culturalEvent} onValueChange={(value) => handleInputChange("culturalEvent", value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an event" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {culturalEvents.map((event) => (
+                                <SelectItem key={event} value={event}>
+                                  {event}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          {formData.culturalEvent === "Other" && (
+                            <Input
+                              value={formData.culturalEventOther}
+                              onChange={(e) => handleInputChange("culturalEventOther", e.target.value)}
+                              placeholder="Please specify the event"
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
-                  <div className="md:col-span-1">
-                    <Label htmlFor="hostel" className="font-medium">Associated Hostel</Label>
-                    <p className="text-xs text-gray-500 mt-1">If relevant.</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <Select value={formData.hostel} onValueChange={(value) => handleInputChange("hostel", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a hostel" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="not-applicable">Not Applicable</SelectItem>
-                        <SelectItem value="kamaraj">Kamaraj Hostel (Boys)</SelectItem>
-                        <SelectItem value="periyar">Periyar Hostel (Boys)</SelectItem>
-                        <SelectItem value="bharathi">Bharathi Hostel (Girls)</SelectItem>
-                        <SelectItem value="avvaiyar">Avvaiyar Hostel (Girls)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
-                  <div className="md:col-span-1">
-                    <Label htmlFor="culturalEvent" className="font-medium">Related Cultural Event</Label>
-                     <p className="text-xs text-gray-500 mt-1">If relevant.</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <Select value={formData.culturalEvent} onValueChange={(value) => handleInputChange("culturalEvent", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an event" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Not Related to Any Event</SelectItem>
-                        <SelectItem value="annual-day">Annual Day 2024</SelectItem>
-                        <SelectItem value="tamil-meet">Tamil Literary Meet</SelectItem>
-                        <SelectItem value="sports-meet">Inter-College Sports Meet</SelectItem>
-                        <SelectItem value="christmas">Christmas Celebration</SelectItem>
-                        <SelectItem value="science-exhibition">Science Exhibition</SelectItem>
-                        <SelectItem value="cultural-festival">Cultural Festival</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="md:col-span-3 mt-6 pt-6 border-t border-gray-200/80">
-                  <MccCampusMap />
                 </div>
               </div>
 
-              {/* Contact Information */}
-              <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200/80 mt-8">
+              <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200/80">
                 <h3 className="text-xl font-semibold mb-6 mcc-text-primary font-serif">3. Your Contact Information</h3>
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-1">
                     <Label htmlFor="contactName" className="font-medium">Your Name *</Label>
                   </div>
                   <div className="md:col-span-2">
-                    <Input 
-                      id="contactName" 
-                      placeholder="Full Name" 
+                    <Input
+                      id="contactName"
                       value={formData.contactName}
                       onChange={(e) => handleInputChange("contactName", e.target.value)}
-                      required 
+                      placeholder="Full Name"
+                      required
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 mt-6 border-t border-gray-200/80">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
                     <Label htmlFor="contactEmail" className="font-medium">Email Address *</Label>
                   </div>
                   <div className="md:col-span-2">
-                    <Input 
-                      id="contactEmail" 
-                      type="email" 
-                      placeholder="your.email@college.edu" 
+                    <Input
+                      id="contactEmail"
+                      type="email"
                       value={formData.contactEmail}
                       onChange={(e) => handleInputChange("contactEmail", e.target.value)}
-                      required 
+                      placeholder="your.email@college.edu"
+                      required
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 mt-6 border-t border-gray-200/80">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
                     <Label htmlFor="contactPhone" className="font-medium">Phone Number</Label>
                     <p className="text-xs text-gray-500 mt-1">Optional, for faster contact.</p>
                   </div>
                   <div className="md:col-span-2">
-                    <Input 
-                      id="contactPhone" 
-                      placeholder="+91 00000 00000" 
+                    <Input
+                      id="contactPhone"
                       value={formData.contactPhone}
                       onChange={(e) => handleInputChange("contactPhone", e.target.value)}
+                      placeholder="+91 00000 00000"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-4 pt-6">
-                 <Button type="submit" size="lg" className="w-full md:w-auto mcc-accent hover:bg-red-800 font-semibold py-3 px-8 text-lg">
+              <div className="flex justify-center pt-6">
+                <Button
+                  type="submit"
+                  className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-lg"
+                >
                   Report Found Item
                 </Button>
-                <p className="text-xs text-gray-500 text-center">By submitting, you agree to be contacted by the item's owner.</p>
               </div>
+              
+              <p className="text-xs text-gray-500 text-center">
+                By submitting, you agree to be contacted by the item's owner.
+              </p>
             </form>
           </CardContent>
         </Card>

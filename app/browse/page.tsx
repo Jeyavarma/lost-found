@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,90 +23,7 @@ import {
   GraduationCap,
 } from "lucide-react"
 
-// Enhanced college items with MCC student names and no price field
-const allItems = [
-  {
-    id: 1,
-    title: 'MacBook Pro 13" M2 (CS Major)',
-    category: "Electronics",
-    type: "lost",
-    location: "Computer Science Building - Room 204",
-    date: "2024-01-15",
-    description:
-      "Silver MacBook Pro with programming stickers (React, Python, GitHub). Has my final project on it! Very urgent as I have a presentation tomorrow.",
-    contact: "harish.kumar@mcc.edu.in",
-    image: "/placeholder.svg?height=200&width=200&text=MacBook+Pro",
-    urgency: "high",
-    reward: "$100",
-    views: 234,
-    likes: 45,
-    course: "CS 401 - Software Engineering",
-    building: "Computer Science",
-    floor: "2nd Floor",
-    timeAgo: "2 hours ago",
-    tags: ["laptop", "programming", "urgent", "reward", "presentation"],
-  },
-  {
-    id: 2,
-    title: "Student ID Card - Kiruba Shankar",
-    category: "ID Cards",
-    type: "found",
-    location: "Student Union - Food Court",
-    date: "2024-01-15",
-    description:
-      "Found student ID for Kiruba Shankar, Biology major, Class of 2025. Card was near the Starbucks counter.",
-    contact: "suresh.nathan@mcc.edu.in",
-    image: "/placeholder.svg?height=200&width=200&text=Student+ID",
-    urgency: "high",
-    views: 156,
-    likes: 28,
-    building: "Student Union",
-    floor: "1st Floor",
-    timeAgo: "4 hours ago",
-    tags: ["id-card", "biology", "urgent", "dining"],
-  },
-  {
-    id: 3,
-    title: "TI-84 Plus CE Graphing Calculator",
-    category: "Academic",
-    type: "lost",
-    location: "Mathematics Building - Exam Hall B",
-    date: "2024-01-14",
-    description:
-      "Black TI-84 Plus CE calculator with custom programs installed. Name 'Jeya Prakash' written on back. Lost during Calculus II midterm!",
-    contact: "jeya.prakash@mcc.edu.in",
-    image: "/placeholder.svg?height=200&width=200&text=Calculator",
-    urgency: "high",
-    reward: "$30",
-    views: 189,
-    likes: 37,
-    course: "MATH 202 - Calculus II",
-    building: "Mathematics",
-    floor: "Ground Floor",
-    timeAgo: "1 day ago",
-    tags: ["calculator", "math", "exam", "urgent", "programs"],
-  },
-  {
-    id: 4,
-    title: "Organic Chemistry Textbook (Clayden 8th Ed)",
-    category: "Textbooks",
-    type: "found",
-    location: "Science Library - Study Room 3",
-    date: "2024-01-14",
-    description:
-      "Organic Chemistry by Clayden et al., 8th edition. Extensively highlighted with handwritten notes throughout. Found abandoned on study desk.",
-    contact: "kiruba.devi@mcc.edu.in",
-    image: "/placeholder.svg?height=200&width=200&text=Chemistry+Book",
-    urgency: "medium",
-    views: 98,
-    likes: 19,
-    course: "CHEM 301 - Organic Chemistry",
-    building: "Science Library",
-    floor: "2nd Floor",
-    timeAgo: "1 day ago",
-    tags: ["textbook", "chemistry", "expensive", "notes"],
-  },
-]
+
 
 const categories = [
   "All Categories",
@@ -142,46 +59,53 @@ export default function BrowsePage() {
   const [showRewardOnly, setShowRewardOnly] = useState(false)
   const [sortBy, setSortBy] = useState("newest")
   const [viewMode, setViewMode] = useState("grid")
-  const [likedItems, setLikedItems] = useState<Set<number>>(new Set())
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
+  const [allItems, setAllItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/items')
+        if (response.ok) {
+          const data = await response.json()
+          setAllItems(data)
+        }
+      } catch (error) {
+        console.error('Error fetching items:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchItems()
+  }, [])
 
   const filteredItems = allItems.filter((item) => {
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      item.location.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesCategory = categoryFilter === "All Categories" || item.category === categoryFilter
-    const matchesType = typeFilter === "All" || item.type === typeFilter
-    const matchesBuilding = buildingFilter === "All Buildings" || item.building === buildingFilter
-    const matchesUrgency = urgencyFilter === "All" || item.urgency === urgencyFilter
-    const matchesReward = !showRewardOnly || item.reward
+    const matchesType = typeFilter === "All" || item.status === typeFilter
+    const matchesBuilding = buildingFilter === "All Buildings" || item.location.includes(buildingFilter)
 
-    return matchesSearch && matchesCategory && matchesType && matchesBuilding && matchesUrgency && matchesReward
+    return matchesSearch && matchesCategory && matchesType && matchesBuilding
   })
 
   const sortedItems = [...filteredItems].sort((a, b) => {
     switch (sortBy) {
       case "newest":
-        return new Date(b.date).getTime() - new Date(a.date).getTime()
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       case "oldest":
-        return new Date(a.date).getTime() - new Date(b.date).getTime()
-      case "most-viewed":
-        return b.views - a.views
-      case "most-liked":
-        return b.likes - a.likes
-      case "urgency":
-        const urgencyOrder = { high: 3, medium: 2, low: 1 }
-        return (
-          urgencyOrder[b.urgency as keyof typeof urgencyOrder] - urgencyOrder[a.urgency as keyof typeof urgencyOrder]
-        )
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       default:
         return 0
     }
   })
 
-  const handleLike = (itemId: number) => {
+  const handleLike = (itemId: string) => {
     setLikedItems((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(itemId)) {
@@ -329,29 +253,7 @@ export default function BrowsePage() {
                   </Select>
                 </div>
 
-                {/* Urgency */}
-                <div>
-                  <Label className="text-sm font-medium mb-2 block mcc-text-primary">Urgency</Label>
-                  <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-                    <SelectTrigger className="border-gray-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Urgency</SelectItem>
-                      <SelectItem value="high">High Priority</SelectItem>
-                      <SelectItem value="medium">Medium Priority</SelectItem>
-                      <SelectItem value="low">Low Priority</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
-                {/* Reward Only */}
-                <div className="flex items-center space-x-2">
-                  <Switch id="reward-only" checked={showRewardOnly} onCheckedChange={setShowRewardOnly} />
-                  <Label htmlFor="reward-only" className="text-sm mcc-text-primary">
-                    Show items with rewards only
-                  </Label>
-                </div>
 
                 {/* Sort By */}
                 <div>
@@ -404,16 +306,29 @@ export default function BrowsePage() {
             </div>
 
             {/* Items Display */}
-            {viewMode === "grid" ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+                    <CardContent className="p-4">
+                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {sortedItems.map((item) => (
                   <Card
-                    key={item.id}
+                    key={item._id}
                     className="mcc-card hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden border-2 border-gray-200"
                   >
                     <div className="relative">
                       <img
-                        src={item.image || "/placeholder.svg"}
+                        src={(item.itemImageUrl || item.imageUrl) ? `http://localhost:5000${item.itemImageUrl || item.imageUrl}` : "/placeholder.svg"}
                         alt={item.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -422,21 +337,14 @@ export default function BrowsePage() {
                       ></div>
                       <div className="absolute top-2 right-2 flex gap-1">
                         <Badge
-                          variant={item.type === "lost" ? "destructive" : "default"}
-                          className={`shadow-md ${item.type === "lost" ? "bg-red-500" : "bg-green-500"} text-white`}
+                          variant={item.status === "lost" ? "destructive" : "default"}
+                          className={`shadow-md ${item.status === "lost" ? "bg-red-500" : "bg-green-500"} text-white`}
                         >
-                          {item.type === "lost" ? "Lost" : "Found"}
+                          {item.status === "lost" ? "Lost" : "Found"}
                         </Badge>
-                        {item.reward && (
-                          <Badge variant="secondary" className="mcc-accent text-brand-text-light shadow-md">
-                            {item.reward}
-                          </Badge>
-                        )}
+
                       </div>
-                      <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/50 rounded-full px-2 py-1">
-                        <Eye className="w-3 h-3 text-white" />
-                        <span className="text-xs text-white">{item.views}</span>
-                      </div>
+
                     </div>
 
                     <CardContent className="p-4">
@@ -444,7 +352,7 @@ export default function BrowsePage() {
                         <Badge variant="outline" className="text-xs border-brand-primary/30 mcc-text-primary">
                           {item.category}
                         </Badge>
-                        <span className="text-xs text-gray-500">{item.timeAgo}</span>
+                        <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</span>
                       </div>
 
                       <CardTitle className="text-lg mb-2 group-hover:text-brand-primary transition-colors font-serif">
@@ -457,42 +365,35 @@ export default function BrowsePage() {
                       <div className="space-y-1 text-sm text-brand-text-dark mb-4">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4 mcc-text-primary" />
-                          <span className="truncate">{item.building}</span>
+                          <span className="truncate">{item.location}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4 mcc-text-accent" />
-                          {new Date(item.date).toLocaleDateString()}
+                          {new Date(item.createdAt).toLocaleDateString()}
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-1 mb-4">
-                        {item.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs border-gray-300">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
+
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleLike(item.id)}
-                            className={`flex items-center gap-1 ${likedItems.has(item.id) ? "text-red-500" : "text-gray-500"}`}
+                            onClick={() => handleLike(item._id)}
+                            className={`flex items-center gap-1 ${likedItems.has(item._id) ? "text-red-500" : "text-gray-500"}`}
                           >
-                            <Heart className={`w-4 h-4 ${likedItems.has(item.id) ? "fill-current" : ""}`} />
-                            {item.likes + (likedItems.has(item.id) ? 1 : 0)}
+                            <Heart className={`w-4 h-4 ${likedItems.has(item._id) ? "fill-current" : ""}`} />
+                            {likedItems.has(item._id) ? 1 : 0}
                           </Button>
-                          <div className="flex items-center gap-1 text-gray-500">
-                            <Eye className="w-4 h-4" />
-                            {item.views}
-                          </div>
+
                         </div>
-                        <Button size="sm" className="mcc-accent hover:bg-red-800">
-                          <MessageCircle className="w-4 h-4 mr-1" />
-                          Contact
-                        </Button>
+                        <a href={`mailto:${item.reportedBy?.email}`}>
+                          <Button size="sm" className="mcc-accent hover:bg-red-800">
+                            <MessageCircle className="w-4 h-4 mr-1" />
+                            Contact
+                          </Button>
+                        </a>
                       </div>
                     </CardContent>
                   </Card>
@@ -502,14 +403,14 @@ export default function BrowsePage() {
               <div className="space-y-4">
                 {sortedItems.map((item) => (
                   <Card
-                    key={item.id}
+                    key={item._id}
                     className="mcc-card hover:shadow-lg transition-all duration-300 border-2 border-gray-200"
                   >
                     <CardContent className="p-6">
                       <div className="flex gap-4">
                         <div className="relative">
                           <img
-                            src={item.image || "/placeholder.svg"}
+                            src={(item.itemImageUrl || item.imageUrl) ? `http://localhost:5000${item.itemImageUrl || item.imageUrl}` : "/placeholder.svg"}
                             alt={item.title}
                             className="w-24 h-24 object-cover rounded-lg"
                           />

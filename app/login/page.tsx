@@ -62,19 +62,18 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const response = await fetch("http://localhost:5001/api/auth/login", {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, role: selectedPortal }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Successful login
-        localStorage.setItem("userType", selectedPortal || 'student');
+        localStorage.setItem("userType", data.role);
         localStorage.setItem("userName", data.name);
         localStorage.setItem("token", data.token);
         router.push("/dashboard");

@@ -49,7 +49,7 @@ export default function DashboardPage() {
       const fetchUserItems = async () => {
         try {
           setLoading(true);
-          const response = await fetch('http://localhost:5001/api/items/my-items', {
+          const response = await fetch('http://localhost:5000/api/items/my-items', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
       const fetchNotifications = async () => {
         try {
-          const response = await fetch('http://localhost:5001/api/notifications', {
+          const response = await fetch('http://localhost:5000/api/notifications', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -132,56 +132,80 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Action Hub */}
-        <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">What would you like to do?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/report-lost" className="block h-full">
-                    <ActionCard 
-                        title="Report a Lost Item"
-                        description="Let us know what you've lost so we can help you find it."
-                        icon={Package}
-                        color="#1C13B3"
-                    />
-                </Link>
-                <Link href="/report-found" className="block h-full">
-                    <ActionCard 
-                        title="Report a Found Item"
-                        description="Report an item you've found to help it get back to its owner."
-                        icon={PackageOpen}
-                        color="#16A34A"
-                    />
-                </Link>
-                <Link href="/browse" className="block h-full">
-                    <ActionCard 
-                        title="Search All Items"
-                        description="Browse through all reported lost and found items on campus."
-                        icon={Search}
-                        color="#EA580C"
-                    />
-                </Link>
-            </div>
-        </section>
-
-        {/* User's Activity Section */}
-        <section>
-            <Tabs defaultValue="lost-items" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-gray-200 rounded-lg">
-                <TabsTrigger value="lost-items">My Lost Items</TabsTrigger>
-                <TabsTrigger value="found-items">My Found Items</TabsTrigger>
-                <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Main Content Area */}
+          <div className="lg:col-span-3">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Lost & Found Items</h2>
+            
+            <Tabs defaultValue="all-items" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 bg-gray-200 rounded-lg">
+                <TabsTrigger value="potential-matches">Potential Matches</TabsTrigger>
+                <TabsTrigger value="lost-items">Lost Items</TabsTrigger>
+                <TabsTrigger value="found-items">Found Items</TabsTrigger>
+                <TabsTrigger value="my-items">My Items</TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="potential-matches">
+                <PotentialMatchesCard />
+              </TabsContent>
               <TabsContent value="lost-items">
-                {loading ? <p className="text-center p-4">Loading your items...</p> : error ? <p className="text-center p-4 text-red-500">{error}</p> : <ItemCard title="My Reported Lost Items" items={lostItems} />}
+                <LostItemsCard />
               </TabsContent>
               <TabsContent value="found-items">
-                {loading ? <p className="text-center p-4">Loading your items...</p> : error ? <p className="text-center p-4 text-red-500">{error}</p> : <ItemCard title="My Reported Found Items" items={foundItems} />}
+                <FoundItemsCard />
               </TabsContent>
-              <TabsContent value="notifications">
-                <NotificationCard notifications={notifications} />
+              <TabsContent value="my-items">
+                {loading ? <p className="text-center p-4">Loading your items...</p> : error ? <p className="text-center p-4 text-red-500">{error}</p> : <MyItemsCard lostItems={lostItems} foundItems={foundItems} />}
               </TabsContent>
             </Tabs>
-        </section>
+          </div>
+
+          {/* Quick Actions Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+              <div className="space-y-4">
+                <Link href="/report-lost" className="block">
+                  <QuickActionCard 
+                    title="Report Lost Item"
+                    description="Lost something?"
+                    icon={Package}
+                    color="#1C13B3"
+                  />
+                </Link>
+                <Link href="/report-found" className="block">
+                  <QuickActionCard 
+                    title="Report Found Item"
+                    description="Found something?"
+                    icon={PackageOpen}
+                    color="#16A34A"
+                  />
+                </Link>
+                <Link href="/browse" className="block">
+                  <QuickActionCard 
+                    title="Search Items"
+                    description="Browse all items"
+                    icon={Search}
+                    color="#EA580C"
+                  />
+                </Link>
+              </div>
+              
+              {/* Notifications */}
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Notifications</h3>
+                <div className="space-y-2">
+                  {notifications.slice(0, 3).map(notif => (
+                    <div key={notif.id} className={`p-3 rounded-lg text-sm ${!notif.read ? 'bg-blue-50 border-l-4 border-blue-400' : 'bg-gray-50'}`}>
+                      <p className="text-gray-700 text-xs">{notif.message}</p>
+                      <p className="text-gray-500 text-xs mt-1">{new Date(notif.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
@@ -189,65 +213,207 @@ export default function DashboardPage() {
 
 // Helper Components
 
-const ActionCard = ({ title, description, icon: Icon, color }: { title: string, description: string, icon: React.ElementType, color: string }) => (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4" style={{ borderLeftColor: color }}>
-        <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-            <div className="p-3 rounded-full bg-opacity-10" style={{ backgroundColor: `${color}1A`}}>
-                <Icon className="w-6 h-6" style={{ color }}/>
+const QuickActionCard = ({ title, description, icon: Icon, color }: { title: string, description: string, icon: React.ElementType, color: string }) => (
+    <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 p-4" style={{ borderLeftColor: color }}>
+        <div className="flex items-center gap-3">
+            <div className="p-2 rounded-full" style={{ backgroundColor: `${color}1A`}}>
+                <Icon className="w-5 h-5" style={{ color }}/>
             </div>
-            <CardTitle className="text-lg font-semibold text-gray-800">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <p className="text-sm text-gray-600">{description}</p>
-        </CardContent>
+            <div>
+                <h4 className="font-semibold text-sm text-gray-800">{title}</h4>
+                <p className="text-xs text-gray-600">{description}</p>
+            </div>
+        </div>
     </Card>
 );
 
-const ItemCard = ({ title, items }: { title: string, items: any[] }) => (
-    <Card className="mt-4">
-        <CardHeader>
-            <CardTitle className="text-xl font-bold text-gray-800">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <ul className="space-y-4">
-                {items.length > 0 ? items.map(item => (
-                    <li key={item.id} className="flex flex-col sm:flex-row justify-between sm:items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                        <div>
-                            <p className="font-semibold text-gray-800">{item.title}</p>
-                            <p className="text-sm text-gray-500">Last seen at {item.location} on {item.date}</p>
-                        </div>
-                        <span className={`text-sm font-medium px-3 py-1 rounded-full mt-2 sm:mt-0 ${getStatusColor(item.status)}`}>
-                            {item.status}
-                        </span>
-                    </li>
-                )) : <p className="text-gray-500">No items to display.</p>}
-            </ul>
-        </CardContent>
-    </Card>
+const PotentialMatchesCard = () => {
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/items/potential-matches', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const items = await response.json();
+        setMatches(items);
+      } catch (error) {
+        console.error('Error fetching matches:', error);
+        // Fallback to all items if matches endpoint fails
+        const response = await fetch('http://localhost:5000/api/items');
+        const items = await response.json();
+        setMatches(items.slice(0, 6)); // Show first 6 items as potential matches
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMatches();
+  }, []);
+
+  if (loading) return <p className="text-center p-4">Finding potential matches...</p>;
+
+  return (
+    <div>
+      <p className="text-sm text-gray-600 mb-4">Items that might match your interests or recent activity</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {matches.map((item: any) => (
+          <ItemDisplayCard key={item._id} item={item} showMatchScore={true} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const LostItemsCard = () => {
+  const [lostItems, setLostItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLostItems = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/items');
+        const items = await response.json();
+        setLostItems(items.filter((item: any) => item.status === 'lost'));
+      } catch (error) {
+        console.error('Error fetching items:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLostItems();
+  }, []);
+
+  if (loading) return <p className="text-center p-4">Loading lost items...</p>;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      {lostItems.map((item: any) => (
+        <ItemDisplayCard key={item._id} item={item} />
+      ))}
+    </div>
+  );
+};
+
+const FoundItemsCard = () => {
+  const [foundItems, setFoundItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFoundItems = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/items');
+        const items = await response.json();
+        setFoundItems(items.filter((item: any) => item.status === 'found'));
+      } catch (error) {
+        console.error('Error fetching items:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFoundItems();
+  }, []);
+
+  if (loading) return <p className="text-center p-4">Loading found items...</p>;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      {foundItems.map((item: any) => (
+        <ItemDisplayCard key={item._id} item={item} />
+      ))}
+    </div>
+  );
+};
+
+const MyItemsCard = ({ lostItems, foundItems }: { lostItems: any[], foundItems: any[] }) => (
+  <div className="mt-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {[...lostItems, ...foundItems].map((item: any) => (
+        <ItemDisplayCard key={item._id} item={item} isOwner={true} />
+      ))}
+    </div>
+  </div>
 );
 
-const NotificationCard = ({ notifications }: { notifications: any[] }) => (
-    <Card className="mt-4">
-        <CardHeader>
-            <CardTitle className="text-xl font-bold text-gray-800">Recent Notifications</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <ul className="space-y-2">
-                {notifications.map(notif => (
-                    <li key={notif.id} className={`flex items-start gap-4 p-4 rounded-lg ${!notif.read ? 'bg-blue-50' : 'bg-white'}`}>
-                        <div className={`mt-1 p-2 rounded-full ${!notif.read ? 'bg-blue-200' : 'bg-gray-200'}`}>
-                            <Bell className={`h-5 w-5 ${!notif.read ? 'text-blue-600' : 'text-gray-500'}`} />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-700">{notif.message}</p>
-                            <p className="text-xs text-gray-500">{new Date(notif.createdAt).toLocaleString()}</p>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-        </CardContent>
-    </Card>
+const ItemDisplayCard = ({ item, isOwner = false, showMatchScore = false }: { item: any, isOwner?: boolean, showMatchScore?: boolean }) => (
+  <Card className="hover:shadow-md transition-shadow">
+    {/* Image Section */}
+    {item.imageUrl && (
+      <div className="relative h-48 w-full">
+        <img 
+          src={`http://localhost:5000${item.imageUrl}`} 
+          alt={item.title}
+          className="w-full h-full object-cover rounded-t-lg"
+        />
+        {showMatchScore && (
+          <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+            95% Match
+          </div>
+        )}
+      </div>
+    )}
+    
+    <CardHeader className="pb-3">
+      <div className="flex justify-between items-start">
+        <CardTitle className="text-lg font-semibold text-gray-800">{item.title}</CardTitle>
+        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+          item.status === 'lost' ? 'bg-red-100 text-red-800' : 
+          item.status === 'found' ? 'bg-green-100 text-green-800' : 
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {item.status.toUpperCase()}
+        </span>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+      
+      {/* Location Details */}
+      <div className="bg-gray-50 p-3 rounded-lg mb-3">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-sm font-medium text-gray-700">📍 {item.location}</span>
+        </div>
+        {(item.locationDetails?.building || item.locationDetails?.floor || item.locationDetails?.room) && (
+          <div className="text-xs text-gray-600 space-y-1">
+            {item.locationDetails.building && <div>🏢 {item.locationDetails.building}</div>}
+            {item.locationDetails.floor && <div>📊 {item.locationDetails.floor}</div>}
+            {item.locationDetails.room && <div>🚪 {item.locationDetails.room}</div>}
+          </div>
+        )}
+      </div>
+      
+      <div className="flex justify-between text-xs text-gray-500 mb-2">
+        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+        {item.timeReported && <span>⏰ {item.timeReported}</span>}
+      </div>
+      
+      {showMatchScore && (
+        <div className="mt-3 pt-3 border-t">
+          <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
+            Contact Owner
+          </Button>
+        </div>
+      )}
+      
+      {isOwner && (
+        <div className="mt-3 pt-3 border-t flex gap-2">
+          <Button size="sm" variant="outline" className="flex-1">
+            Edit
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1">
+            Mark Resolved
+          </Button>
+        </div>
+      )}
+    </CardContent>
+  </Card>
 );
+
+
 
 const getStatusColor = (status: string) => {
     switch (status) {

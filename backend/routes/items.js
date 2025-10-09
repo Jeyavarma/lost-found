@@ -1,26 +1,115 @@
 const express = require('express');
+const Item = require('../models/Item');
+const auth = require('../middleware/auth');
+const { upload, compressImage } = require('../middleware/upload');
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
-const {
-  createItem,
-  getAllItems,
-  getItemById,
-  updateItem,
-  deleteItem,
-  getUserItems
-} = require('../controllers/itemController');
 
-// Define routes
-router.route('/')
-  .post(protect, createItem)
-  .get(getAllItems);
+router.get('/', async (req, res) => {
+  try {
+    const items = await Item.find().populate('reportedBy', 'name email').sort({ createdAt: -1 });
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-router.route('/my-items')
-  .get(protect, getUserItems);
+router.get('/recent', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const items = await Item.find()
+      .populate('reportedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-router.route('/:id')
-  .get(getItemById)
-  .put(protect, updateItem)
-  .delete(protect, deleteItem);
+router.get('/my-items', auth, async (req, res) => {
+  try {
+    const items = await Item.find({ reportedBy: req.userId })
+      .populate('reportedBy', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/potential-matches', auth, async (req, res) => {
+  try {
+    // Get user's items to find potential matches
+    const userItems = await Item.find({ reportedBy: req.userId });
+    
+    // Simple matching logic: opposite status items in similar categories/locations
+    const matches = await Item.find({
+      reportedBy: { $ne: req.userId }, // Not user's own items
+      $or: [
+        { status: 'found' }, // Show found items if user has lost items
+        { status: 'lost' }   // Show lost items if user has found items
+      ]
+    })
+    .populate('reportedBy', 'name email')
+    .sort({ createdAt: -1 })
+    .limit(6);
+    
+    res.json(matches);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+const uploadFields = upload.fields([
+  { name: 'itemImage', maxCount: 1 },
+  { name: 'locationImage', maxCount: 1 }
+]);
+
+router.post('/', auth, uploadFields, compressImage, async (req, res) => {
+  try {
+    const { contactName, contactEmail, contactPhone, date, time, ...otherFields } = req.body;
+    
+    const itemData = {
+      ...otherFields,
+      reportedBy: req.userId,
+      contactInfo: `${contactName} - ${contactEmail}${contactPhone ? ` - ${contactPhone}` : ''}`,
+      dateLostFound: date ? new Date(date) : undefined,
+      timeLostFound: time || undefined,
+      timeReported: new Date().toLocaleTimeString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        hour12: true 
+      })
+    };
+    
+    if (req.files) {
+      if (req.files.itemImage) {
+        itemData.imageUrl = `/uploads/${req.files.itemImage[0].filename}`;
+      }
+      if (req.files.locationImage) {
+        itemData.locationImageUrl = `/uploads/${req.files.locationImage[0].filename}`;
+      }
+    }
+    
+    const item = new Item(itemData);
+    await item.save();
+    await item.populate('reportedBy', 'name email');
+    res.status(201).json(item);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const item = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true })
+      .populate('reportedBy', 'name email');
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 module.exports = router;

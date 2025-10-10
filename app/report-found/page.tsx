@@ -119,7 +119,7 @@ export default function ReportFoundPage() {
     }
     
     console.log('🔵 FOUND ITEM REQUEST - Sending to backend:')
-    const apiUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/items`
+    const apiUrl = 'https://lost-found-79xn.onrender.com/api/items'
     console.log('📍 URL:', apiUrl)
     console.log('📝 Method: POST')
     console.log('📦 Form Data:', Object.fromEntries(submitData.entries()))

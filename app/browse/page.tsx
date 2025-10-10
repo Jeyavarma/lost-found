@@ -67,7 +67,7 @@ export default function BrowsePage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/items')
+        const response = await fetch('https://lost-found-79xn.onrender.com/api/items')
         if (response.ok) {
           const data = await response.json()
           setAllItems(data)
@@ -328,7 +328,7 @@ export default function BrowsePage() {
                   >
                     <div className="relative">
                       <img
-                        src={(item.itemImageUrl || item.imageUrl) ? `http://localhost:5000${item.itemImageUrl || item.imageUrl}` : "/placeholder.svg"}
+                        src={(item.itemImageUrl || item.imageUrl) ? `https://lost-found-79xn.onrender.com${item.itemImageUrl || item.imageUrl}` : "/placeholder.svg"}
                         alt={item.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -410,7 +410,7 @@ export default function BrowsePage() {
                       <div className="flex gap-4">
                         <div className="relative">
                           <img
-                            src={(item.itemImageUrl || item.imageUrl) ? `http://localhost:5000${item.itemImageUrl || item.imageUrl}` : "/placeholder.svg"}
+                            src={(item.itemImageUrl || item.imageUrl) ? `https://lost-found-79xn.onrender.com${item.itemImageUrl || item.imageUrl}` : "/placeholder.svg"}
                             alt={item.title}
                             className="w-24 h-24 object-cover rounded-lg"
                           />

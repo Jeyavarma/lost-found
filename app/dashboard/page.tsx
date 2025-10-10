@@ -49,7 +49,7 @@ export default function DashboardPage() {
       const fetchUserItems = async () => {
         try {
           setLoading(true);
-          const response = await fetch('http://localhost:5000/api/items/my-items', {
+          const response = await fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
       const fetchNotifications = async () => {
         try {
-          const response = await fetch('http://localhost:5000/api/notifications', {
+          const response = await fetch('https://lost-found-79xn.onrender.com/api/notifications', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -235,7 +235,7 @@ const PotentialMatchesCard = () => {
     const fetchMatches = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5000/api/items/potential-matches', {
+        const response = await fetch('https://lost-found-79xn.onrender.com/api/items/potential-matches', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -245,7 +245,7 @@ const PotentialMatchesCard = () => {
       } catch (error) {
         console.error('Error fetching matches:', error);
         // Fallback to all items if matches endpoint fails
-        const response = await fetch('http://localhost:5000/api/items');
+        const response = await fetch('https://lost-found-79xn.onrender.com/api/items');
         const items = await response.json();
         setMatches(items.slice(0, 6)); // Show first 6 items as potential matches
       } finally {
@@ -276,7 +276,7 @@ const LostItemsCard = () => {
   useEffect(() => {
     const fetchLostItems = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/items');
+        const response = await fetch('https://lost-found-79xn.onrender.com/api/items');
         const items = await response.json();
         setLostItems(items.filter((item: any) => item.status === 'lost'));
       } catch (error) {
@@ -306,7 +306,7 @@ const FoundItemsCard = () => {
   useEffect(() => {
     const fetchFoundItems = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/items');
+        const response = await fetch('https://lost-found-79xn.onrender.com/api/items');
         const items = await response.json();
         setFoundItems(items.filter((item: any) => item.status === 'found'));
       } catch (error) {
@@ -345,7 +345,7 @@ const ItemDisplayCard = ({ item, isOwner = false, showMatchScore = false }: { it
     {item.imageUrl && (
       <div className="relative h-48 w-full">
         <img 
-          src={`http://localhost:5000${item.imageUrl}`} 
+          src={`https://lost-found-79xn.onrender.com${item.imageUrl}`} 
           alt={item.title}
           className="w-full h-full object-cover rounded-t-lg"
         />

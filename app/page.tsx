@@ -254,8 +254,8 @@ export default function HomePage() {
       try {
         console.log('🔄 Fetching all items from backend...')
         const [itemsResponse, recentResponse] = await Promise.all([
-          fetch('http://localhost:5000/api/items'),
-          fetch('http://localhost:5000/api/items/recent?limit=10')
+          fetch('/api/items'),
+          fetch('/api/items/recent?limit=10')
         ])
         
         if (itemsResponse.ok) {
@@ -536,7 +536,7 @@ export default function HomePage() {
                 <div className="relative">
                   {(item.itemImageUrl || item.imageUrl) ? (
                     <img
-                      src={`http://localhost:5000${item.itemImageUrl || item.imageUrl}`}
+                      src={`/uploads/${(item.itemImageUrl || item.imageUrl)?.split('/').pop()}`}
                       alt={item.title}
                       className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-500"
                     />

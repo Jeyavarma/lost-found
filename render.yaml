@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mcc-lost-found-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: MONGODB_URI
+        value: mongodb+srv://2024178026_db_user:1DUnoM4iWPsDFQ0b@lostandfound.6mo1sey.mongodb.net/mcc-lost-found?retryWrites=true&w=majority&appName=lostAndFound
+      - key: JWT_SECRET
+        value: mcc-lost-found-production-secret-2024
+      - key: PORT
+        value: 10000

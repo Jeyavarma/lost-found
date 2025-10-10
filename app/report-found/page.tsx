@@ -119,13 +119,14 @@ export default function ReportFoundPage() {
     }
     
     console.log('🔵 FOUND ITEM REQUEST - Sending to backend:')
-    console.log('📍 URL: http://localhost:5000/api/items')
+    const apiUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/items`
+    console.log('📍 URL:', apiUrl)
     console.log('📝 Method: POST')
     console.log('📦 Form Data:', Object.fromEntries(submitData.entries()))
     console.log('🖼️ Images:', { itemImage: !!itemImage, locationImage: !!locationImage })
     
     try {
-      const response = await fetch('http://localhost:5000/api/items', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: submitData
       })

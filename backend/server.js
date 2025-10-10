@@ -12,7 +12,7 @@ const healthRoutes = require('./routes/health');
 const app = express();
 
 app.use(cors({
-  origin: ['http://localhost:3002', 'https://*.vercel.app', 'https://vercel.app'],
+  origin: true,
   credentials: true
 }));
 app.use(express.json());

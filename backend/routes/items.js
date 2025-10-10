@@ -1,7 +1,7 @@
 const express = require('express');
 const Item = require('../models/Item');
 const auth = require('../middleware/auth');
-const { upload, compressImage } = require('../middleware/upload');
+const upload = require('../middleware/cloudinaryUpload');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -65,7 +65,7 @@ const uploadFields = upload.fields([
   { name: 'locationImage', maxCount: 1 }
 ]);
 
-router.post('/', auth, uploadFields, compressImage, async (req, res) => {
+router.post('/', auth, uploadFields, async (req, res) => {
   try {
     const { contactName, contactEmail, contactPhone, date, time, ...otherFields } = req.body;
     
@@ -83,10 +83,10 @@ router.post('/', auth, uploadFields, compressImage, async (req, res) => {
     
     if (req.files) {
       if (req.files.itemImage) {
-        itemData.imageUrl = `/uploads/${req.files.itemImage[0].filename}`;
+        itemData.imageUrl = req.files.itemImage[0].path;
       }
       if (req.files.locationImage) {
-        itemData.locationImageUrl = `/uploads/${req.files.locationImage[0].filename}`;
+        itemData.locationImageUrl = req.files.locationImage[0].path;
       }
     }
     

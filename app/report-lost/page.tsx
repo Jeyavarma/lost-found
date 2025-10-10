@@ -15,12 +15,13 @@ import { ArrowLeft, Upload, User, GraduationCap } from "lucide-react"
 const categories = ["ID Card", "Mobile Phone", "Laptop", "Wallet", "Keys", "Books", "Clothing", "Jewelry", "Other"]
 
 const culturalEvents = [
-  "Madras Day Celebrations",
-  "Annual Sports Meet",
-  "Cultural Festival",
-  "Freshers Day",
-  "College Day",
-  "Department Symposium",
+  "Deepwoods",
+  "Moonshadow",
+  "Octavia",
+  "Margaret Hall Day",
+  "Martin Hall Day",
+  "St. Thomas's Hall Day",
+  "Founders' Day",
   "Other"
 ];
 

@@ -345,7 +345,7 @@ const ItemDisplayCard = ({ item, isOwner = false, showMatchScore = false }: { it
     {item.imageUrl && (
       <div className="relative h-48 w-full">
         <img 
-          src={`https://lost-found-79xn.onrender.com${item.imageUrl}`} 
+          src={item.itemImageUrl || item.imageUrl || '/placeholder.svg'} 
           alt={item.title}
           className="w-full h-full object-cover rounded-t-lg"
         />

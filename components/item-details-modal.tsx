@@ -37,8 +37,8 @@ export default function ItemDetailsModal({ isOpen, onClose, item }: ItemDetailsM
             <div>
               <h3 className="font-semibold mb-2">Item Photo</h3>
               <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
-                {item.itemImage ? (
-                  <img src={item.itemImage} alt={item.title} className="w-full h-full object-cover" />
+                {item.itemImageUrl || item.imageUrl ? (
+                  <img src={item.itemImageUrl || item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
                     No item photo available
@@ -51,8 +51,8 @@ export default function ItemDetailsModal({ isOpen, onClose, item }: ItemDetailsM
             <div>
               <h3 className="font-semibold mb-2">Location Photo</h3>
               <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
-                {item.locationImage ? (
-                  <img src={item.locationImage} alt="Location" className="w-full h-full object-cover" />
+                {item.locationImageUrl ? (
+                  <img src={item.locationImageUrl} alt="Location" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
                     No location photo available

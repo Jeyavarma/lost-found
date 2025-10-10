@@ -536,7 +536,7 @@ export default function HomePage() {
                 <div className="relative">
                   {(item.itemImageUrl || item.imageUrl) ? (
                     <img
-                      src={`/uploads/${(item.itemImageUrl || item.imageUrl)?.split('/').pop()}`}
+                      src={item.itemImageUrl || item.imageUrl}
                       alt={item.title}
                       className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-500"
                     />

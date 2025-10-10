@@ -20,7 +20,20 @@ const itemSchema = new mongoose.Schema({
     room: String
   },
   culturalEvent: String,
-  culturalEventOther: String
+  culturalEventOther: String,
+  event: {
+    type: String,
+    enum: [
+      'Madras Day Celebrations',
+      'Annual Sports Meet', 
+      'Cultural Festival',
+      'Freshers Day',
+      'College Day',
+      'Inter-Collegiate Events',
+      'Alumni Meet',
+      'Science Exhibition'
+    ]
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Item', itemSchema);

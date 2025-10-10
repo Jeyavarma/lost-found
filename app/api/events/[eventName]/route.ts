@@ -1,0 +1,30 @@
+import { NextResponse } from 'next/server'
+
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000'
+
+export async function GET(
+  request: Request,
+  { params }: { params: { eventName: string } }
+) {
+  try {
+    const eventName = decodeURIComponent(params.eventName)
+    const response = await fetch(`${BACKEND_URL}/api/items/events/${encodeURIComponent(eventName)}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch event items')
+    }
+
+    const data = await response.json()
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('Event items API error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch event items' },
+      { status: 500 }
+    )
+  }
+}

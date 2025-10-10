@@ -38,66 +38,118 @@ const seedData = async () => {
       }
     ]);
 
-    // Create sample items
+    // Create sample items with events
     await Item.create([
       {
-        title: 'Lost iPhone 13',
-        description: 'Black iPhone 13 with blue case',
-        category: 'electronics',
-        location: 'library',
+        title: 'Laptop Bag',
+        description: 'Black laptop bag with college logo',
+        category: 'bags',
+        location: 'Main Auditorium',
         status: 'lost',
         reportedBy: users[0]._id,
         contactInfo: 'student@mcc.edu.in',
         timeReported: '2:30 PM',
+        event: 'Inter-Collegiate Events',
         locationDetails: {
-          building: 'Main Library',
-          floor: '2nd Floor',
-          room: 'Reading Hall'
+          building: 'Main Auditorium',
+          floor: 'Ground Floor',
+          room: 'Hall A'
         }
       },
       {
-        title: 'Found Wallet',
-        description: 'Brown leather wallet with ID cards',
-        category: 'personal',
-        location: 'cafeteria',
+        title: 'ID Card',
+        description: 'Student ID card with photo',
+        category: 'documents',
+        location: 'Registration Desk',
         status: 'found',
         reportedBy: users[1]._id,
         contactInfo: 'staff@mcc.edu.in',
         timeReported: '1:15 PM',
+        event: 'Inter-Collegiate Events',
         locationDetails: {
-          building: 'Student Cafeteria',
+          building: 'Main Building',
           floor: 'Ground Floor',
-          room: 'Near Counter 3'
+          room: 'Registration Counter'
         }
       },
       {
-        title: 'Found Samsung Earbuds',
-        description: 'White Samsung Galaxy Buds in charging case',
-        category: 'electronics',
-        location: 'sports-complex',
-        status: 'found',
-        reportedBy: users[1]._id,
-        contactInfo: 'staff@mcc.edu.in',
-        timeReported: '4:45 PM',
-        locationDetails: {
-          building: 'Sports Complex',
-          floor: 'Ground Floor',
-          room: 'Basketball Court'
-        }
-      },
-      {
-        title: 'Lost Blue Notebook',
-        description: 'Blue spiral notebook with Physics notes',
-        category: 'books',
-        location: 'main-building',
+        title: 'Traditional Costume',
+        description: 'Red and gold traditional saree',
+        category: 'clothing',
+        location: 'Cultural Hall',
         status: 'lost',
         reportedBy: users[0]._id,
         contactInfo: 'student@mcc.edu.in',
-        timeReported: '11:20 AM',
+        timeReported: '4:45 PM',
+        event: 'Madras Day Celebrations',
         locationDetails: {
-          building: 'Academic Block A',
-          floor: '3rd Floor',
-          room: 'Room 301'
+          building: 'Cultural Center',
+          floor: '1st Floor',
+          room: 'Dressing Room 2'
+        }
+      },
+      {
+        title: 'Dance Accessories',
+        description: 'Set of bharatanatyam jewelry and accessories',
+        category: 'accessories',
+        location: 'Stage Area',
+        status: 'found',
+        reportedBy: users[1]._id,
+        contactInfo: 'staff@mcc.edu.in',
+        timeReported: '11:20 AM',
+        event: 'Madras Day Celebrations',
+        locationDetails: {
+          building: 'Cultural Center',
+          floor: 'Ground Floor',
+          room: 'Main Stage'
+        }
+      },
+      {
+        title: 'Heritage Book',
+        description: 'Book about Madras history and culture',
+        category: 'books',
+        location: 'Exhibition Area',
+        status: 'found',
+        reportedBy: users[1]._id,
+        contactInfo: 'staff@mcc.edu.in',
+        timeReported: '3:30 PM',
+        event: 'Madras Day Celebrations',
+        locationDetails: {
+          building: 'Library',
+          floor: '1st Floor',
+          room: 'Heritage Section'
+        }
+      },
+      {
+        title: 'Sports Water Bottle',
+        description: 'Blue water bottle with MCC logo',
+        category: 'personal',
+        location: 'Athletic Track',
+        status: 'lost',
+        reportedBy: users[0]._id,
+        contactInfo: 'student@mcc.edu.in',
+        timeReported: '6:15 AM',
+        event: 'Annual Sports Meet',
+        locationDetails: {
+          building: 'Sports Complex',
+          floor: 'Ground Floor',
+          room: 'Track Field'
+        }
+      },
+      {
+        title: 'Running Shoes',
+        description: 'Nike running shoes, size 9',
+        category: 'footwear',
+        location: 'Changing Room',
+        status: 'found',
+        reportedBy: users[1]._id,
+        contactInfo: 'staff@mcc.edu.in',
+        timeReported: '7:45 AM',
+        event: 'Annual Sports Meet',
+        locationDetails: {
+          building: 'Sports Complex',
+          floor: 'Ground Floor',
+          room: 'Men\'s Changing Room'
         }
       }
     ]);

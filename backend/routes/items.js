@@ -99,6 +99,82 @@ router.post('/', auth, uploadFields, async (req, res) => {
   }
 });
 
+router.get('/events', async (req, res) => {
+  try {
+    const events = [
+      'Madras Day Celebrations',
+      'Annual Sports Meet', 
+      'Cultural Festival',
+      'Freshers Day',
+      'College Day',
+      'Inter-Collegiate Events',
+      'Alumni Meet',
+      'Science Exhibition'
+    ];
+    
+    const eventData = await Promise.all(
+      events.map(async (eventName) => {
+        const items = await Item.find({ event: eventName })
+          .populate('reportedBy', 'name email')
+          .sort({ createdAt: -1 });
+        
+        const lostCount = items.filter(item => item.status === 'lost').length;
+        const foundCount = items.filter(item => item.status === 'found').length;
+        
+        return {
+          name: eventName,
+          totalItems: items.length,
+          lostCount,
+          foundCount,
+          status: 'active',
+          items
+        };
+      })
+    );
+    
+    res.json(eventData.filter(event => event.totalItems > 0));
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/events/:eventName', async (req, res) => {
+  try {
+    const { eventName } = req.params;
+    const items = await Item.find({ event: eventName })
+      .populate('reportedBy', 'name email')
+      .sort({ createdAt: -1 });
+    
+    const lostItems = items.filter(item => item.status === 'lost');
+    const foundItems = items.filter(item => item.status === 'found');
+    
+    res.json({
+      eventName,
+      totalItems: items.length,
+      lostCount: lostItems.length,
+      foundCount: foundItems.length,
+      lostItems,
+      foundItems,
+      allItems: items
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id)
+      .populate('reportedBy', 'name email');
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 router.put('/:id', auth, async (req, res) => {
   try {
     const item = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true })

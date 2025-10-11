@@ -38,8 +38,31 @@ export default function ReportLostPage() {
   useEffect(() => {
     const token = localStorage.getItem("token")
     console.log('🔍 Token check:', token ? 'Token exists' : 'No token found')
+    
+    // Clear invalid token if it exists but user lookup fails
     if (token) {
-      setIsAuthenticated(true)
+      // Test token validity
+      fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(response => {
+        if (response.status === 401) {
+          console.log('🗑️ Clearing invalid token')
+          localStorage.removeItem('token')
+          localStorage.removeItem('userName')
+          localStorage.removeItem('userType')
+          setIsAuthenticated(false)
+        } else {
+          setIsAuthenticated(true)
+        }
+      })
+      .catch(() => {
+        console.log('🗑️ Clearing invalid token due to error')
+        localStorage.removeItem('token')
+        localStorage.removeItem('userName')
+        localStorage.removeItem('userType')
+        setIsAuthenticated(false)
+      })
     }
   }, [])
 

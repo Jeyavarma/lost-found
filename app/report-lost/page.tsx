@@ -42,6 +42,14 @@ export default function ReportLostPage() {
     }
   }, [])
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      // Don't redirect immediately, let user see the login prompt
+      return
+    }
+  }, [isAuthenticated])
+
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -60,6 +68,13 @@ export default function ReportLostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check authentication requirement for lost items
+    if (!isAuthenticated) {
+      alert('Please login to report a lost item. This helps us track your reports and notify you when items are found.')
+      window.location.href = '/login'
+      return
+    }
     
     // Validate required fields
     if (!formData.title || !formData.category || !formData.description || !formData.location || !formData.date || !formData.contactName || !formData.contactEmail) {
@@ -84,8 +99,16 @@ export default function ReportLostPage() {
     console.log('📦 Form Data:', Object.fromEntries(submitData.entries()))
     
     try {
+      const token = localStorage.getItem('token')
+      const headers: Record<string, string> = {}
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
       const response = await fetch('https://lost-found-79xn.onrender.com/api/items', {
         method: 'POST',
+        headers,
         body: submitData
       })
       
@@ -214,14 +237,14 @@ export default function ReportLostPage() {
 
       {!isAuthenticated && (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Card className="mcc-card border-2 border-red-200">
-            <CardHeader className="bg-red-50 border-b border-red-200">
+          <Card className="mcc-card border-2 border-red-500">
+            <CardHeader className="bg-red-100 border-b border-red-300">
               <CardTitle className="text-red-800 font-serif flex items-center gap-2">
                 <User className="w-5 h-5" />
-                Optional: Login for Better Experience
+                Login Required
               </CardTitle>
-              <CardDescription className="text-brand-text-dark">
-                While not required, logging in helps track your reports and notify you when items are found.
+              <CardDescription className="text-red-700 font-medium">
+                You must be logged in to report a lost item. This helps us track your reports and notify you when items are found.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4">
@@ -229,7 +252,7 @@ export default function ReportLostPage() {
                 <Link href="/login">
                   <Button size="sm" className="bg-red-600 hover:bg-red-700">
                     <User className="w-4 h-4 mr-2" />
-                    Login
+                    Login to Continue
                   </Button>
                 </Link>
               </div>
@@ -246,6 +269,13 @@ export default function ReportLostPage() {
           </CardHeader>
           <CardContent className="p-4 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-8">
+              {!isAuthenticated && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                  <p className="text-red-800 font-medium text-center">
+                    Please login first to report a lost item. The form below will be enabled after login.
+                  </p>
+                </div>
+              )}
               <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200/80">
                 <h3 className="text-xl font-semibold mb-6 mcc-text-primary font-serif">1. Item Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -526,9 +556,14 @@ export default function ReportLostPage() {
               <div className="flex justify-center pt-6">
                 <Button
                   type="submit"
-                  className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-lg"
+                  disabled={!isAuthenticated}
+                  className={`px-8 py-3 font-medium rounded-lg shadow-lg ${
+                    isAuthenticated 
+                      ? 'bg-red-600 hover:bg-red-700 text-white' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
-                  Report Lost Item
+                  {isAuthenticated ? 'Report Lost Item' : 'Login Required'}
                 </Button>
               </div>
               

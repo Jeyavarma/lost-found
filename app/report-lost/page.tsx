@@ -39,47 +39,62 @@ export default function ReportLostPage() {
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token")
-      console.log('🔍 Token check:', token ? 'Token exists' : 'No token found')
+      const userName = localStorage.getItem("userName")
+      console.log('🔍 Auth check - Token:', token ? 'EXISTS' : 'MISSING', 'User:', userName || 'NONE')
       
       if (!token) {
+        console.log('❌ No token found - setting unauthenticated')
         setIsAuthenticated(false)
         setIsLoading(false)
         return
       }
       
-      // Assume token is valid initially to avoid delay
+      console.log('✅ Token found - setting authenticated')
       setIsAuthenticated(true)
       setIsLoading(false)
       
-      // Validate token in background
+      // Validate token in background (don't change auth state immediately)
       fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(response => {
+        console.log('📞 Token validation response:', response.status)
         if (response.status === 401) {
-          console.log('🗑️ Clearing invalid token')
+          console.log('🗑️ Token invalid - clearing auth data')
           localStorage.removeItem('token')
           localStorage.removeItem('userName')
           localStorage.removeItem('userType')
           setIsAuthenticated(false)
+        } else {
+          console.log('✅ Token valid - staying authenticated')
         }
       })
-      .catch(() => {
-        console.log('🗑️ Clearing invalid token due to error')
-        localStorage.removeItem('token')
-        localStorage.removeItem('userName')
-        localStorage.removeItem('userType')
-        setIsAuthenticated(false)
+      .catch((error) => {
+        console.log('❌ Token validation error:', error.message)
+        // Don't clear token on network errors, only on 401
       })
     }
     
     checkAuth()
     
     // Listen for storage changes (login/logout in other tabs)
-    const handleStorageChange = () => checkAuth()
+    const handleStorageChange = (e) => {
+      console.log('🔄 Storage changed:', e.key, e.newValue ? 'SET' : 'REMOVED')
+      checkAuth()
+    }
     window.addEventListener('storage', handleStorageChange)
     
-    return () => window.removeEventListener('storage', handleStorageChange)
+    // Also check on focus (when returning from login page)
+    const handleFocus = () => {
+      console.log('🔍 Page focused - rechecking auth')
+      checkAuth()
+    }
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   // Redirect to login if not authenticated
@@ -137,16 +152,19 @@ export default function ReportLostPage() {
     
     console.log('🔴 LOST ITEM REQUEST:')
     console.log('📦 Form Data:', Object.fromEntries(submitData.entries()))
+    console.log('🔐 Auth state check - isAuthenticated:', isAuthenticated)
     
     try {
       const token = localStorage.getItem('token')
       const headers: Record<string, string> = {}
       
-      console.log('🔑 Submitting with token:', token ? 'Token present' : 'No token')
+      console.log('🔑 Token for submission:', token ? `EXISTS (${token.substring(0, 20)}...)` : 'MISSING')
       
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
-        console.log('📡 Authorization header set')
+        console.log('📡 Authorization header set with Bearer token')
+      } else {
+        console.log('⚠️ WARNING: No token available for submission!')
       }
       
       const response = await fetch('https://lost-found-79xn.onrender.com/api/items', {

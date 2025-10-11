@@ -79,16 +79,17 @@ const optionalAuth = async (req, res, next) => {
       console.log('🔑 Token extracted, verifying...');
       
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('✅ Token decoded, user ID:', decoded.id);
+      console.log('✅ Token decoded, user ID:', decoded.userId || decoded.id);
       
-      const user = await User.findById(decoded.id).select('-password');
+      const userId = decoded.userId || decoded.id;
+      const user = await User.findById(userId).select('-password');
       
       if (user) {
         req.user = user;
-        req.userId = decoded.id;
+        req.userId = userId;
         console.log('👤 User found and set:', user.name);
       } else {
-        console.log('❌ User not found in database for ID:', decoded.id);
+        console.log('❌ User not found in database for ID:', userId);
       }
     } catch (error) {
       // Token invalid, but continue without auth

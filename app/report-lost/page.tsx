@@ -61,13 +61,6 @@ export default function ReportLostPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Require login for lost item reports
-    if (!isAuthenticated) {
-      alert('Please login to report a lost item. This helps us track your reports and notify you when items are found.')
-      window.location.href = '/login'
-      return
-    }
-    
     // Validate required fields
     if (!formData.title || !formData.category || !formData.description || !formData.location || !formData.date || !formData.contactName || !formData.contactEmail) {
       alert('Please fill in all required fields marked with *')
@@ -91,14 +84,8 @@ export default function ReportLostPage() {
     console.log('📦 Form Data:', Object.fromEntries(submitData.entries()))
     
     try {
-      const token = localStorage.getItem('token')
-      console.log('🔑 Token exists:', !!token)
-      
       const response = await fetch('https://lost-found-79xn.onrender.com/api/items', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
         body: submitData
       })
       
@@ -111,13 +98,7 @@ export default function ReportLostPage() {
         window.location.href = '/'
       } else {
         console.error('❌ Backend error:', responseText)
-        if (response.status === 401) {
-          alert('Authentication failed. Please login again.')
-          localStorage.removeItem('token')
-          window.location.href = '/login'
-        } else {
-          alert(`Error submitting report: ${responseText}`)
-        }
+        alert(`Error submitting report: ${responseText}`)
       }
     } catch (error) {
       console.error('❌ Network error:', error)
@@ -237,10 +218,10 @@ export default function ReportLostPage() {
             <CardHeader className="bg-red-50 border-b border-red-200">
               <CardTitle className="text-red-800 font-serif flex items-center gap-2">
                 <User className="w-5 h-5" />
-                Login is Mandatory
+                Optional: Login for Better Experience
               </CardTitle>
               <CardDescription className="text-brand-text-dark">
-                You must login to report a lost item. This helps us track your reports and notify you when items are found.
+                While not required, logging in helps track your reports and notify you when items are found.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4">
@@ -251,7 +232,6 @@ export default function ReportLostPage() {
                     Login
                   </Button>
                 </Link>
-
               </div>
             </CardContent>
           </Card>

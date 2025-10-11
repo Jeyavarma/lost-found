@@ -65,13 +65,13 @@ const uploadFields = upload.fields([
   { name: 'locationImage', maxCount: 1 }
 ]);
 
-router.post('/', auth, uploadFields, async (req, res) => {
+router.post('/', uploadFields, async (req, res) => {
   try {
     const { contactName, contactEmail, contactPhone, date, time, ...otherFields } = req.body;
     
     const itemData = {
       ...otherFields,
-      reportedBy: req.userId,
+      reportedBy: req.userId || null,
       contactInfo: `${contactName} - ${contactEmail}${contactPhone ? ` - ${contactPhone}` : ''}`,
       dateLostFound: date ? new Date(date) : undefined,
       timeLostFound: time || undefined,

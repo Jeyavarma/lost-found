@@ -68,10 +68,16 @@ export default function ReportLostPage() {
       return
     }
     
+    // Validate required fields
+    if (!formData.title || !formData.category || !formData.description || !formData.location || !formData.date || !formData.contactName || !formData.contactEmail) {
+      alert('Please fill in all required fields marked with *')
+      return
+    }
+    
     const submitData = new FormData()
-    submitData.append('status', 'lost') // Add status to differentiate lost vs found
+    submitData.append('status', 'lost')
     Object.entries(formData).forEach(([key, value]) => {
-      submitData.append(key, value)
+      if (value) submitData.append(key, value)
     })
     
     if (itemImage) {
@@ -81,16 +87,14 @@ export default function ReportLostPage() {
       submitData.append('locationImage', locationImage)
     }
     
-    console.log('🔴 LOST ITEM REQUEST - Sending to backend:')
-    const apiUrl = 'https://lost-found-79xn.onrender.com/api/items'
-    console.log('📍 URL:', apiUrl)
-    console.log('📝 Method: POST')
+    console.log('🔴 LOST ITEM REQUEST:')
     console.log('📦 Form Data:', Object.fromEntries(submitData.entries()))
-    console.log('🖼️ Images:', { itemImage: !!itemImage, locationImage: !!locationImage })
     
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(apiUrl, {
+      console.log('🔑 Token exists:', !!token)
+      
+      const response = await fetch('https://lost-found-79xn.onrender.com/api/items', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -98,18 +102,26 @@ export default function ReportLostPage() {
         body: submitData
       })
       
-      console.log('✅ LOST ITEM RESPONSE:', response.status, response.statusText)
+      console.log('📡 Response:', response.status, response.statusText)
+      const responseText = await response.text()
+      console.log('📄 Response body:', responseText)
       
       if (response.ok) {
         alert('Lost item reported successfully! We will notify you if someone finds it.')
         window.location.href = '/'
       } else {
-        console.error('❌ Backend error:', await response.text())
-        alert('Error submitting report. Please try again.')
+        console.error('❌ Backend error:', responseText)
+        if (response.status === 401) {
+          alert('Authentication failed. Please login again.')
+          localStorage.removeItem('token')
+          window.location.href = '/login'
+        } else {
+          alert(`Error submitting report: ${responseText}`)
+        }
       }
     } catch (error) {
       console.error('❌ Network error:', error)
-      alert('Error connecting to server. Please try again.')
+      alert('Error connecting to server. Please check your internet connection and try again.')
     }
   }
 

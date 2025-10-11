@@ -6,7 +6,7 @@ const itemSchema = new mongoose.Schema({
   category: { type: String, required: true },
   location: { type: String, required: true },
   status: { type: String, enum: ['lost', 'found', 'resolved'], default: 'lost' },
-  reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
   contactInfo: { type: String, required: true },
   imageUrl: String,
   locationImageUrl: String,

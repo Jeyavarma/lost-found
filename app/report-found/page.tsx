@@ -61,10 +61,10 @@ const culturalEvents = [
   "Deepwoods",
   "Moonshadow",
   "Octavia",
-  "Margaret Hall Day",
+  "Barnes Hall Day",
   "Martin Hall Day",
-  "St. Thomas's Hall Day",
-  "Founders' Day",
+  "Games Fury",
+  "Founders Day",
   "Other"
 ];
 
@@ -101,6 +101,7 @@ export default function ReportFoundPage() {
     currentLocation: "",
     culturalEvent: "",
     culturalEventOther: "",
+    event: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,7 +155,15 @@ export default function ReportFoundPage() {
   const handleCulturalEventChange = (checked: boolean) => {
     setHasCulturalEvent(checked)
     if (!checked) {
-      setFormData(prev => ({ ...prev, culturalEvent: "", culturalEventOther: "" }))
+      setFormData(prev => ({ ...prev, culturalEvent: "", culturalEventOther: "", event: "" }))
+    }
+  }
+
+  const handleCulturalEventSelect = (value: string) => {
+    handleInputChange("culturalEvent", value)
+    // Map cultural event to event field for backend
+    if (value !== "Other") {
+      handleInputChange("event", value)
     }
   }
 
@@ -496,7 +505,7 @@ export default function ReportFoundPage() {
                       
                       {hasCulturalEvent && (
                         <div className="space-y-3">
-                          <Select value={formData.culturalEvent} onValueChange={(value) => handleInputChange("culturalEvent", value)}>
+                          <Select value={formData.culturalEvent} onValueChange={handleCulturalEventSelect}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select an event" />
                             </SelectTrigger>

@@ -24,14 +24,13 @@ const itemSchema = new mongoose.Schema({
   event: {
     type: String,
     enum: [
-      'Madras Day Celebrations',
-      'Annual Sports Meet', 
-      'Cultural Festival',
-      'Freshers Day',
-      'College Day',
-      'Inter-Collegiate Events',
-      'Alumni Meet',
-      'Science Exhibition'
+      'Deepwoods',
+      'Moonshadow',
+      'Octavia',
+      'Barnes Hall Day',
+      'Martin Hall Day',
+      'Games Fury',
+      'Founders Day'
     ]
   }
 }, { timestamps: true });

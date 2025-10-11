@@ -49,7 +49,7 @@ const seedData = async () => {
         reportedBy: users[0]._id,
         contactInfo: 'student@mcc.edu.in',
         timeReported: '2:30 PM',
-        event: 'Inter-Collegiate Events',
+        event: 'Games Fury',
         locationDetails: {
           building: 'Main Auditorium',
           floor: 'Ground Floor',
@@ -65,7 +65,7 @@ const seedData = async () => {
         reportedBy: users[1]._id,
         contactInfo: 'staff@mcc.edu.in',
         timeReported: '1:15 PM',
-        event: 'Inter-Collegiate Events',
+        event: 'Games Fury',
         locationDetails: {
           building: 'Main Building',
           floor: 'Ground Floor',
@@ -81,7 +81,7 @@ const seedData = async () => {
         reportedBy: users[0]._id,
         contactInfo: 'student@mcc.edu.in',
         timeReported: '4:45 PM',
-        event: 'Madras Day Celebrations',
+        event: 'Deepwoods',
         locationDetails: {
           building: 'Cultural Center',
           floor: '1st Floor',
@@ -97,7 +97,7 @@ const seedData = async () => {
         reportedBy: users[1]._id,
         contactInfo: 'staff@mcc.edu.in',
         timeReported: '11:20 AM',
-        event: 'Madras Day Celebrations',
+        event: 'Deepwoods',
         locationDetails: {
           building: 'Cultural Center',
           floor: 'Ground Floor',
@@ -113,7 +113,7 @@ const seedData = async () => {
         reportedBy: users[1]._id,
         contactInfo: 'staff@mcc.edu.in',
         timeReported: '3:30 PM',
-        event: 'Madras Day Celebrations',
+        event: 'Octavia',
         locationDetails: {
           building: 'Library',
           floor: '1st Floor',
@@ -129,7 +129,7 @@ const seedData = async () => {
         reportedBy: users[0]._id,
         contactInfo: 'student@mcc.edu.in',
         timeReported: '6:15 AM',
-        event: 'Annual Sports Meet',
+        event: 'Moonshadow',
         locationDetails: {
           building: 'Sports Complex',
           floor: 'Ground Floor',
@@ -145,7 +145,7 @@ const seedData = async () => {
         reportedBy: users[1]._id,
         contactInfo: 'staff@mcc.edu.in',
         timeReported: '7:45 AM',
-        event: 'Annual Sports Meet',
+        event: 'Barnes Hall Day',
         locationDetails: {
           building: 'Sports Complex',
           floor: 'Ground Floor',

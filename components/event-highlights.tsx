@@ -14,7 +14,8 @@ const eventTemplates = [
   { name: 'Barnes Hall Day', icon: '🏠', description: 'Hostel celebration where personal belongings and room items often get misplaced.', eventDate: 'May 20, 2024' },
   { name: 'Martin Hall Day', icon: '🏠', description: 'Hostel celebration with games and activities where sports equipment and personal items get lost.', eventDate: 'Jun 15, 2024' },
   { name: 'Games Fury', icon: '🎮', description: 'Inter-departmental gaming competition where gaming accessories and personal items go missing.', eventDate: 'Aug 10-12, 2024' },
-  { name: 'Founders Day', icon: '🎆', description: 'Annual college foundation day celebration where formal attire and ceremonial items get misplaced.', eventDate: 'Sep 5, 2024' }
+  { name: 'Founders Day', icon: '🎆', description: 'Annual college foundation day celebration where formal attire and ceremonial items get misplaced.', eventDate: 'Sep 5, 2024' },
+  { name: 'Cultural Festival', icon: '🎨', description: 'Multi-day cultural celebration with performances, exhibitions and competitions where personal items get misplaced.', eventDate: 'Mar 1-3, 2024' }
 ]
 
 export default function EventHighlights() {
@@ -31,22 +32,34 @@ export default function EventHighlights() {
 
   const fetchEventData = async () => {
     try {
-      const response = await fetch('/api/items')
+      const response = await fetch('/api/events')
       if (response.ok) {
-        const allItems = await response.json()
+        const eventData = await response.json()
         
-        // Group items by event
-        const eventGroups = eventTemplates.map(template => {
-          const eventItems = allItems.filter((item: any) => item.eventName === template.name)
+        // Map backend event data to frontend template format
+        const mappedEvents = eventData.map((backendEvent: any) => {
+          const template = eventTemplates.find(t => t.name === backendEvent.name)
           return {
             ...template,
-            id: template.name,
-            itemCount: eventItems.length,
-            items: eventItems
+            id: backendEvent.name,
+            title: backendEvent.name,
+            itemCount: backendEvent.totalItems,
+            items: backendEvent.items.map((item: any) => ({
+              id: item._id,
+              name: item.title,
+              description: item.description,
+              status: item.status,
+              location: item.location,
+              date: new Date(item.dateReported).toLocaleDateString(),
+              imageUrl: item.imageUrl,
+              locationImageUrl: item.locationImageUrl,
+              category: item.category,
+              contactInfo: item.contactInfo
+            }))
           }
-        }).filter(event => event.itemCount > 0) // Only show events with items
+        })
         
-        setEventsData(eventGroups)
+        setEventsData(mappedEvents)
       }
     } catch (error) {
       console.error('Error fetching event data:', error)
@@ -230,11 +243,33 @@ export default function EventHighlights() {
           
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-100 rounded-lg h-32 flex items-center justify-center text-gray-400">
-                Item Photo
+              <div>
+                <h4 className="font-semibold mb-2">Item Photo</h4>
+                {selectedItem?.imageUrl ? (
+                  <img 
+                    src={selectedItem.imageUrl.startsWith('http') ? selectedItem.imageUrl : `https://lost-found-79xn.onrender.com${selectedItem.imageUrl}`} 
+                    alt="Item" 
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="bg-gray-100 rounded-lg h-32 flex items-center justify-center text-gray-400">
+                    No item photo available
+                  </div>
+                )}
               </div>
-              <div className="bg-gray-100 rounded-lg h-32 flex items-center justify-center text-gray-400">
-                Location Photo
+              <div>
+                <h4 className="font-semibold mb-2">Location Photo</h4>
+                {selectedItem?.locationImageUrl ? (
+                  <img 
+                    src={selectedItem.locationImageUrl.startsWith('http') ? selectedItem.locationImageUrl : `https://lost-found-79xn.onrender.com${selectedItem.locationImageUrl}`} 
+                    alt="Location" 
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="bg-gray-100 rounded-lg h-32 flex items-center justify-center text-gray-400">
+                    No location photo available
+                  </div>
+                )}
               </div>
             </div>
             

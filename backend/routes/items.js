@@ -1,6 +1,6 @@
 const express = require('express');
 const Item = require('../models/Item');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
 const router = express.Router();
 
@@ -102,19 +102,25 @@ router.post('/', auth, uploadFields, async (req, res) => {
 router.get('/events', async (req, res) => {
   try {
     const events = [
-      'Madras Day Celebrations',
-      'Annual Sports Meet', 
-      'Cultural Festival',
-      'Freshers Day',
-      'College Day',
-      'Inter-Collegiate Events',
-      'Alumni Meet',
-      'Science Exhibition'
+      'Deepwoods',
+      'Moonshadow',
+      'Octavia',
+      'Barnes Hall Day',
+      'Martin Hall Day',
+      'Games Fury',
+      'Founders Day',
+      'Cultural Festival'
     ];
     
     const eventData = await Promise.all(
       events.map(async (eventName) => {
-        const items = await Item.find({ event: eventName })
+        // Check both event and culturalEvent fields for backward compatibility
+        const items = await Item.find({ 
+          $or: [
+            { event: eventName },
+            { culturalEvent: eventName }
+          ]
+        })
           .populate('reportedBy', 'name email')
           .sort({ createdAt: -1 });
         
@@ -141,7 +147,12 @@ router.get('/events', async (req, res) => {
 router.get('/events/:eventName', async (req, res) => {
   try {
     const { eventName } = req.params;
-    const items = await Item.find({ event: eventName })
+    const items = await Item.find({ 
+      $or: [
+        { event: eventName },
+        { culturalEvent: eventName }
+      ]
+    })
       .populate('reportedBy', 'name email')
       .sort({ createdAt: -1 });
     

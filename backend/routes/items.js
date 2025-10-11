@@ -1,5 +1,7 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const Item = require('../models/Item');
+const User = require('../models/User');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
 const router = express.Router();
@@ -65,12 +67,41 @@ const uploadFields = upload.fields([
   { name: 'locationImage', maxCount: 1 }
 ]);
 
-router.post('/', uploadFields, async (req, res) => {
+// Optional auth middleware - sets user if token is valid, but doesn't block request
+const optionalAuth = async (req, res, next) => {
+  let token;
+  
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    try {
+      token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id).select('-password');
+      
+      if (user) {
+        req.user = user;
+        req.userId = decoded.id;
+      }
+    } catch (error) {
+      // Token invalid, but continue without auth
+      console.log('Invalid token, continuing without auth:', error.message);
+    }
+  }
+  
+  next();
+};
+
+router.post('/', uploadFields, optionalAuth, async (req, res) => {
   try {
-    const { contactName, contactEmail, contactPhone, date, time, ...otherFields } = req.body;
+    const { contactName, contactEmail, contactPhone, date, time, status, ...otherFields } = req.body;
+    
+    // Business rule: Lost items require authentication, Found items can be anonymous
+    if (status === 'lost' && !req.userId) {
+      return res.status(401).json({ message: 'Authentication required to report lost items' });
+    }
     
     const itemData = {
       ...otherFields,
+      status,
       reportedBy: req.userId || null,
       contactInfo: `${contactName} - ${contactEmail}${contactPhone ? ` - ${contactPhone}` : ''}`,
       dateLostFound: date ? new Date(date) : undefined,

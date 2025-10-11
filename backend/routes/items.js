@@ -71,19 +71,28 @@ const uploadFields = upload.fields([
 const optionalAuth = async (req, res, next) => {
   let token;
   
+  console.log('🔍 OptionalAuth - Headers:', req.headers.authorization ? 'Auth header present' : 'No auth header');
+  
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
+      console.log('🔑 Token extracted, verifying...');
+      
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('✅ Token decoded, user ID:', decoded.id);
+      
       const user = await User.findById(decoded.id).select('-password');
       
       if (user) {
         req.user = user;
         req.userId = decoded.id;
+        console.log('👤 User found and set:', user.name);
+      } else {
+        console.log('❌ User not found in database for ID:', decoded.id);
       }
     } catch (error) {
       // Token invalid, but continue without auth
-      console.log('Invalid token, continuing without auth:', error.message);
+      console.log('❌ Token validation failed:', error.message);
     }
   }
   
@@ -94,8 +103,11 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
   try {
     const { contactName, contactEmail, contactPhone, date, time, status, ...otherFields } = req.body;
     
+    console.log('📝 Item submission - Status:', status, 'User ID:', req.userId || 'None');
+    
     // Business rule: Lost items require authentication, Found items can be anonymous
     if (status === 'lost' && !req.userId) {
+      console.log('❌ Lost item submission blocked - no authentication');
       return res.status(401).json({ message: 'Authentication required to report lost items' });
     }
     

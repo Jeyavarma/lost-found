@@ -37,6 +37,7 @@ export default function ReportLostPage() {
   // Check if user is authenticated
   useEffect(() => {
     const token = localStorage.getItem("token")
+    console.log('🔍 Token check:', token ? 'Token exists' : 'No token found')
     if (token) {
       setIsAuthenticated(true)
     }
@@ -102,8 +103,11 @@ export default function ReportLostPage() {
       const token = localStorage.getItem('token')
       const headers: Record<string, string> = {}
       
+      console.log('🔑 Submitting with token:', token ? 'Token present' : 'No token')
+      
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
+        console.log('📡 Authorization header set')
       }
       
       const response = await fetch('https://lost-found-79xn.onrender.com/api/items', {

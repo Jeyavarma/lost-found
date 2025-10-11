@@ -27,6 +27,7 @@ const culturalEvents = [
 
 export default function ReportLostPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const [itemImage, setItemImage] = useState<File | null>(null)
   const [locationImage, setLocationImage] = useState<File | null>(null)
@@ -36,12 +37,21 @@ export default function ReportLostPage() {
 
   // Check if user is authenticated
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    console.log('🔍 Token check:', token ? 'Token exists' : 'No token found')
-    
-    // Clear invalid token if it exists but user lookup fails
-    if (token) {
-      // Test token validity
+    const checkAuth = () => {
+      const token = localStorage.getItem("token")
+      console.log('🔍 Token check:', token ? 'Token exists' : 'No token found')
+      
+      if (!token) {
+        setIsAuthenticated(false)
+        setIsLoading(false)
+        return
+      }
+      
+      // Assume token is valid initially to avoid delay
+      setIsAuthenticated(true)
+      setIsLoading(false)
+      
+      // Validate token in background
       fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -52,8 +62,6 @@ export default function ReportLostPage() {
           localStorage.removeItem('userName')
           localStorage.removeItem('userType')
           setIsAuthenticated(false)
-        } else {
-          setIsAuthenticated(true)
         }
       })
       .catch(() => {
@@ -64,6 +72,14 @@ export default function ReportLostPage() {
         setIsAuthenticated(false)
       })
     }
+    
+    checkAuth()
+    
+    // Listen for storage changes (login/logout in other tabs)
+    const handleStorageChange = () => checkAuth()
+    window.addEventListener('storage', handleStorageChange)
+    
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
   // Redirect to login if not authenticated
@@ -250,7 +266,28 @@ export default function ReportLostPage() {
                 </div>
               </Link>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-4">
+              {isAuthenticated && (
+                <div className="flex items-center gap-3">
+                  <span className="text-white text-sm">
+                    Welcome, {localStorage.getItem('userName') || 'User'}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-brand-text-light hover:bg-white/10"
+                    onClick={() => {
+                      localStorage.removeItem('token')
+                      localStorage.removeItem('userName')
+                      localStorage.removeItem('userType')
+                      setIsAuthenticated(false)
+                      window.location.href = '/'
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </div>
+              )}
               <Link href="/">
                 <Button variant="ghost" className="flex items-center gap-2 text-brand-text-light hover:bg-white/10">
                   <ArrowLeft className="w-4 h-4" />
@@ -262,7 +299,7 @@ export default function ReportLostPage() {
         </div>
       </nav>
 
-      {!isAuthenticated && (
+      {!isLoading && !isAuthenticated && (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Card className="mcc-card border-2 border-red-500">
             <CardHeader className="bg-red-100 border-b border-red-300">
@@ -283,6 +320,17 @@ export default function ReportLostPage() {
                   </Button>
                 </Link>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      
+      {isLoading && (
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Card className="mcc-card">
+            <CardContent className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Checking authentication...</p>
             </CardContent>
           </Card>
         </div>

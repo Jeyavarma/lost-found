@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const db = require('../models');
+const User = require('../models/User');
 
 const protect = async (req, res, next) => {
   let token;
@@ -12,10 +12,9 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from the token
-      req.user = await db.User.findByPk(decoded.id, {
-        attributes: { exclude: ['password'] }
-      });
+      // Get user from the token (MongoDB)
+      req.user = await User.findById(decoded.id).select('-password');
+      req.userId = decoded.id;
 
       if (!req.user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
@@ -26,11 +25,9 @@ const protect = async (req, res, next) => {
       console.error(error);
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
-  }
-
-  if (!token) {
+  } else {
     res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
 
-module.exports = { protect };
+module.exports = protect;

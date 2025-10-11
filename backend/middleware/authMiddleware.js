@@ -12,13 +12,17 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from the token (MongoDB)
-      req.user = await User.findById(decoded.id).select('-password');
-      req.userId = decoded.id;
+      // Get user from the token (MongoDB) - handle both id and userId
+      const userId = decoded.id || decoded.userId;
+      req.user = await User.findById(userId).select('-password');
+      req.userId = userId;
 
       if (!req.user) {
+        console.log('❌ User not found for ID:', userId);
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
+      
+      console.log('✅ User authenticated:', req.user.name);
 
       next();
     } catch (error) {

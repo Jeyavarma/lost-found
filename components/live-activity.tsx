@@ -65,8 +65,23 @@ export default function LiveActivity() {
   useEffect(() => {
     fetchActivities()
     const interval = setInterval(fetchActivities, 30000)
-    return () => clearInterval(interval)
-  }, [])
+    
+    // Listen for item submission events to refresh immediately
+    const handleItemSubmitted = () => {
+      fetchActivities()
+      // Also refresh all activities if modal is open
+      if (showAllModal) {
+        fetchAllActivities()
+      }
+    }
+    
+    window.addEventListener('itemSubmitted', handleItemSubmitted)
+    
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('itemSubmitted', handleItemSubmitted)
+    }
+  }, [showAllModal])
 
   const getFormattedDate = (dateString: string) => {
     const date = new Date(dateString)

@@ -175,6 +175,8 @@ export default function ReportFoundPage() {
       
       if (response.ok) {
         setShowSuccess(true)
+        // Trigger data refresh by dispatching a custom event
+        window.dispatchEvent(new CustomEvent('itemSubmitted', { detail: { type: 'found' } }))
         setTimeout(() => {
           window.location.href = isAuthenticated ? '/dashboard' : '/'
         }, 3000)

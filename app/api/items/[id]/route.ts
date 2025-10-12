@@ -2,30 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://lost-found-79xn.onrender.com'
 
-export async function DELETE(
+export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Authorization required' }, { status: 401 })
-    }
-
-    const response = await fetch(`${BACKEND_URL}/api/items/${params.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': authHeader
-      }
-    })
-
-    if (response.ok) {
-      return NextResponse.json({ message: 'Item deleted successfully' })
-    } else {
-      const error = await response.text()
-      return NextResponse.json({ error }, { status: response.status })
-    }
+    const response = await fetch(`${BACKEND_URL}/api/items/${params.id}`)
+    const data = await response.json()
+    return NextResponse.json(data, { status: response.status })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch item' }, { status: 500 })
   }
 }
+

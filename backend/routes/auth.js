@@ -87,26 +87,19 @@ router.post('/forgot-password', async (req, res) => {
     console.log('💾 OTP saved to database');
     
     try {
-      // Send OTP via email with timeout
-      const emailPromise = sendOTPEmail(email, otp);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Email timeout')), 30000)
-      );
-      
-      await Promise.race([emailPromise, timeoutPromise]);
+      await sendOTPEmail(email, otp);
       console.log('✅ Email sent successfully');
       res.json({ message: 'OTP sent to your email address' });
     } catch (emailError) {
       console.error('📧 Email sending failed:', emailError.message);
-      // For now, return success with OTP for testing
       res.json({ 
         message: 'OTP generated successfully. Your OTP is: ' + otp,
-        note: 'Email service temporarily unavailable'
+        note: 'Email service temporarily unavailable - OTP displayed for testing'
       });
     }
   } catch (error) {
     console.error('❌ Forgot password error:', error);
-    res.status(500).json({ error: 'Failed to process request' });
+    res.status(500).json({ error: 'Failed to send OTP' });
   }
 });
 
@@ -143,6 +136,11 @@ router.post('/reset-password', async (req, res) => {
 router.post('/test-email', async (req, res) => {
   try {
     const { email } = req.body;
+    console.log('🧪 Testing email to:', email);
+    console.log('📧 Email config check:', {
+      user: process.env.EMAIL_USER ? 'Set' : 'Missing',
+      pass: process.env.EMAIL_PASS ? 'Set' : 'Missing'
+    });
     await sendOTPEmail(email, '123456');
     res.json({ message: 'Test email sent successfully' });
   } catch (error) {

@@ -193,42 +193,43 @@ export default function HomePage() {
       {/* Introduction Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <Card className="mcc-card border-2 border-brand-primary/20 bg-gradient-to-br from-red-50 to-white">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-center mb-6">
-                <div className="w-16 h-16 mcc-primary rounded-full flex items-center justify-center shadow-lg">
-                  <Heart className="w-8 h-8 text-brand-text-light" />
-                </div>
+          <div className="bg-gradient-to-br from-red-50 via-white to-red-50 rounded-3xl p-8 md:p-12 shadow-xl border border-red-100">
+            <h2 className="text-3xl md:text-4xl font-bold mcc-text-primary mb-6 font-serif">
+              Lost Something? We've Got You Covered.
+            </h2>
+            <p className="text-lg md:text-xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Every day, MCC students lose valuable items across campus. From textbooks to electronics, 
+              we're here to reunite you with what matters most through our digital lost & found community.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <div className="text-2xl font-bold text-green-600 mb-2">Instant Reports</div>
+                <p className="text-gray-600">Upload photos and details in seconds. Your report goes live immediately.</p>
               </div>
-              <h2 className="text-3xl font-bold mcc-text-primary mb-4 font-serif">Why MCC Lost & Found?</h2>
-              <p className="text-lg text-brand-text-dark mb-6 max-w-4xl mx-auto leading-relaxed">
-                We understand how stressful it can be to lose important belongings on campus. Our platform connects the entire MCC community to help reunite students with their lost items quickly and efficiently.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Search className="w-6 h-6 text-green-600" />
-                  </div>
-                  <h3 className="font-semibold text-brand-text-dark mb-2">Easy Reporting</h3>
-                  <p className="text-sm text-gray-600">Simple forms to report lost or found items with photos and detailed descriptions</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <MessageCircle className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold text-brand-text-dark mb-2">Direct Contact</h3>
-                  <p className="text-sm text-gray-600">Connect directly with finders or owners through secure email communication</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Shield className="w-6 h-6 text-red-600" />
-                  </div>
-                  <h3 className="font-semibold text-brand-text-dark mb-2">Community Trust</h3>
-                  <p className="text-sm text-gray-600">Built for MCC students by MCC students, fostering campus community spirit</p>
-                </div>
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <div className="text-2xl font-bold text-blue-600 mb-2">Smart Search</div>
+                <p className="text-gray-600">Find items by description, location, or category with intelligent matching.</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+                <div className="text-2xl font-bold text-red-600 mb-2">Direct Contact</div>
+                <p className="text-gray-600">Connect instantly with finders or owners through secure messaging.</p>
+              </div>
+            </div>
+            
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/report-lost">
+                <Button size="lg" className="mcc-accent hover:bg-red-800 px-8 py-3 font-semibold shadow-lg">
+                  Report Lost Item
+                </Button>
+              </Link>
+              <Link href="/browse">
+                <Button size="lg" variant="outline" className="border-red-600 text-red-600 hover:bg-red-50 px-8 py-3 font-semibold">
+                  Browse Found Items
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* MCC Campus Map */}
@@ -368,71 +369,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="mt-20">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 mcc-text-primary font-serif">Get Started</h2>
-            <p className="text-brand-text-dark text-lg">Choose an action to help build our campus community</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Link href="/report-lost">
-              <Card className="mcc-card hover:shadow-xl transition-all duration-300 border-2 border-red-200 bg-red-50 group cursor-pointer">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <Search className="w-8 h-8 text-red-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-red-700 mb-2 font-serif">Report Lost Item</h3>
-                  <p className="text-sm text-red-600 mb-4">Lost something on campus? Let the community help you find it</p>
-                  <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
-                    Get Started
-                  </Button>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/report-found">
-              <Card className="mcc-card hover:shadow-xl transition-all duration-300 border-2 border-green-200 bg-green-50 group cursor-pointer">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <Plus className="w-8 h-8 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-green-700 mb-2 font-serif">Report Found Item</h3>
-                  <p className="text-sm text-green-600 mb-4">Found something? Help reunite it with its owner</p>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
-                    Report Now
-                  </Button>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/browse">
-              <Card className="mcc-card hover:shadow-xl transition-all duration-300 border-2 border-blue-200 bg-blue-50 group cursor-pointer">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <Eye className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-blue-700 mb-2 font-serif">Browse All Items</h3>
-                  <p className="text-sm text-blue-600 mb-4">Search through all reported lost and found items</p>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Browse Now
-                  </Button>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/feedback">
-              <Card className="mcc-card hover:shadow-xl transition-all duration-300 border-2 border-purple-200 bg-purple-50 group cursor-pointer">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <MessageCircle className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-purple-700 mb-2 font-serif">Share Feedback</h3>
-                  <p className="text-sm text-purple-600 mb-4">Help us improve the platform with your suggestions</p>
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
-                    Give Feedback
-                  </Button>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-        </div>
+
       </div>
       
       {/* Footer */}

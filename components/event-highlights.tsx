@@ -121,65 +121,40 @@ export default function EventHighlights() {
           <h2 className="text-3xl font-bold mcc-text-primary font-serif">Event Highlights</h2>
           <p className="text-brand-text-dark">Items commonly lost during MCC events and activities</p>
         </div>
-        <span className="text-sm text-gray-500">↗ {eventsData.reduce((sum, event) => sum + event.itemCount, 0)} event-related items</span>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {visibleEvents.map((event) => (
-          <Card key={event.id} className="mcc-card hover:shadow-xl transition-all duration-300 border-2 border-brand-primary/20 group cursor-pointer relative">
-            <div className="absolute top-4 right-4">
-              <Badge className="bg-brand-primary text-white">{event.itemCount} items</Badge>
-            </div>
-            <CardContent className="p-6">
-              <div className="text-4xl mb-4">{event.icon}</div>
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                <Calendar className="w-4 h-4" />
-                {event.eventDate}
-              </div>
-              <h3 className="text-xl font-bold mcc-text-primary mb-3 font-serif">{event.title}</h3>
-              <p className="text-brand-text-dark mb-6 line-clamp-3">{event.description}</p>
-              <Button 
-                className="w-full mcc-accent hover:bg-red-800" 
-                onClick={() => setSelectedEvent(event)}
-              >
-                <Users className="w-4 h-4 mr-2" />
-                View Items
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Carousel Navigation */}
-      <div className="flex justify-center items-center gap-4">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
-          disabled={currentSlide === 0}
-        >
-          <ChevronLeft className="w-4 h-4" />
+        <Button variant="outline" className="border-brand-primary text-brand-primary hover:bg-red-50">
+          View All Events
         </Button>
-        <div className="flex gap-2">
-          {Array.from({length: totalSlides}, (_, i) => (
-            <div 
-              key={i}
-              className={`w-2 h-2 rounded-full cursor-pointer transition-all ${
-                i === currentSlide ? 'bg-brand-primary w-6' : 'bg-gray-300'
-              }`}
-              onClick={() => setCurrentSlide(i)}
-            />
+      </div>
+
+      <div className="overflow-x-auto pb-4">
+        <div className="flex gap-6 min-w-max">
+          {eventsData.map((event) => (
+            <Card key={event.id} className="mcc-card hover:shadow-xl transition-all duration-300 border-2 border-brand-primary/20 group cursor-pointer relative w-80 flex-shrink-0">
+              <div className="absolute top-4 right-4">
+                <Badge className="bg-brand-primary text-white">{event.itemCount} items</Badge>
+              </div>
+              <CardContent className="p-6">
+                <div className="text-4xl mb-4">{event.icon}</div>
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                  <Calendar className="w-4 h-4" />
+                  {event.eventDate}
+                </div>
+                <h3 className="text-xl font-bold mcc-text-primary mb-3 font-serif">{event.title}</h3>
+                <p className="text-brand-text-dark mb-6 line-clamp-3">{event.description}</p>
+                <Button 
+                  className="w-full mcc-accent hover:bg-red-800" 
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  View Items
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={() => setCurrentSlide(Math.min(totalSlides - 1, currentSlide + 1))}
-          disabled={currentSlide >= totalSlides - 1}
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
       </div>
+
+
 
       {/* Event Items Modal */}
       <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>

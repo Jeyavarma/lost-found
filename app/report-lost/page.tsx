@@ -29,6 +29,7 @@ const culturalEvents = [
 export default function ReportLostPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [itemImage, setItemImage] = useState<File | null>(null)
   const [locationImage, setLocationImage] = useState<File | null>(null)
@@ -90,6 +91,9 @@ export default function ReportLostPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Prevent double submission
+    if (isSubmitting) return
+    
     // Check authentication requirement for lost items
     if (!isAuthenticated) {
       alert('Please login to report a lost item. This helps us track your reports and notify you when items are found.')
@@ -102,6 +106,8 @@ export default function ReportLostPage() {
       alert('Please fill in all required fields marked with *')
       return
     }
+    
+    setIsSubmitting(true)
     
     const submitData = new FormData()
     submitData.append('status', 'lost')
@@ -154,6 +160,8 @@ export default function ReportLostPage() {
     } catch (error) {
       console.error('❌ Network error:', error)
       alert('Error connecting to server. Please check your internet connection and try again.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -570,14 +578,14 @@ export default function ReportLostPage() {
               <div className="flex justify-center pt-6">
                 <Button
                   type="submit"
-                  disabled={!isAuthenticated}
+                  disabled={!isAuthenticated || isSubmitting}
                   className={`px-8 py-3 font-medium rounded-lg shadow-lg ${
-                    isAuthenticated 
+                    isAuthenticated && !isSubmitting
                       ? 'bg-red-600 hover:bg-red-700 text-white' 
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {isAuthenticated ? 'Report Lost Item' : 'Login Required'}
+                  {isSubmitting ? 'Submitting...' : isAuthenticated ? 'Report Lost Item' : 'Login Required'}
                 </Button>
               </div>
               

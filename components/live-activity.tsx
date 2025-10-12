@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Zap } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Zap, Eye } from "lucide-react"
 
 interface ActivityItem {
   _id: string
@@ -19,19 +21,45 @@ interface ActivityItem {
 
 export default function LiveActivity() {
   const [activities, setActivities] = useState<ActivityItem[]>([])
+  const [allActivities, setAllActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAllModal, setShowAllModal] = useState(false)
+  const [loadingAll, setLoadingAll] = useState(false)
 
   const fetchActivities = async () => {
     try {
       const response = await fetch('/api/items/recent?limit=5')
       if (response.ok) {
         const data = await response.json()
-        setActivities(data)
+        // Ensure we only show exactly 5 items
+        setActivities(Array.isArray(data) ? data.slice(0, 5) : [])
       }
     } catch (error) {
       console.error('Error fetching activities:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAllActivities = async () => {
+    setLoadingAll(true)
+    try {
+      const response = await fetch('/api/items/recent?limit=1000')
+      if (response.ok) {
+        const data = await response.json()
+        setAllActivities(data)
+      }
+    } catch (error) {
+      console.error('Error fetching all activities:', error)
+    } finally {
+      setLoadingAll(false)
+    }
+  }
+
+  const handleViewAll = () => {
+    setShowAllModal(true)
+    if (allActivities.length === 0) {
+      fetchAllActivities()
     }
   }
 
@@ -110,13 +138,26 @@ export default function LiveActivity() {
   return (
     <Card className="mcc-card border-2 border-brand-primary/20">
       <CardHeader className="bg-gray-50 border-b">
-        <CardTitle className="flex items-center gap-3 mcc-text-primary">
-          <div className="w-8 h-8 mcc-accent rounded-full flex items-center justify-center">
-            <Zap className="w-4 h-4 text-brand-text-light" />
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-3 mcc-text-primary">
+              <div className="w-8 h-8 mcc-accent rounded-full flex items-center justify-center">
+                <Zap className="w-4 h-4 text-brand-text-light" />
+              </div>
+              Live Campus Activity
+            </CardTitle>
+            <CardDescription className="text-brand-text-dark">Real-time updates from the MCC community</CardDescription>
           </div>
-          Live Campus Activity
-        </CardTitle>
-        <CardDescription className="text-brand-text-dark">Real-time updates from the MCC community</CardDescription>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleViewAll}
+            className="border-brand-primary text-brand-primary hover:bg-[#8B0000] hover:text-white"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            View All
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-6">
         <div className="space-y-4">
@@ -157,6 +198,72 @@ export default function LiveActivity() {
           </div>
         )}
       </CardContent>
+
+      {/* View All Modal */}
+      <Dialog open={showAllModal} onOpenChange={setShowAllModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 mcc-text-primary">
+              <div className="w-8 h-8 mcc-accent rounded-full flex items-center justify-center">
+                <Zap className="w-4 h-4 text-brand-text-light" />
+              </div>
+              All Campus Activity
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-4 p-1">
+            {loadingAll ? (
+              <div className="space-y-4">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl animate-pulse">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                      <div className="h-4 bg-gray-200 rounded w-48"></div>
+                    </div>
+                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              allActivities.map((activity) => (
+                <div
+                  key={activity._id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-200"
+                >
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-10 h-10 border-2 border-brand-primary/20">
+                      <AvatarFallback className="text-sm font-semibold bg-blue-100 mcc-text-primary">
+                        {getInitials(activity.reportedBy?.name || 'Anonymous')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col flex-1">
+                      <p className="text-sm font-bold text-brand-text-dark">
+                        {activity.description}
+                      </p>
+                      <span className="text-sm font-medium text-brand-text-dark mt-1">
+                        <strong className="mcc-text-primary">{activity.reportedBy?.name || 'Anonymous'}</strong>{' '}
+                        {activity.status === 'lost' ? 'reported lost' : 'found'}{' '}
+                        <strong className="mcc-text-accent">{activity.title}</strong>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end text-xs text-gray-500">
+                    <a href={`mailto:${activity.reportedBy?.email}`} className="text-sm text-blue-600 hover:underline mb-1 font-medium">
+                      {activity.reportedBy?.email}
+                    </a>
+                    <span>{getFormattedDate(activity.createdAt)}</span>
+                  </div>
+                </div>
+              ))
+            )}
+            {!loadingAll && allActivities.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p>No activity found</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

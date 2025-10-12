@@ -9,6 +9,11 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendOTPEmail = async (email, otp) => {
+  // Validate environment variables
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('Email credentials not configured. Please set EMAIL_USER and EMAIL_PASS environment variables.');
+  }
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,

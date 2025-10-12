@@ -165,7 +165,7 @@ export default function EventHighlights() {
                 <h3 className="text-xl font-bold mcc-text-primary mb-3 font-serif">{event.title}</h3>
                 <p className="text-brand-text-dark mb-6 line-clamp-3">{event.description}</p>
                 <Button 
-                  className="w-full mcc-accent hover:bg-[#0c2e8a]" 
+                  className="w-full mcc-accent hover:bg-[#1c1b3b]" 
                   onClick={() => setSelectedEvent(event)}
                 >
                   <Users className="w-4 h-4 mr-2" />
@@ -287,7 +287,7 @@ export default function EventHighlights() {
               </div>
             </div>
             
-            <Button className="w-full mcc-accent hover:bg-[#0c2e8a]" onClick={() => window.open(`mailto:lostfound@mcc.edu.in?subject=Regarding ${selectedItem?.name}&body=Hi, I am contacting you regarding the ${selectedItem?.status} item: ${selectedItem?.name}. Location: ${selectedItem?.location}. Date: ${selectedItem?.date}.`)}>
+            <Button className="w-full mcc-accent hover:bg-[#1c1b3b]" onClick={() => window.open(`mailto:lostfound@mcc.edu.in?subject=Regarding ${selectedItem?.name}&body=Hi, I am contacting you regarding the ${selectedItem?.status} item: ${selectedItem?.name}. Location: ${selectedItem?.location}. Date: ${selectedItem?.date}.`)}>
               <MessageCircle className="w-4 h-4 mr-2" />
               Contact Reporter
             </Button>

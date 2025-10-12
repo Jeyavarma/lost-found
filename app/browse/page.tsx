@@ -99,10 +99,14 @@ export default function BrowsePage() {
       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.location.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCategory = categoryFilter === "All Categories" || item.category === categoryFilter
+    const matchesCategory = categoryFilter === "All Categories" || 
+      (item.category && item.category.toLowerCase().trim() === categoryFilter.toLowerCase().trim()) ||
+      (!item.category && categoryFilter === "Other")
     const matchesType = typeFilter === "All" || item.status === typeFilter
-    const matchesBuilding = buildingFilter === "All Buildings" || item.location.includes(buildingFilter)
-    const matchesEvent = eventFilter === "All Events" || item.eventName === eventFilter
+    const matchesBuilding = buildingFilter === "All Buildings" || 
+      (item.location && item.location.toLowerCase().includes(buildingFilter.toLowerCase()))
+    const matchesEvent = eventFilter === "All Events" || 
+      (item.eventName && item.eventName === eventFilter)
 
     return matchesSearch && matchesCategory && matchesType && matchesBuilding && matchesEvent
   })

@@ -23,7 +23,7 @@ export default function LiveActivity() {
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch('/api/items/recent?limit=4')
+      const response = await fetch('/api/items/recent?limit=5')
       if (response.ok) {
         const data = await response.json()
         setActivities(data)
@@ -92,7 +92,7 @@ export default function LiveActivity() {
         </CardHeader>
         <CardContent className="p-6">
           <div className="space-y-4">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl animate-pulse">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-gray-200 rounded-full"></div>

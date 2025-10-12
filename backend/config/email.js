@@ -9,6 +9,9 @@ const transporter = nodemailer.createTransporter({
 });
 
 const sendOTPEmail = async (email, otp) => {
+  console.log(`📧 Attempting to send OTP ${otp} to ${email}`);
+  console.log(`📧 From: ${process.env.EMAIL_USER}`);
+  
   const mailOptions = {
     from: `"MCC Lost & Found" <${process.env.EMAIL_USER}>`,
     to: email,
@@ -30,7 +33,17 @@ const sendOTPEmail = async (email, otp) => {
     `
   };
 
-  return await transporter.sendMail(mailOptions);
+  const result = await transporter.sendMail(mailOptions);
+  console.log(`✅ Email sent successfully! Message ID: ${result.messageId}`);
+  console.log(`📊 Email details:`, {
+    from: mailOptions.from,
+    to: mailOptions.to,
+    subject: mailOptions.subject,
+    accepted: result.accepted,
+    rejected: result.rejected
+  });
+  
+  return result;
 };
 
 module.exports = { sendOTPEmail };

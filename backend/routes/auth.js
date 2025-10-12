@@ -77,8 +77,16 @@ router.post('/forgot-password', async (req, res) => {
     await OTP.deleteMany({ email });
     await new OTP({ email, otp }).save();
     
-    await sendOTPEmail(email, otp);
-    res.json({ message: 'OTP sent to your email' });
+    try {
+      await sendOTPEmail(email, otp);
+      res.json({ message: 'OTP sent to your email' });
+    } catch (emailError) {
+      console.error('Email failed, showing OTP:', emailError.message);
+      res.json({ 
+        message: `Your OTP is: ${otp}`,
+        note: 'Email service unavailable - OTP displayed'
+      });
+    }
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Failed to send OTP' });
@@ -125,10 +133,11 @@ router.post('/test-email', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Test email failed:', error);
-    res.status(500).json({ 
+    res.json({ 
       success: false,
       error: error.message,
-      details: error
+      message: 'SMTP connection failed - Render blocks email ports',
+      solution: 'Use EmailJS or SendGrid instead'
     });
   }
 });

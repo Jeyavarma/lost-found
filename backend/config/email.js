@@ -1,19 +1,15 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-  tls: {
-    rejectUnauthorized: false
-  },
-  connectionTimeout: 60000,
-  greetingTimeout: 30000,
-  socketTimeout: 60000
+  pool: true,
+  maxConnections: 1,
+  rateDelta: 20000,
+  rateLimit: 5
 });
 
 const sendOTPEmail = async (email, otp) => {
@@ -51,9 +47,22 @@ const sendOTPEmail = async (email, otp) => {
     `
   };
 
-  const info = await transporter.sendMail(mailOptions);
-  console.log('📧 Email sent successfully to:', email);
-  return info;
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Email sending timeout'));
+    }, 15000);
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      clearTimeout(timeout);
+      if (error) {
+        console.error('📧 Email error:', error.message);
+        reject(error);
+      } else {
+        console.log('📧 Email sent successfully to:', email);
+        resolve(info);
+      }
+    });
+  });
 };
 
 module.exports = { sendOTPEmail };

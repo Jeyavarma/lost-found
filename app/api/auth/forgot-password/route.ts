@@ -14,12 +14,19 @@ export async function POST(request: NextRequest) {
     })
     
     console.log('📡 Backend response status:', response.status)
+    
+    if (!response.ok) {
+      const errorData = await response.text()
+      console.error('❌ Backend error:', errorData)
+      return NextResponse.json({ error: 'Failed to send OTP' }, { status: 500 })
+    }
+    
     const data = await response.json()
     console.log('📄 Backend response data:', data)
     
-    return NextResponse.json(data, { status: response.status })
+    return NextResponse.json(data)
   } catch (error) {
     console.error('❌ Frontend API error:', error)
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to send OTP' }, { status: 500 })
   }
 }

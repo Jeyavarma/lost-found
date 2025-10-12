@@ -165,7 +165,7 @@ export default function EventHighlights() {
                 <h3 className="text-xl font-bold mcc-text-primary mb-3 font-serif">{event.title}</h3>
                 <p className="text-brand-text-dark mb-6 line-clamp-3">{event.description}</p>
                 <Button 
-                  className="w-full mcc-accent hover:bg-[#1c1b3b]" 
+                  className="w-full bg-[#1c1b3b] text-white hover:bg-[#811c1f]" 
                   onClick={() => setSelectedEvent(event)}
                 >
                   <Users className="w-4 h-4 mr-2" />
@@ -205,7 +205,7 @@ export default function EventHighlights() {
           {/* Items List */}
           <div className="flex-1 overflow-y-auto space-y-4 p-1">
             {filteredItems.map((item: any) => (
-              <div key={item.id} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={item.id} className="flex items-start justify-between p-4 bg-white border border-gray-200 rounded-lg">
                 <div className="flex-1">
                   <Badge className={`mb-2 text-xs ${item.status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {item.status.toUpperCase()}
@@ -287,7 +287,7 @@ export default function EventHighlights() {
               </div>
             </div>
             
-            <Button className="w-full mcc-accent hover:bg-[#1c1b3b]" onClick={() => window.open(`mailto:lostfound@mcc.edu.in?subject=Regarding ${selectedItem?.name}&body=Hi, I am contacting you regarding the ${selectedItem?.status} item: ${selectedItem?.name}. Location: ${selectedItem?.location}. Date: ${selectedItem?.date}.`)}>
+            <Button className="w-full bg-[#1c1b3b] text-white hover:bg-[#811c1f]" onClick={() => window.open(`mailto:lostfound@mcc.edu.in?subject=Regarding ${selectedItem?.name}&body=Hi, I am contacting you regarding the ${selectedItem?.status} item: ${selectedItem?.name}. Location: ${selectedItem?.location}. Date: ${selectedItem?.date}.`)}>
               <MessageCircle className="w-4 h-4 mr-2" />
               Contact Reporter
             </Button>

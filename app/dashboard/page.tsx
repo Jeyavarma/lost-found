@@ -41,11 +41,21 @@ export default function DashboardPage() {
   const loadUserItems = async () => {
     try {
       const token = getAuthToken()
-      const response = await fetch('/api/items/my-items', {
+      // Try API route first, fallback to direct backend call
+      let response = await fetch('/api/items/my-items', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+      
+      // If API route fails (404), try direct backend call
+      if (response.status === 404) {
+        response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://lost-found-79xn.onrender.com'}/api/items/my-items`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+      }
 
       if (response.ok) {
         const items = await response.json()
@@ -64,18 +74,35 @@ export default function DashboardPage() {
     
     try {
       const token = getAuthToken()
-      const response = await fetch(`/api/items/${deleteModal.item._id}`, {
+      // Try API route first, fallback to direct backend call
+      let response = await fetch(`/api/items/${deleteModal.item._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       
+      // If API route fails (404), try direct backend call
+      if (response.status === 404) {
+        response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://lost-found-79xn.onrender.com'}/api/items/${deleteModal.item._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+      }
+      
       if (response.ok) {
         setMyItems(prev => prev.filter(item => item._id !== deleteModal.item!._id))
         setDeleteModal({show: false, item: null})
       } else {
-        const errorData = await response.json()
+        const errorText = await response.text()
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { error: errorText }
+        }
         alert(`Failed to delete item: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {

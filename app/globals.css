@@ -2,87 +2,114 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
-    --primary: 245 45% 17%;
-    --primary-foreground: 0 0% 96%;
-    --secondary: 0 100% 20%;
-    --secondary-foreground: 0 0% 96%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 9% 39%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 245 45% 17%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 245 45% 17%;
-    --foreground: 0 0% 96%;
-    --card: 245 45% 17%;
-    --card-foreground: 0 0% 96%;
-    --popover: 245 45% 17%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 245 45% 17%;
-    --primary-foreground: 0 0% 96%;
-    --secondary: 0 100% 20%;
-    --secondary-foreground: 0 0% 96%;
-    --muted: 245 20% 25%;
-    --muted-foreground: 220 9% 65%;
-    --accent: 245 20% 25%;
-    --accent-foreground: 220 9% 65%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 245 20% 25%;
-    --input: 245 20% 25%;
-    --ring: 245 45% 17%;
-  }
+/* Custom responsive breakpoints for extra small screens */
+@media (min-width: 475px) {
+  .xs\:w-10 { width: 2.5rem; }
+  .xs\:h-10 { height: 2.5rem; }
+  .xs\:w-5 { width: 1.25rem; }
+  .xs\:h-5 { height: 1.25rem; }
+  .xs\:w-6 { width: 1.5rem; }
+  .xs\:h-6 { height: 1.5rem; }
+  .xs\:text-base { font-size: 1rem; line-height: 1.5rem; }
+  .xs\:h-16 { height: 4rem; }
+  .xs\:block { display: block; }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground font-sans;
-  }
+/* MCC Brand Colors */
+:root {
+  --brand-primary: #8B0000;
+  --brand-accent: #DC2626;
+  --brand-text-dark: #374151;
+  --brand-text-light: #F9FAFB;
 }
 
-/* MCC Brand-specific styles */
 .mcc-primary {
-  background-color: #1c1b3b;
-  color: #f5f5f5;
+  background-color: var(--brand-primary);
 }
 
 .mcc-accent {
-  background-color: #640000;
-  color: #f5f5f5;
-}
-
-.mcc-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px -1px rgba(28, 27, 59, 0.1), 0 2px 4px -1px rgba(28, 27, 59, 0.06);
+  background-color: var(--brand-accent);
 }
 
 .mcc-text-primary {
-  color: #1c1b3b;
+  color: var(--brand-primary);
 }
 
 .mcc-text-accent {
-  color: #640000;
+  color: var(--brand-accent);
 }
 
-.institutional-shadow {
-  box-shadow: 0 10px 25px -5px rgba(28, 27, 59, 0.1), 0 10px 10px -5px rgba(28, 27, 59, 0.04);
+.text-brand-text-dark {
+  color: var(--brand-text-dark);
+}
+
+.text-brand-text-light {
+  color: var(--brand-text-light);
+}
+
+.border-brand-primary {
+  border-color: var(--brand-primary);
+}
+
+.border-brand-accent {
+  border-color: var(--brand-accent);
+}
+
+.mcc-card {
+  transition: all 0.3s ease;
+}
+
+.mcc-card:hover {
+  transform: translateY(-2px);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+/* Mobile-first responsive design improvements */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Ensure text doesn't overflow on small screens */
+  .text-responsive {
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  /* Better touch targets for mobile */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Very small screens (< 375px) */
+@media (max-width: 374px) {
+  .text-xs-mobile {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  
+  .p-xs-mobile {
+    padding: 0.5rem;
+  }
+  
+  .gap-xs-mobile {
+    gap: 0.25rem;
+  }
 }

@@ -44,21 +44,21 @@ export default function Navigation() {
   return (
     <nav className="mcc-primary border-b-4 border-brand-accent sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 sm:h-20">
+        <div className="flex justify-between h-14 xs:h-16 sm:h-20">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 sm:space-x-4 group">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 mcc-accent rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg">
-                <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-brand-text-light" />
+            <Link href="/" className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 group">
+              <div className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 mcc-accent rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg">
+                <GraduationCap className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-brand-text-light" />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg sm:text-xl font-bold text-brand-text-light font-serif">MCC Lost & Found</span>
-                <span className="text-xs text-gray-300 font-medium hidden sm:block">Madras Christian College</span>
+                <span className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-brand-text-light font-serif leading-tight">MCC Lost & Found</span>
+                <span className="text-xs text-gray-300 font-medium hidden xs:block">Madras Christian College</span>
               </div>
             </Link>
           </div>
           
           {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
             <Link href="/browse">
               <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">
                 <BookOpen className="w-4 h-4 mr-2" />
@@ -126,7 +126,7 @@ export default function Navigation() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="lg:hidden flex items-center">
+          <div className="md:hidden flex items-center">
             <Button
               variant="ghost"
               size="sm"
@@ -140,7 +140,7 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-red-700 bg-red-900">
+          <div className="md:hidden border-t border-red-700 bg-red-900">
             <div className="px-2 pt-2 pb-3 space-y-1">
               <Link href="/browse" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start text-brand-text-light hover:bg-red-800">

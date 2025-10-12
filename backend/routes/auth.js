@@ -1,6 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const OTP = require('../models/OTP');
+const { sendOTPEmail } = require('../config/email');
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
@@ -70,34 +72,53 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // In a real app, send email here
-    console.log(`Password reset link: ${process.env.FRONTEND_URL || 'http://localhost:3002'}/reset-password?token=${resetToken}`);
+    // Delete any existing OTP for this email
+    await OTP.deleteMany({ email });
     
-    res.json({ message: 'Password reset link sent to email' });
+    // Save new OTP
+    const otpDoc = new OTP({ email, otp });
+    await otpDoc.save();
+    
+    // Send OTP via email
+    await sendOTPEmail(email, otp);
+    
+    res.json({ message: 'OTP sent to your email' });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
   }
 });
 
 router.post('/reset-password', async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const { email, otp, password } = req.body;
     
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
+    // Find and verify OTP
+    const otpDoc = await OTP.findOne({ email, otp });
+    if (!otpDoc) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
     
+    // Find user
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: 'Invalid token' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
+    // Update password
     user.password = password;
     await user.save();
     
+    // Delete used OTP
+    await OTP.deleteOne({ _id: otpDoc._id });
+    
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
-    res.status(400).json({ error: 'Invalid or expired token' });
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 

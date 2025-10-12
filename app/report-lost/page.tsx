@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Upload, User, GraduationCap } from "lucide-react"
+import { ArrowLeft, Upload, User, GraduationCap, CheckCircle, Home } from "lucide-react"
 import Navigation from "@/components/navigation"
 
 const categories = ["ID Card", "Mobile Phone", "Laptop", "Wallet", "Keys", "Books", "Clothing", "Jewelry", "Other"]
@@ -30,6 +30,7 @@ export default function ReportLostPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const [itemImage, setItemImage] = useState<File | null>(null)
   const [locationImage, setLocationImage] = useState<File | null>(null)
@@ -151,8 +152,10 @@ export default function ReportLostPage() {
       console.log('📄 Response body:', responseText)
       
       if (response.ok) {
-        alert('Lost item reported successfully! We will notify you if someone finds it.')
-        window.location.href = '/'
+        setShowSuccess(true)
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 3000)
       } else {
         console.error('❌ Backend error:', responseText)
         alert(`Error submitting report: ${responseText}`)
@@ -596,6 +599,29 @@ export default function ReportLostPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 text-center animate-fade-in">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-green-800 mb-2 font-serif">Success!</h3>
+            <p className="text-gray-600 mb-6">Lost item reported successfully! We will notify you if someone finds it.</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => window.location.href = '/'}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                Go Home
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-4">Redirecting automatically in 3 seconds...</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

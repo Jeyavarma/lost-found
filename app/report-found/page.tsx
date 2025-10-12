@@ -176,7 +176,7 @@ export default function ReportFoundPage() {
       if (response.ok) {
         setShowSuccess(true)
         setTimeout(() => {
-          window.location.href = '/'
+          window.location.href = isAuthenticated ? '/dashboard' : '/'
         }, 3000)
       } else {
         console.error('❌ Backend error:', await response.text())
@@ -639,11 +639,11 @@ export default function ReportFoundPage() {
             <p className="text-gray-600 mb-6">Found item reported successfully! The owner will be notified.</p>
             <div className="flex gap-3 justify-center">
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => window.location.href = isAuthenticated ? '/dashboard' : '/'}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2"
               >
-                <Home className="w-4 h-4" />
-                Go Home
+                {isAuthenticated ? <User className="w-4 h-4" /> : <Home className="w-4 h-4" />}
+                {isAuthenticated ? 'Go to Dashboard' : 'Go Home'}
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-4">Redirecting automatically in 3 seconds...</p>

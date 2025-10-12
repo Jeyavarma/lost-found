@@ -66,39 +66,21 @@ router.post('/register', async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    console.log('🔍 Forgot password request for:', email);
     
     const user = await User.findOne({ email });
     if (!user) {
-      console.log('❌ User not found:', email);
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('🔢 Generated OTP:', otp);
     
-    // Delete any existing OTP for this email
     await OTP.deleteMany({ email });
+    await new OTP({ email, otp }).save();
     
-    // Save new OTP
-    const otpDoc = new OTP({ email, otp });
-    await otpDoc.save();
-    console.log('💾 OTP saved to database');
-    
-    try {
-      await sendOTPEmail(email, otp);
-      console.log('✅ Email sent successfully');
-      res.json({ message: 'OTP sent to your email address' });
-    } catch (emailError) {
-      console.error('📧 Email sending failed:', emailError.message);
-      res.json({ 
-        message: 'OTP generated successfully. Your OTP is: ' + otp,
-        note: 'Email service temporarily unavailable - OTP displayed for testing'
-      });
-    }
+    await sendOTPEmail(email, otp);
+    res.json({ message: 'OTP sent to your email' });
   } catch (error) {
-    console.error('❌ Forgot password error:', error);
+    console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Failed to send OTP' });
   }
 });
@@ -107,45 +89,20 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { email, otp, password } = req.body;
     
-    // Find and verify OTP
     const otpDoc = await OTP.findOne({ email, otp });
     if (!otpDoc) {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
     
-    // Find user
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Update password
     user.password = password;
     await user.save();
     
-    // Delete used OTP
     await OTP.deleteOne({ _id: otpDoc._id });
-    
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({ error: 'Failed to reset password' });
-  }
-});
-
-router.post('/test-email', async (req, res) => {
-  try {
-    const { email } = req.body;
-    console.log('🧪 Testing email to:', email);
-    console.log('📧 Email config check:', {
-      user: process.env.EMAIL_USER ? 'Set' : 'Missing',
-      pass: process.env.EMAIL_PASS ? 'Set' : 'Missing'
-    });
-    await sendOTPEmail(email, '123456');
-    res.json({ message: 'Test email sent successfully' });
-  } catch (error) {
-    console.error('Test email error:', error);
-    res.status(500).json({ error: error.message });
   }
 });
 

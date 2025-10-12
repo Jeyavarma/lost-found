@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Upload, User, GraduationCap } from "lucide-react"
+import Navigation from "@/components/navigation"
 
 const categories = ["ID Card", "Mobile Phone", "Laptop", "Wallet", "Keys", "Books", "Clothing", "Jewelry", "Other"]
 
@@ -37,64 +38,29 @@ export default function ReportLostPage() {
 
   // Check if user is authenticated
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("token")
-      const userName = localStorage.getItem("userName")
-      console.log('🔍 Auth check - Token:', token ? 'EXISTS' : 'MISSING', 'User:', userName || 'NONE')
+    const checkAuth = async () => {
+      const { isAuthenticated: checkIsAuth, getAuthToken, validateToken } = await import('@/lib/auth')
+      const authenticated = checkIsAuth()
+      const token = getAuthToken()
       
-      if (!token) {
-        console.log('❌ No token found - setting unauthenticated')
-        setIsAuthenticated(false)
-        setIsLoading(false)
-        return
-      }
-      
-      console.log('✅ Token found - setting authenticated')
-      setIsAuthenticated(true)
-      setIsLoading(false)
-      
-      // Validate token in background (don't change auth state immediately)
-      fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(response => {
-        console.log('📞 Token validation response:', response.status)
-        if (response.status === 401) {
-          console.log('🗑️ Token invalid - clearing auth data')
-          localStorage.removeItem('token')
-          localStorage.removeItem('userName')
-          localStorage.removeItem('userType')
-          setIsAuthenticated(false)
+      if (authenticated && token) {
+        // Validate token with backend
+        const isValid = await validateToken(token)
+        if (isValid) {
+          setIsAuthenticated(true)
         } else {
-          console.log('✅ Token valid - staying authenticated')
+          // Token is invalid, clear it
+          const { logout } = await import('@/lib/auth')
+          logout()
+          setIsAuthenticated(false)
         }
-      })
-      .catch((error) => {
-        console.log('❌ Token validation error:', error.message)
-        // Don't clear token on network errors, only on 401
-      })
+      } else {
+        setIsAuthenticated(false)
+      }
+      setIsLoading(false)
     }
     
     checkAuth()
-    
-    // Listen for storage changes (login/logout in other tabs)
-    const handleStorageChange = (e) => {
-      console.log('🔄 Storage changed:', e.key, e.newValue ? 'SET' : 'REMOVED')
-      checkAuth()
-    }
-    window.addEventListener('storage', handleStorageChange)
-    
-    // Also check on focus (when returning from login page)
-    const handleFocus = () => {
-      console.log('🔍 Page focused - rechecking auth')
-      checkAuth()
-    }
-    window.addEventListener('focus', handleFocus)
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('focus', handleFocus)
-    }
   }, [])
 
   // Redirect to login if not authenticated
@@ -155,7 +121,8 @@ export default function ReportLostPage() {
     console.log('🔐 Auth state check - isAuthenticated:', isAuthenticated)
     
     try {
-      const token = localStorage.getItem('token')
+      const { getAuthToken } = await import('@/lib/auth')
+      const token = getAuthToken()
       const headers: Record<string, string> = {}
       
       console.log('🔑 Token for submission:', token ? `EXISTS (${token.substring(0, 20)}...)` : 'MISSING')
@@ -213,7 +180,7 @@ export default function ReportLostPage() {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')!
-      const img = new Image()
+      const img = new window.Image()
       
       img.onload = () => {
         const maxWidth = 600
@@ -269,53 +236,7 @@ export default function ReportLostPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="mcc-primary border-b-4 border-brand-accent shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20">
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center space-x-4">
-                <div className="w-12 h-12 mcc-accent rounded-lg flex items-center justify-center shadow-lg">
-                  <GraduationCap className="w-6 h-6 text-brand-text-light" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xl font-bold text-brand-text-light font-serif">MCC Lost & Found</span>
-                  <span className="text-xs text-gray-300 font-medium">Madras Christian College</span>
-                </div>
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              {isAuthenticated && (
-                <div className="flex items-center gap-3">
-                  <span className="text-white text-sm">
-                    Welcome, {localStorage.getItem('userName') || 'User'}
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-brand-text-light hover:bg-white/10"
-                    onClick={() => {
-                      localStorage.removeItem('token')
-                      localStorage.removeItem('userName')
-                      localStorage.removeItem('userType')
-                      setIsAuthenticated(false)
-                      window.location.href = '/'
-                    }}
-                  >
-                    Logout
-                  </Button>
-                </div>
-              )}
-              <Link href="/">
-                <Button variant="ghost" className="flex items-center gap-2 text-brand-text-light hover:bg-white/10">
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Home
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation />
 
       {!isLoading && !isAuthenticated && (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

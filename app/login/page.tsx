@@ -73,9 +73,21 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Store auth data using the auth utility
+        const { setAuthToken, setUserData } = await import('@/lib/auth');
+        setAuthToken(data.token);
+        setUserData({
+          id: data.userId || data.id,
+          name: data.name,
+          email: data.email || formData.email,
+          role: data.role
+        });
+        
+        // Legacy storage for backward compatibility
         localStorage.setItem("userType", data.role);
         localStorage.setItem("userName", data.name);
         localStorage.setItem("token", data.token);
+        
         router.push("/dashboard");
       } else {
         setError(data.message || "Invalid credentials. Please check your email and password.");

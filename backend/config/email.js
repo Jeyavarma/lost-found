@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 
 const sendOTPEmail = async (email, otp) => {
   const mailOptions = {
-    from: 'noreply@mcc.edu.in',
+    from: process.env.EMAIL_USER,
     to: email,
     subject: 'MCC Lost & Found - Password Reset OTP',
     html: `

@@ -127,7 +127,7 @@ export default function LiveActivity() {
             variant="outline" 
             size="sm" 
             onClick={handleViewAll}
-            className="border-brand-primary text-brand-primary hover:bg-[#1e4765] hover:text-white shrink-0"
+            className="border-brand-primary text-brand-primary hover:bg-[#0c2e8a] hover:text-white shrink-0"
           >
             <Eye className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">View All</span>

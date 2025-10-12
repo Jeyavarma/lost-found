@@ -238,6 +238,57 @@ export default function LiveActivity() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-brand-text-dark">
+                        {activity.description}
+                      </p>
+                      <span className="text-xs sm:text-sm font-medium text-brand-text-dark mt-1">
+                        <strong className="mcc-text-primary">{activity.reportedBy?.name || 'Anonymous'}</strong>{' '}
+                        {activity.status === 'lost' ? 'reported lost' : 'found'}{' '}
+                        <strong className="mcc-text-accent">{activity.title}</strong>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-row sm:flex-col items-start sm:items-end justify-between sm:justify-start text-xs text-gray-500 shrink-0">
+                    <a href={`mailto:${activity.reportedBy?.email}`} className="text-xs sm:text-sm text-blue-600 hover:underline mb-0 sm:mb-1 font-medium truncate max-w-[150px] sm:max-w-none">
+                      {activity.reportedBy?.email}
+                    </a>
+                    <span className="text-xs">{getFormattedDate(activity.createdAt)}</span>
+                  </div>
+                </div>
+              ))
+            )}
+            {!loadingAll && allActivities.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p>No activity found</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  )
+}nter justify-between p-3 sm:p-4 bg-gray-50 rounded-xl animate-pulse gap-3 sm:gap-0">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full"></div>
+                      <div className="h-4 bg-gray-200 rounded w-32 sm:w-48"></div>
+                    </div>
+                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              allActivities.map((activity) => (
+                <div
+                  key={activity._id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-200 gap-3 sm:gap-0"
+                >
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                    <Avatar className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-brand-primary/20 shrink-0">
+                      <AvatarFallback className="text-xs sm:text-sm font-semibold bg-blue-100 mcc-text-primary">
+                        {getInitials(activity.reportedBy?.name || 'Anonymous')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col flex-1 min-w-0">
                       <p className="text-xs sm:text-sm font-bold text-brand-text-dark line-clamp-2 sm:line-clamp-1">
                         {activity.description}
                       </p>

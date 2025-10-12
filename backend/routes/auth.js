@@ -61,6 +61,46 @@ router.post('/register', async (req, res) => {
   }
 });
 
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    
+    // In a real app, send email here
+    console.log(`Password reset link: ${process.env.FRONTEND_URL || 'http://localhost:3002'}/reset-password?token=${resetToken}`);
+    
+    res.json({ message: 'Password reset link sent to email' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Invalid token' });
+    }
+
+    user.password = password;
+    await user.save();
+    
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(400).json({ error: 'Invalid or expired token' });
+  }
+});
+
 router.get('/validate', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');

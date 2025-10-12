@@ -314,7 +314,7 @@ export default function ReportFoundPage() {
                 <h3 className="text-xl font-semibold mb-6 mcc-text-primary font-serif">1. Item Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="title" className="font-medium">Item Name *</Label>
+                    <Label htmlFor="title" className="font-medium">Item Name <span className="text-red-500">*</span></Label>
                     <p className="text-xs text-gray-500 mt-1">A short, clear title.</p>
                   </div>
                   <div className="md:col-span-2">
@@ -330,7 +330,7 @@ export default function ReportFoundPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="category" className="font-medium">Category *</Label>
+                    <Label htmlFor="category" className="font-medium">Category <span className="text-red-500">*</span></Label>
                     <p className="text-xs text-gray-500 mt-1">Helps in classifying the item.</p>
                   </div>
                   <div className="md:col-span-2">
@@ -362,7 +362,7 @@ export default function ReportFoundPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="description" className="font-medium">Description *</Label>
+                    <Label htmlFor="description" className="font-medium">Description <span className="text-red-500">*</span></Label>
                     <p className="text-xs text-gray-500 mt-1">Be as detailed as possible.</p>
                   </div>
                   <div className="md:col-span-2">
@@ -412,7 +412,7 @@ export default function ReportFoundPage() {
                     
                     {/* Location Photo */}
                     <div>
-                      <Label className="text-sm font-medium mb-2 block">Location Photo</Label>
+                      <Label className="text-sm font-medium mb-2 block">Location Photo (Optional)</Label>
                       <label htmlFor="locationImage" className="cursor-pointer block">
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
                           {locationImagePreview ? (
@@ -446,7 +446,7 @@ export default function ReportFoundPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="location" className="font-medium">Found Location *</Label>
+                    <Label htmlFor="location" className="font-medium">Found Location <span className="text-red-500">*</span></Label>
                     <p className="text-xs text-gray-500 mt-1">Where was the item found?</p>
                   </div>
                   <div className="md:col-span-2">
@@ -462,13 +462,13 @@ export default function ReportFoundPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
-                    <Label className="font-medium">Date & Time Found *</Label>
+                    <Label className="font-medium">Date & Time Found <span className="text-red-500">*</span></Label>
                     <p className="text-xs text-gray-500 mt-1">When was it found?</p>
                   </div>
                   <div className="md:col-span-2">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label htmlFor="date" className="text-sm">Date *</Label>
+                        <Label htmlFor="date" className="text-sm">Date <span className="text-red-500">*</span></Label>
                         <Input
                           id="date"
                           type="date"
@@ -492,7 +492,7 @@ export default function ReportFoundPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="currentLocation" className="font-medium">Current Location of Item *</Label>
+                    <Label htmlFor="currentLocation" className="font-medium">Current Location of Item <span className="text-red-500">*</span></Label>
                     <p className="text-xs text-gray-500 mt-1">Where is the item now?</p>
                   </div>
                   <div className="md:col-span-2">
@@ -558,7 +558,7 @@ export default function ReportFoundPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="contactName" className="font-medium">Your Name *</Label>
+                    <Label htmlFor="contactName" className="font-medium">Your Name <span className="text-red-500">*</span></Label>
                   </div>
                   <div className="md:col-span-2">
                     <Input
@@ -573,7 +573,7 @@ export default function ReportFoundPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-gray-200/80 pt-6 mt-6">
                   <div className="md:col-span-1">
-                    <Label htmlFor="contactEmail" className="font-medium">Email Address *</Label>
+                    <Label htmlFor="contactEmail" className="font-medium">Email Address <span className="text-red-500">*</span></Label>
                   </div>
                   <div className="md:col-span-2">
                     <Input

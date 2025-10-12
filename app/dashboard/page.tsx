@@ -28,6 +28,7 @@ interface Item {
   date: string
   createdAt: string
   itemImageUrl?: string
+  imageUrl?: string
 }
 
 export default function DashboardPage() {
@@ -40,7 +41,7 @@ export default function DashboardPage() {
   const loadUserItems = async () => {
     try {
       const token = getAuthToken()
-      const response = await fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
+      const response = await fetch('/api/items/my-items', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -49,6 +50,7 @@ export default function DashboardPage() {
       if (response.ok) {
         const items = await response.json()
         setMyItems(items)
+        setError('')
       } else {
         setError('Failed to load your items')
       }
@@ -62,7 +64,7 @@ export default function DashboardPage() {
     
     try {
       const token = getAuthToken()
-      const response = await fetch(`https://lost-found-79xn.onrender.com/api/items/${deleteModal.item._id}`, {
+      const response = await fetch(`/api/items/${deleteModal.item._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -73,9 +75,11 @@ export default function DashboardPage() {
         setMyItems(prev => prev.filter(item => item._id !== deleteModal.item!._id))
         setDeleteModal({show: false, item: null})
       } else {
-        alert('Failed to delete item')
+        const errorData = await response.json()
+        alert(`Failed to delete item: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
+      console.error('Delete error:', error)
       alert('Error deleting item')
     }
   }
@@ -95,14 +99,22 @@ export default function DashboardPage() {
     }
 
     const handleItemSubmitted = () => {
+      console.log('Item submitted event received, reloading items...')
       loadUserItems()
     }
     
     window.addEventListener('itemSubmitted', handleItemSubmitted)
     checkAuthAndLoadData()
     
+    // Also listen for storage events in case of multiple tabs
+    const handleStorageChange = () => {
+      loadUserItems()
+    }
+    window.addEventListener('storage', handleStorageChange)
+    
     return () => {
       window.removeEventListener('itemSubmitted', handleItemSubmitted)
+      window.removeEventListener('storage', handleStorageChange)
     }
   }, [])
 
@@ -242,9 +254,9 @@ export default function DashboardPage() {
                       <div key={item._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between">
                           <div className="flex gap-4">
-                            {item.itemImageUrl && (
+                            {(item.itemImageUrl || item.imageUrl) && (
                               <img 
-                                src={item.itemImageUrl} 
+                                src={item.itemImageUrl || item.imageUrl} 
                                 alt={item.title}
                                 className="w-16 h-16 object-cover rounded-lg"
                               />
@@ -316,9 +328,9 @@ export default function DashboardPage() {
                       <div key={item._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between">
                           <div className="flex gap-4">
-                            {item.itemImageUrl && (
+                            {(item.itemImageUrl || item.imageUrl) && (
                               <img 
-                                src={item.itemImageUrl} 
+                                src={item.itemImageUrl || item.imageUrl} 
                                 alt={item.title}
                                 className="w-16 h-16 object-cover rounded-lg"
                               />

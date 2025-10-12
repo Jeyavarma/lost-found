@@ -136,35 +136,36 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-black/10"></div>
         {/* Brand accent stripe */}
         <div className="absolute top-0 left-0 w-full h-1 mcc-accent"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-24 relative">
           <div className="text-center">
 
-            <h1 className="text-5xl font-bold mb-4 animate-fade-in font-serif">Lost Something? Found Something?</h1>
-            <p className="text-xl mb-2 opacity-95 font-medium">Madras Christian College Community Portal</p>
-            <p className="text-lg mb-8 opacity-80">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 animate-fade-in font-serif">Lost Something? Found Something?</h1>
+            <p className="text-lg sm:text-xl mb-2 opacity-95 font-medium">Madras Christian College Community Portal</p>
+            <p className="text-base sm:text-lg mb-6 sm:mb-8 opacity-80">
               Connect with your campus community to reunite with lost belongings
             </p>
 
             {/* Enhanced Search Bar with Filters */}
             <div className="max-w-4xl mx-auto relative">
               <div className="bg-white rounded-xl p-2 shadow-2xl">
-                <div className="flex items-center">
-                  <Search className="ml-4 mcc-text-primary w-6 h-6" />
-                  <Input
-                    type="text"
-                    placeholder="Search for textbooks, electronics, ID cards, calculators..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 border-0 bg-transparent text-lg text-brand-text-dark placeholder:text-gray-500 focus:ring-0 px-4 py-4"
-                  />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0">
+                  <div className="flex items-center flex-1">
+                    <Search className="ml-3 sm:ml-4 mcc-text-primary w-5 h-5 sm:w-6 sm:h-6" />
+                    <Input
+                      type="text"
+                      placeholder="Search for textbooks, electronics, ID cards..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 border-0 bg-transparent text-sm sm:text-lg text-brand-text-dark placeholder:text-gray-500 focus:ring-0 px-3 sm:px-4 py-3 sm:py-4"
+                    />
+                  </div>
                   <div className="flex items-center gap-2 mr-2">
-
                     <Button 
-                      size="lg" 
-                      className="mcc-accent hover:bg-red-800 shadow-lg"
+                      size="default" 
+                      className="mcc-accent hover:bg-red-800 shadow-lg w-full sm:w-auto"
                       onClick={() => window.location.href = `/browse?search=${encodeURIComponent(searchQuery)}`}
                     >
-                      <Zap className="w-5 h-5 mr-2" />
+                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       Search
                     </Button>
                   </div>
@@ -173,13 +174,13 @@ export default function HomePage() {
             </div>
 
             {/* Quick Search Tags */}
-            <div className="flex flex-wrap justify-center gap-3 mt-8">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-6 sm:mt-8">
               {["Electronics", "Textbooks", "ID Cards", "Keys", "Calculators"].map((tag) => (
                 <Button
                   key={tag}
                   variant="outline"
                   size="sm"
-                  className="bg-white/20 border-white/40 text-brand-text-light hover:bg-white/30 rounded-full font-medium backdrop-blur-sm"
+                  className="bg-white/20 border-white/40 text-brand-text-light hover:bg-white/30 rounded-full font-medium backdrop-blur-sm text-xs sm:text-sm"
                   onClick={() => window.location.href = `/browse?search=${encodeURIComponent(tag.toLowerCase())}`}
                 >
                   {tag}

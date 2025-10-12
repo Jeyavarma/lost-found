@@ -118,17 +118,17 @@ export default function LiveActivity() {
           </CardTitle>
           <CardDescription className="text-brand-text-dark">Real-time updates from the MCC community</CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="space-y-4">
+        <CardContent className="p-3 sm:p-6">
+          <div className="space-y-3 sm:space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl animate-pulse">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-48"></div>
+              <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl animate-pulse gap-3 sm:gap-0">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-32 sm:w-48"></div>
                 </div>
                 <div className="h-3 bg-gray-200 rounded w-16"></div>
               </div>
-            ))}
+            ))
           </div>
         </CardContent>
       </Card>
@@ -138,56 +138,57 @@ export default function LiveActivity() {
   return (
     <Card className="mcc-card border-2 border-brand-primary/20">
       <CardHeader className="bg-gray-50 border-b">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="flex items-center gap-3 mcc-text-primary">
-              <div className="w-8 h-8 mcc-accent rounded-full flex items-center justify-center">
-                <Zap className="w-4 h-4 text-brand-text-light" />
+            <CardTitle className="flex items-center gap-2 sm:gap-3 mcc-text-primary text-lg sm:text-xl">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 mcc-accent rounded-full flex items-center justify-center">
+                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-brand-text-light" />
               </div>
               Live Campus Activity
             </CardTitle>
-            <CardDescription className="text-brand-text-dark">Real-time updates from the MCC community</CardDescription>
+            <CardDescription className="text-brand-text-dark text-sm">Real-time updates from the MCC community</CardDescription>
           </div>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleViewAll}
-            className="border-brand-primary text-brand-primary hover:bg-[#8B0000] hover:text-white"
+            className="border-brand-primary text-brand-primary hover:bg-[#8B0000] hover:text-white shrink-0"
           >
             <Eye className="w-4 h-4 mr-2" />
-            View All
+            <span className="hidden sm:inline">View All</span>
+            <span className="sm:hidden">All</span>
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="space-y-4">
+      <CardContent className="p-3 sm:p-6">
+        <div className="space-y-3 sm:space-y-4">
           {activities.map((activity) => (
             <div
               key={activity._id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-200"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-200 gap-3 sm:gap-0"
             >
-              <div className="flex items-center gap-4">
-                <Avatar className="w-10 h-10 border-2 border-brand-primary/20">
-                  <AvatarFallback className="text-sm font-semibold bg-blue-100 mcc-text-primary">
+              <div className="flex items-center gap-3 sm:gap-4 flex-1">
+                <Avatar className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-brand-primary/20 shrink-0">
+                  <AvatarFallback className="text-xs sm:text-sm font-semibold bg-blue-100 mcc-text-primary">
                     {getInitials(activity.reportedBy?.name || 'Anonymous')}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col flex-1">
-                  <p className="text-sm font-bold text-brand-text-dark line-clamp-1">
-                    {activity.description.length > 60 ? `${activity.description.substring(0, 60)}...` : activity.description}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-bold text-brand-text-dark line-clamp-2 sm:line-clamp-1">
+                    {activity.description.length > (window.innerWidth < 640 ? 40 : 60) ? `${activity.description.substring(0, window.innerWidth < 640 ? 40 : 60)}...` : activity.description}
                   </p>
-                  <span className="text-sm font-medium text-brand-text-dark mt-1">
+                  <span className="text-xs sm:text-sm font-medium text-brand-text-dark mt-1">
                     <strong className="mcc-text-primary">{activity.reportedBy?.name || 'Anonymous'}</strong>{' '}
                     {activity.status === 'lost' ? 'reported lost' : 'found'}{' '}
                     <strong className="mcc-text-accent">{activity.title}</strong>
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col items-end text-xs text-gray-500">
-                <a href={`mailto:${activity.reportedBy?.email}`} className="text-sm text-blue-600 hover:underline mb-1 font-medium">
+              <div className="flex flex-row sm:flex-col items-start sm:items-end justify-between sm:justify-start text-xs text-gray-500 shrink-0">
+                <a href={`mailto:${activity.reportedBy?.email}`} className="text-xs sm:text-sm text-blue-600 hover:underline mb-0 sm:mb-1 font-medium truncate max-w-[150px] sm:max-w-none">
                   {activity.reportedBy?.email}
                 </a>
-                <span>{getFormattedDate(activity.createdAt)}</span>
+                <span className="text-xs">{getFormattedDate(activity.createdAt)}</span>
               </div>
             </div>
           ))}
@@ -201,24 +202,24 @@ export default function LiveActivity() {
 
       {/* View All Modal */}
       <Dialog open={showAllModal} onOpenChange={setShowAllModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col mx-4 sm:mx-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 mcc-text-primary">
-              <div className="w-8 h-8 mcc-accent rounded-full flex items-center justify-center">
-                <Zap className="w-4 h-4 text-brand-text-light" />
+            <DialogTitle className="flex items-center gap-2 sm:gap-3 mcc-text-primary text-lg sm:text-xl">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 mcc-accent rounded-full flex items-center justify-center">
+                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-brand-text-light" />
               </div>
               All Campus Activity
             </DialogTitle>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto space-y-4 p-1">
+          <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 p-1">
             {loadingAll ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {[...Array(10)].map((_, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl animate-pulse">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                      <div className="h-4 bg-gray-200 rounded w-48"></div>
+                  <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl animate-pulse gap-3 sm:gap-0">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full"></div>
+                      <div className="h-4 bg-gray-200 rounded w-32 sm:w-48"></div>
                     </div>
                     <div className="h-3 bg-gray-200 rounded w-16"></div>
                   </div>
@@ -228,9 +229,33 @@ export default function LiveActivity() {
               allActivities.map((activity) => (
                 <div
                   key={activity._id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-200"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 border border-gray-200 gap-3 sm:gap-0"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                    <Avatar className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-brand-primary/20 shrink-0">
+                      <AvatarFallback className="text-xs sm:text-sm font-semibold bg-blue-100 mcc-text-primary">
+                        {getInitials(activity.reportedBy?.name || 'Anonymous')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-brand-text-dark line-clamp-2 sm:line-clamp-1">
+                        {activity.description}
+                      </p>
+                      <span className="text-xs sm:text-sm font-medium text-brand-text-dark mt-1">
+                        <strong className="mcc-text-primary">{activity.reportedBy?.name || 'Anonymous'}</strong>{' '}
+                        {activity.status === 'lost' ? 'reported lost' : 'found'}{' '}
+                        <strong className="mcc-text-accent">{activity.title}</strong>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-row sm:flex-col items-start sm:items-end justify-between sm:justify-start text-xs text-gray-500 shrink-0">
+                    <a href={`mailto:${activity.reportedBy?.email}`} className="text-xs sm:text-sm text-blue-600 hover:underline mb-0 sm:mb-1 font-medium truncate max-w-[150px] sm:max-w-none">
+                      {activity.reportedBy?.email}
+                    </a>
+                    <span className="text-xs">{getFormattedDate(activity.createdAt)}</span>
+                  </div>
+                </div>
+              ))ap-4">
                     <Avatar className="w-10 h-10 border-2 border-brand-primary/20">
                       <AvatarFallback className="text-sm font-semibold bg-blue-100 mcc-text-primary">
                         {getInitials(activity.reportedBy?.name || 'Anonymous')}

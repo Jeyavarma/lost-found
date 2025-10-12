@@ -121,12 +121,35 @@ export default function EventHighlights() {
           <h2 className="text-3xl font-bold mcc-text-primary font-serif">Event Highlights</h2>
           <p className="text-brand-text-dark">Items commonly lost during MCC events and activities</p>
         </div>
-        <Button variant="outline" className="border-brand-primary text-brand-primary hover:bg-red-50">
-          View All Events
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => {
+              const container = document.getElementById('events-scroll-container')
+              if (container) {
+                container.scrollBy({ left: -320, behavior: 'smooth' })
+              }
+            }}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => {
+              const container = document.getElementById('events-scroll-container')
+              if (container) {
+                container.scrollBy({ left: 320, behavior: 'smooth' })
+              }
+            }}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
-      <div className="overflow-x-auto pb-4">
+      <div id="events-scroll-container" className="overflow-x-auto pb-4 scroll-smooth">
         <div className="flex gap-6 min-w-max">
           {eventsData.map((event) => (
             <Card key={event.id} className="mcc-card hover:shadow-xl transition-all duration-300 border-2 border-brand-primary/20 group cursor-pointer relative w-80 flex-shrink-0">

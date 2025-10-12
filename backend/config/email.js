@@ -1,16 +1,26 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransporter({
-  service: 'gmail',
+  host: 'smtp.ethereal.email',
+  port: 587,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: 'ethereal.user@ethereal.email',
+    pass: 'verysecret'
   }
 });
 
+// For production, use Gmail:
+// const transporter = nodemailer.createTransporter({
+//   service: 'gmail',
+//   auth: {
+//     user: process.env.EMAIL_USER,
+//     pass: process.env.EMAIL_PASS
+//   }
+// });
+
 const sendOTPEmail = async (email, otp) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: 'noreply@mcc.edu.in',
     to: email,
     subject: 'MCC Lost & Found - Password Reset OTP',
     html: `
@@ -38,7 +48,10 @@ const sendOTPEmail = async (email, otp) => {
     `
   };
 
-  return transporter.sendMail(mailOptions);
+  const info = await transporter.sendMail(mailOptions);
+  console.log('📧 Email sent:', info.messageId);
+  console.log('🔗 Preview URL:', nodemailer.getTestMessageUrl(info));
+  return info;
 };
 
 module.exports = { sendOTPEmail };

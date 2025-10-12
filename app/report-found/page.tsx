@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Image from "next/image"
 import { ArrowLeft, Upload, Search, User, GraduationCap } from "lucide-react"
+import Navigation from "@/components/navigation"
 
 const categories = ["ID Card", "Mobile Phone", "Laptop", "Wallet", "Keys", "Books", "Clothing", "Jewelry", "Other"]
 
@@ -80,11 +81,31 @@ export default function ReportFoundPage() {
 
   // Check if user is authenticated
   useEffect(() => {
-    const authToken = localStorage.getItem("authToken")
-    if (authToken) {
-      setIsAuthenticated(true)
-      setShowOptionalLogin(false)
+    const checkAuth = async () => {
+      const { isAuthenticated: checkIsAuth, getAuthToken, validateToken } = await import('@/lib/auth')
+      const authenticated = checkIsAuth()
+      const token = getAuthToken()
+      
+      if (authenticated && token) {
+        // Validate token with backend
+        const isValid = await validateToken(token)
+        if (isValid) {
+          setIsAuthenticated(true)
+          setShowOptionalLogin(false)
+        } else {
+          // Token is invalid, clear it
+          const { logout } = await import('@/lib/auth')
+          logout()
+          setIsAuthenticated(false)
+          setShowOptionalLogin(true)
+        }
+      } else {
+        setIsAuthenticated(false)
+        setShowOptionalLogin(true)
+      }
     }
+    
+    checkAuth()
   }, [])
 
   const [formData, setFormData] = useState({
@@ -120,16 +141,26 @@ export default function ReportFoundPage() {
       submitData.append('locationImage', locationImage)
     }
     
-    console.log('🔵 FOUND ITEM REQUEST - Sending to backend:')
-    const apiUrl = 'https://lost-found-79xn.onrender.com/api/items'
+    // Get auth token if user is authenticated
+    let authHeaders = {}
+    if (isAuthenticated) {
+      const { getAuthToken } = await import('@/lib/auth')
+      const token = getAuthToken()
+      if (token) {
+        authHeaders = { 'Authorization': `Bearer ${token}` }
+      }
+    }
+    
+    console.log('🔵 FOUND ITEM REQUEST - Sending via API route:')
+    const apiUrl = '/api/items'
     console.log('📍 URL:', apiUrl)
     console.log('📝 Method: POST')
-    console.log('📦 Form Data:', Object.fromEntries(submitData.entries()))
-    console.log('🖼️ Images:', { itemImage: !!itemImage, locationImage: !!locationImage })
+    console.log('🔐 Auth:', isAuthenticated ? 'With Token' : 'Anonymous')
     
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
+        headers: authHeaders,
         body: submitData
       })
       
@@ -171,7 +202,7 @@ export default function ReportFoundPage() {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')!
-      const img = new Image()
+      const img = new window.Image()
       
       img.onload = () => {
         const maxWidth = 600
@@ -227,32 +258,7 @@ export default function ReportFoundPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="mcc-primary border-b-4 border-brand-accent shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20">
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center space-x-4">
-                <div className="w-12 h-12 mcc-accent rounded-lg flex items-center justify-center shadow-lg">
-                  <GraduationCap className="w-6 h-6 text-brand-text-light" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xl font-bold text-brand-text-light font-serif">MCC Lost & Found</span>
-                  <span className="text-xs text-gray-300 font-medium">Madras Christian College</span>
-                </div>
-              </Link>
-            </div>
-            <div className="flex items-center">
-              <Link href="/">
-                <Button variant="ghost" className="flex items-center gap-2 text-brand-text-light hover:bg-white/10">
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Home
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation />
 
       {showOptionalLogin && !isAuthenticated && (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -274,7 +280,14 @@ export default function ReportFoundPage() {
                     Login
                   </Button>
                 </Link>
-
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => setShowOptionalLogin(false)}
+                  className="border-green-600 text-green-600 hover:bg-green-50"
+                >
+                  Continue Without Login
+                </Button>
               </div>
             </CardContent>
           </Card>

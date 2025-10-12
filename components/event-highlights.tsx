@@ -181,7 +181,7 @@ export default function EventHighlights() {
 
       {/* Event Items Modal */}
       <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-white">
           <DialogHeader className="flex flex-row items-center gap-3">
             <span className="text-3xl">{selectedEvent?.icon}</span>
             <DialogTitle className="text-2xl mcc-text-primary">{selectedEvent?.title}</DialogTitle>
@@ -231,7 +231,7 @@ export default function EventHighlights() {
 
       {/* Item Detail Modal */}
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-white">
           <DialogHeader>
             <Badge className={`w-fit mb-2 ${selectedItem?.status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
               {selectedItem?.status?.toUpperCase()}

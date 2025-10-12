@@ -90,11 +90,13 @@ router.post('/forgot-password', async (req, res) => {
       // Send OTP via email
       await sendOTPEmail(email, otp);
       console.log('✅ Email sent successfully');
-      res.json({ message: 'OTP sent to your email' });
+      res.json({ message: 'OTP sent to your email address' });
     } catch (emailError) {
-      console.error('📧 Email sending failed:', emailError);
-      // Still return success since OTP is saved - user can use it
-      res.json({ message: 'OTP generated. Check your email or use: ' + otp });
+      console.error('📧 Email sending failed:', emailError.message);
+      res.status(500).json({ 
+        error: 'Failed to send email. Please check email configuration.',
+        details: emailError.message
+      });
     }
   } catch (error) {
     console.error('❌ Forgot password error:', error);
@@ -129,6 +131,17 @@ router.post('/reset-password', async (req, res) => {
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+router.post('/test-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    await sendOTPEmail(email, '123456');
+    res.json({ message: 'Test email sent successfully' });
+  } catch (error) {
+    console.error('Test email error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

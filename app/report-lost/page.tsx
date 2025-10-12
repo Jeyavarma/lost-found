@@ -154,7 +154,7 @@ export default function ReportLostPage() {
       if (response.ok) {
         setShowSuccess(true)
         setTimeout(() => {
-          window.location.href = '/'
+          window.location.href = '/dashboard'
         }, 3000)
       } else {
         console.error('❌ Backend error:', responseText)
@@ -611,11 +611,11 @@ export default function ReportLostPage() {
             <p className="text-gray-600 mb-6">Lost item reported successfully! We will notify you if someone finds it.</p>
             <div className="flex gap-3 justify-center">
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => window.location.href = '/dashboard'}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2"
               >
-                <Home className="w-4 h-4" />
-                Go Home
+                <User className="w-4 h-4" />
+                Go to Dashboard
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-4">Redirecting automatically in 3 seconds...</p>

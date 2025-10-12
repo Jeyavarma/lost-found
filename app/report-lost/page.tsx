@@ -375,7 +375,7 @@ export default function ReportLostPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Item Photo */}
                     <div>
-                      <Label className="text-sm font-medium mb-2 block">Item Photo</Label>
+                      <Label className="text-sm font-medium mb-2 block">Item Photo <span className="text-red-500">*</span></Label>
                       <label htmlFor="itemImage" className="cursor-pointer block">
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
                           {itemImagePreview ? (

@@ -176,7 +176,7 @@ export default function LiveActivity() {
       </CardContent>
 
       <Dialog open={showAllModal} onOpenChange={setShowAllModal}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col mx-4 sm:mx-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col mx-4 sm:mx-auto bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 sm:gap-3 mcc-text-primary text-lg sm:text-xl">
               <div className="w-6 h-6 sm:w-8 sm:h-8 mcc-accent rounded-full flex items-center justify-center">

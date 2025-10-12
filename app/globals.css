@@ -21,6 +21,12 @@
   --brand-accent: #811c1f;
   --brand-text-dark: #374151;
   --brand-text-light: #F9FAFB;
+  
+  /* Ensure all backgrounds are solid white */
+  --background: #ffffff;
+  --popover: #ffffff;
+  --card: #ffffff;
+  --muted: #f9fafb;
 }
 
 .mcc-primary {

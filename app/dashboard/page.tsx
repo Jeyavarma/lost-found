@@ -12,8 +12,7 @@ import {
   Calendar,
   MapPin,
   Eye,
-  Trash2,
-  Archive
+  Trash2
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } from "@/lib/auth"
@@ -36,7 +35,7 @@ export default function DashboardPage() {
   const [myItems, setMyItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [deleteModal, setDeleteModal] = useState<{show: boolean, item: Item | null, type: 'soft' | 'hard'}>({show: false, item: null, type: 'soft'})
+  const [deleteModal, setDeleteModal] = useState<{show: boolean, item: Item | null}>({show: false, item: null})
 
   const loadUserItems = async () => {
     try {
@@ -58,6 +57,29 @@ export default function DashboardPage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!deleteModal.item) return
+    
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`https://lost-found-79xn.onrender.com/api/items/${deleteModal.item._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        setMyItems(prev => prev.filter(item => item._id !== deleteModal.item!._id))
+        setDeleteModal({show: false, item: null})
+      } else {
+        alert('Failed to delete item')
+      }
+    } catch (error) {
+      alert('Error deleting item')
+    }
+  }
+
   useEffect(() => {
     const checkAuthAndLoadData = async () => {
       if (!isAuthenticated()) {
@@ -72,7 +94,6 @@ export default function DashboardPage() {
       setLoading(false)
     }
 
-    // Listen for item submission events to refresh dashboard
     const handleItemSubmitted = () => {
       loadUserItems()
     }
@@ -107,7 +128,6 @@ export default function DashboardPage() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mcc-text-primary font-serif mb-2">
             Welcome back, {user?.name}!
@@ -118,9 +138,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Stats Cards */}
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="text-lg">Quick Stats</CardTitle>
@@ -150,7 +168,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Quick Actions */}
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="text-lg">Quick Actions</CardTitle>
@@ -178,10 +195,7 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
-
-            {/* Potential Matches */}
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -201,7 +215,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Lost Items */}
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -262,16 +275,8 @@ export default function DashboardPage() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              className="text-orange-600 hover:bg-orange-50"
-                              onClick={() => setDeleteModal({show: true, item, type: 'soft'})}
-                            >
-                              <Archive className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
                               className="text-red-600 hover:bg-red-50"
-                              onClick={() => setDeleteModal({show: true, item, type: 'hard'})}
+                              onClick={() => setDeleteModal({show: true, item})}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -284,7 +289,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Found Items */}
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -345,16 +349,8 @@ export default function DashboardPage() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              className="text-orange-600 hover:bg-orange-50"
-                              onClick={() => setDeleteModal({show: true, item, type: 'soft'})}
-                            >
-                              <Archive className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
                               className="text-red-600 hover:bg-red-50"
-                              onClick={() => setDeleteModal({show: true, item, type: 'hard'})}
+                              onClick={() => setDeleteModal({show: true, item})}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -370,31 +366,25 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {deleteModal.show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold mb-4">
-              {deleteModal.type === 'soft' ? 'Archive Item' : 'Delete Item'}
-            </h3>
+            <h3 className="text-lg font-bold mb-4">Delete Item</h3>
             <p className="text-gray-600 mb-6">
-              {deleteModal.type === 'soft' 
-                ? 'This will hide the item from public view but keep it in your records. You can restore it later.'
-                : 'This will permanently delete the item. This action cannot be undone.'
-              }
+              This will permanently delete the item. This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <Button 
                 variant="outline" 
-                onClick={() => setDeleteModal({show: false, item: null, type: 'soft'})}
+                onClick={() => setDeleteModal({show: false, item: null})}
               >
                 Cancel
               </Button>
               <Button 
-                className={deleteModal.type === 'soft' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-red-600 hover:bg-red-700'}
-                onClick={() => handleDelete(deleteModal.type)}
+                className="bg-red-600 hover:bg-red-700"
+                onClick={handleDelete}
               >
-                {deleteModal.type === 'soft' ? 'Archive' : 'Delete'}
+                Delete
               </Button>
             </div>
           </div>

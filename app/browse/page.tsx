@@ -198,14 +198,14 @@ export default function BrowsePage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Enhanced Filters Sidebar */}
           <div className={`${showFilters ? 'block' : 'hidden'} lg:block w-full lg:w-80 mb-6 lg:mb-0`}>
-            <Card className="sticky top-24 mcc-card border-2 border-brand-primary/20">
-              <CardHeader className="bg-gray-50 border-b">
+            <Card className="sticky top-24 mcc-card border-2 border-brand-primary/20 max-h-[calc(100vh-7rem)] flex flex-col">
+              <CardHeader className="bg-gray-50 border-b flex-shrink-0">
                 <CardTitle className="flex items-center gap-2 mcc-text-primary">
                   <SlidersHorizontal className="w-5 h-5" />
                   Advanced Filters
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto flex-1">
                 {/* Search */}
                 <div>
                   <Label className="text-sm font-medium mb-2 block mcc-text-primary">Search</Label>

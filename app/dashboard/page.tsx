@@ -38,6 +38,26 @@ export default function DashboardPage() {
   const [error, setError] = useState("")
   const [deleteModal, setDeleteModal] = useState<{show: boolean, item: Item | null, type: 'soft' | 'hard'}>({show: false, item: null, type: 'soft'})
 
+  const loadUserItems = async () => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const items = await response.json()
+        setMyItems(items)
+      } else {
+        setError('Failed to load your items')
+      }
+    } catch (err) {
+      setError('Network error loading items')
+    }
+  }
+
   useEffect(() => {
     const checkAuthAndLoadData = async () => {
       if (!isAuthenticated()) {
@@ -47,30 +67,22 @@ export default function DashboardPage() {
 
       const userData = getUserData()
       setUser(userData)
-
-      // Load user's items
-      try {
-        const token = getAuthToken()
-        const response = await fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
-        if (response.ok) {
-          const items = await response.json()
-          setMyItems(items)
-        } else {
-          setError('Failed to load your items')
-        }
-      } catch (err) {
-        setError('Network error loading items')
-      } finally {
-        setLoading(false)
-      }
+      
+      await loadUserItems()
+      setLoading(false)
     }
 
+    // Listen for item submission events to refresh dashboard
+    const handleItemSubmitted = () => {
+      loadUserItems()
+    }
+    
+    window.addEventListener('itemSubmitted', handleItemSubmitted)
     checkAuthAndLoadData()
+    
+    return () => {
+      window.removeEventListener('itemSubmitted', handleItemSubmitted)
+    }
   }, [])
 
   const lostItems = myItems.filter(item => item.status === 'lost')

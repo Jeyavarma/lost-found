@@ -72,6 +72,7 @@ const culturalEvents = [
 export default function ReportFoundPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showOptionalLogin, setShowOptionalLogin] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [itemImage, setItemImage] = useState<File | null>(null)
   const [locationImage, setLocationImage] = useState<File | null>(null)
@@ -128,6 +129,11 @@ export default function ReportFoundPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Prevent double submission
+    if (isSubmitting) return
+    
+    setIsSubmitting(true)
+    
     const submitData = new FormData()
     submitData.append('status', 'found') // Add status to differentiate lost vs found
     Object.entries(formData).forEach(([key, value]) => {
@@ -176,6 +182,8 @@ export default function ReportFoundPage() {
     } catch (error) {
       console.error('❌ Network error:', error)
       alert('Error connecting to server. Please try again.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -598,9 +606,14 @@ export default function ReportFoundPage() {
               <div className="flex justify-center pt-6">
                 <Button
                   type="submit"
-                  className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-lg"
+                  disabled={isSubmitting}
+                  className={`px-8 py-3 font-medium rounded-lg shadow-lg ${
+                    isSubmitting
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
                 >
-                  Report Found Item
+                  {isSubmitting ? 'Submitting...' : 'Report Found Item'}
                 </Button>
               </div>
               

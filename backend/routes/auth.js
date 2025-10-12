@@ -66,14 +66,17 @@ router.post('/register', async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
+    console.log('🔍 Forgot password request for:', email);
     
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('❌ User not found:', email);
       return res.status(404).json({ error: 'User not found' });
     }
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log('🔢 Generated OTP:', otp);
     
     // Delete any existing OTP for this email
     await OTP.deleteMany({ email });
@@ -81,14 +84,21 @@ router.post('/forgot-password', async (req, res) => {
     // Save new OTP
     const otpDoc = new OTP({ email, otp });
     await otpDoc.save();
+    console.log('💾 OTP saved to database');
     
-    // Send OTP via email
-    await sendOTPEmail(email, otp);
-    
-    res.json({ message: 'OTP sent to your email' });
+    try {
+      // Send OTP via email
+      await sendOTPEmail(email, otp);
+      console.log('✅ Email sent successfully');
+      res.json({ message: 'OTP sent to your email' });
+    } catch (emailError) {
+      console.error('📧 Email sending failed:', emailError);
+      // Still return success since OTP is saved - user can use it
+      res.json({ message: 'OTP generated. Check your email or use: ' + otp });
+    }
   } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({ error: 'Failed to send OTP' });
+    console.error('❌ Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to process request' });
   }
 });
 

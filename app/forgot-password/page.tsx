@@ -35,12 +35,14 @@ export default function ForgotPasswordPage() {
       })
 
       console.log('📡 Frontend: Response status:', response.status)
-      const data = await response.json()
-      console.log('📄 Frontend: Response data:', data)
-
+      
       if (response.ok) {
+        const data = await response.json()
+        console.log('📄 Frontend: Response data:', data)
         setStep(2)
       } else {
+        const data = await response.json()
+        console.log('❌ Frontend: Error data:', data)
         setError(data.error || 'Failed to send OTP')
       }
     } catch (error) {

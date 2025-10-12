@@ -178,9 +178,9 @@ export default function BrowsePage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2 mcc-text-primary font-serif">Browse All Items</h1>
-          <p className="text-md sm:text-lg text-brand-text-dark">Discover lost and found items from across MCC campus</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 mcc-text-primary font-serif">Browse All Items</h1>
+          <p className="text-sm sm:text-md lg:text-lg text-brand-text-dark">Discover lost and found items from across MCC campus</p>
         </div>
 
         {/* Mobile Filter Toggle */}
@@ -197,7 +197,7 @@ export default function BrowsePage() {
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Enhanced Filters Sidebar */}
-          <div className={`${showFilters ? 'block' : 'hidden'} lg:block lg:w-80`}>
+          <div className={`${showFilters ? 'block' : 'hidden'} lg:block w-full lg:w-80 mb-6 lg:mb-0`}>
             <Card className="sticky top-24 mcc-card border-2 border-brand-primary/20">
               <CardHeader className="bg-gray-50 border-b">
                 <CardTitle className="flex items-center gap-2 mcc-text-primary">
@@ -205,7 +205,7 @@ export default function BrowsePage() {
                   Advanced Filters
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Search */}
                 <div>
                   <Label className="text-sm font-medium mb-2 block mcc-text-primary">Search</Label>
@@ -312,9 +312,9 @@ export default function BrowsePage() {
           {/* Main Content */}
           <div className="flex-1">
             {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
               <div>
-                <p className="text-brand-text-dark">
+                <p className="text-sm sm:text-base text-brand-text-dark">
                   Showing <span className="font-semibold mcc-text-primary">{sortedItems.length}</span> of{" "}
                   <span className="font-semibold mcc-text-primary">{allItems.length}</span> items
                 </p>
@@ -327,6 +327,7 @@ export default function BrowsePage() {
                   className={viewMode === "grid" ? "mcc-primary text-brand-text-light" : ""}
                 >
                   <Grid className="w-4 h-4" />
+                  <span className="hidden sm:inline ml-1">Grid</span>
                 </Button>
                 <Button
                   variant={viewMode === "list" ? "default" : "outline"}
@@ -335,17 +336,18 @@ export default function BrowsePage() {
                   className={viewMode === "list" ? "mcc-primary text-brand-text-light" : ""}
                 >
                   <List className="w-4 h-4" />
+                  <span className="hidden sm:inline ml-1">List</span>
                 </Button>
               </div>
             </div>
 
             {/* Items Display */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
-                    <div className="h-48 bg-gray-200 rounded-t-lg"></div>
-                    <CardContent className="p-4">
+                    <div className="h-40 sm:h-48 bg-gray-200 rounded-t-lg"></div>
+                    <CardContent className="p-3 sm:p-4">
                       <div className="h-4 bg-gray-200 rounded mb-2"></div>
                       <div className="h-3 bg-gray-200 rounded mb-2"></div>
                       <div className="h-3 bg-gray-200 rounded w-2/3"></div>
@@ -354,7 +356,7 @@ export default function BrowsePage() {
                 ))}
               </div>
             ) : viewMode === "grid" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {sortedItems.map((item) => (
                   <Card
                     key={item._id}
@@ -364,7 +366,7 @@ export default function BrowsePage() {
                       <img
                         src={item.imageUrl ? (item.imageUrl.startsWith('http') ? item.imageUrl : `https://lost-found-79xn.onrender.com${item.imageUrl}`) : "/placeholder.svg"}
                         alt={item.title}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div
                         className={`absolute top-2 left-2 w-3 h-3 rounded-full ${getUrgencyColor(item.urgency)} animate-pulse`}
@@ -381,7 +383,7 @@ export default function BrowsePage() {
 
                     </div>
 
-                    <CardContent className="p-4">
+                    <CardContent className="p-3 sm:p-4">
                       <div className="flex items-center justify-between mb-2">
                         <Badge variant="outline" className="text-xs border-brand-primary/30 mcc-text-primary">
                           {item.category}
@@ -389,14 +391,14 @@ export default function BrowsePage() {
                         <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</span>
                       </div>
 
-                      <CardTitle className="text-lg mb-2 group-hover:text-brand-primary transition-colors font-serif">
+                      <CardTitle className="text-base sm:text-lg mb-2 group-hover:text-brand-primary transition-colors font-serif">
                         {item.title}
                       </CardTitle>
                       <CardDescription className="mb-3 line-clamp-2 text-brand-text-dark">
                         {item.description}
                       </CardDescription>
 
-                      <div className="space-y-1 text-sm text-brand-text-dark mb-4">
+                      <div className="space-y-1 text-xs sm:text-sm text-brand-text-dark mb-3 sm:mb-4">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4 mcc-text-primary" />
                           <span className="truncate">{item.location}</span>
@@ -491,7 +493,7 @@ export default function BrowsePage() {
                                 {likedItems.has(item._id) ? 1 : 0}
                               </div>
                             </div>
-                            <Button size="sm" className="mcc-accent hover:bg-red-800">
+                            <Button size="sm" className="mcc-accent hover:bg-red-800 text-xs sm:text-sm">
                               <MessageCircle className="w-4 h-4 mr-1" />
                               Contact
                             </Button>

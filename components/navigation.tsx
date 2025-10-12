@@ -61,55 +61,55 @@ export default function Navigation() {
               </Button>
             </Link>
             
+            <Link href="/report-lost">
+              <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">
+                <Plus className="w-4 h-4 mr-2" />
+                Report Lost
+              </Button>
+            </Link>
+            
+            <Link href="/report-found">
+              <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">
+                <Plus className="w-4 h-4 mr-2" />
+                Report Found
+              </Button>
+            </Link>
+            
+            <Link href="/feedback">
+              <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Feedback
+              </Button>
+            </Link>
+            
             {authenticated ? (
-              <>
-                <Link href="/report-lost">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Report Lost
+                    <UserCircle className="w-4 h-4 mr-2" />
+                    {user?.name || 'User'}
                   </Button>
-                </Link>
-                <Link href="/report-found">
-                  <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Report Found
-                  </Button>
-                </Link>
-                <Link href="/feedback">
-                  <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Feedback
-                  </Button>
-                </Link>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">
-                      <UserCircle className="w-4 h-4 mr-2" />
-                      {user?.name || 'User'}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <div className="px-2 py-1.5">
-                      <p className="text-sm font-medium">{user?.name}</p>
-                      <p className="text-xs text-gray-500">{user?.email}</p>
-                      <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard" className="cursor-pointer">
-                        <Settings className="w-4 h-4 mr-2" />
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{user?.name}</p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="cursor-pointer">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link href="/login">
                 <Button variant="ghost" className="hover:bg-red-800 text-brand-text-light font-medium">

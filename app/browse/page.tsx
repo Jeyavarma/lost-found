@@ -50,12 +50,24 @@ const buildings = [
   "Library",
 ]
 
+const culturalEvents = [
+  "All Events",
+  "Deepwoods",
+  "Moonshadow",
+  "Octavia",
+  "Barnes Hall Day",
+  "Martin Hall Day",
+  "Games Fury",
+  "Founders Day"
+]
+
 export default function BrowsePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("All Categories")
   const [typeFilter, setTypeFilter] = useState("All")
   const [buildingFilter, setBuildingFilter] = useState("All Buildings")
   const [urgencyFilter, setUrgencyFilter] = useState("All")
+  const [eventFilter, setEventFilter] = useState("All Events")
   const [showRewardOnly, setShowRewardOnly] = useState(false)
   const [sortBy, setSortBy] = useState("newest")
   const [viewMode, setViewMode] = useState("grid")
@@ -90,8 +102,9 @@ export default function BrowsePage() {
     const matchesCategory = categoryFilter === "All Categories" || item.category === categoryFilter
     const matchesType = typeFilter === "All" || item.status === typeFilter
     const matchesBuilding = buildingFilter === "All Buildings" || item.location.includes(buildingFilter)
+    const matchesEvent = eventFilter === "All Events" || item.eventName === eventFilter
 
-    return matchesSearch && matchesCategory && matchesType && matchesBuilding
+    return matchesSearch && matchesCategory && matchesType && matchesBuilding && matchesEvent
   })
 
   const sortedItems = [...filteredItems].sort((a, b) => {
@@ -247,6 +260,23 @@ export default function BrowsePage() {
                       {buildings.map((building) => (
                         <SelectItem key={building} value={building}>
                           {building}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Cultural Event */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block mcc-text-primary">Cultural Event</Label>
+                  <Select value={eventFilter} onValueChange={setEventFilter}>
+                    <SelectTrigger className="border-gray-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {culturalEvents.map((event) => (
+                        <SelectItem key={event} value={event}>
+                          {event}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -424,41 +454,37 @@ export default function BrowsePage() {
                               <h3 className="text-lg font-semibold mb-1 mcc-text-primary font-serif">{item.title}</h3>
                               <div className="flex items-center gap-2 mb-2">
                                 <Badge
-                                  variant={item.type === "lost" ? "destructive" : "default"}
-                                  className={item.type === "lost" ? "bg-red-500 text-white" : "bg-green-500 text-white"}
+                                  variant={item.status === "lost" ? "destructive" : "default"}
+                                  className={item.status === "lost" ? "bg-red-500 text-white" : "bg-green-500 text-white"}
                                 >
-                                  {item.type === "lost" ? "Lost" : "Found"}
+                                  {item.status === "lost" ? "Lost" : "Found"}
                                 </Badge>
                                 <Badge variant="outline" className="border-brand-primary/30 mcc-text-primary">
                                   {item.category}
                                 </Badge>
-                                {item.reward && (
-                                  <Badge variant="secondary" className="mcc-accent text-brand-text-light">
-                                    {item.reward}
-                                  </Badge>
-                                )}
+
                               </div>
                             </div>
-                            <span className="text-sm text-gray-500">{item.timeAgo}</span>
+                            <span className="text-sm text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</span>
                           </div>
                           <p className="text-brand-text-dark mb-3 line-clamp-2">{item.description}</p>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4 text-sm text-brand-text-dark">
                               <div className="flex items-center gap-1">
                                 <MapPin className="w-4 h-4 mcc-text-primary" />
-                                {item.building}
+                                {item.location}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4 mcc-text-accent" />
-                                {new Date(item.date).toLocaleDateString()}
+                                {new Date(item.createdAt).toLocaleDateString()}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Eye className="w-4 h-4" />
-                                {item.views}
+                                0
                               </div>
                               <div className="flex items-center gap-1">
                                 <Heart className="w-4 h-4" />
-                                {item.likes}
+                                {likedItems.has(item._id) ? 1 : 0}
                               </div>
                             </div>
                             <Button size="sm" className="mcc-accent hover:bg-red-800">
@@ -488,6 +514,7 @@ export default function BrowsePage() {
                     setTypeFilter("All")
                     setBuildingFilter("All Buildings")
                     setUrgencyFilter("All")
+                    setEventFilter("All Events")
                     setShowRewardOnly(false)
                   }}
                   className="mcc-accent hover:bg-red-800"

@@ -1,15 +1,29 @@
+# Render.com deployment configuration
+# WARNING: Remove hardcoded credentials before committing!
 services:
   - type: web
     name: mcc-lost-found-backend
     env: node
     region: oregon
     plan: free
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    rootDir: backend
+    buildCommand: npm install && npm run build || echo "No build script found"
+    startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: MONGODB_URI
-        value: mongodb+srv://2024178026_db_user:1DUnoM4iWPsDFQ0b@lostandfound.6mo1sey.mongodb.net/mcc-lost-found?retryWrites=true&w=majority&appName=lostAndFound
+        # TODO: Replace with secure environment variable
+        value: "SET_IN_RENDER_DASHBOARD"
       - key: JWT_SECRET
-        value: mcc-lost-found-production-secret-2024
+        # TODO: Generate strong random secret
+        value: "SET_IN_RENDER_DASHBOARD"
       - key: PORT
         value: 10000
+      - key: CLOUDINARY_CLOUD_NAME
+        value: "SET_IN_RENDER_DASHBOARD"
+      - key: CLOUDINARY_API_KEY
+        value: "SET_IN_RENDER_DASHBOARD"
+      - key: CLOUDINARY_API_SECRET
+        value: "SET_IN_RENDER_DASHBOARD"

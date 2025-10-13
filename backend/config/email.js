@@ -1,16 +1,23 @@
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// More reliable on Render
+const transporter = nodemailer.createTransporter({
+    service: 'gmail',
+    auth: {
+        type: 'OAuth2',
+        user: process.env.EMAIL_USER,
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+    }
+});
 
 const sendOTPEmail = async (email, otp) => {
-  console.log(`📧 Sending OTP ${otp} to ${email} via SendGrid`);
+  console.log(`📧 Sending OTP ${otp} to ${email} via Gmail OAuth2`);
   
-  const msg = {
+  const mailOptions = {
+    from: `"MCC Lost & Found" <${process.env.EMAIL_USER}>`,
     to: email,
-    from: {
-      email: process.env.SENDGRID_FROM_EMAIL || 'noreply@mcc.edu.in',
-      name: 'MCC Lost & Found'
-    },
     subject: 'Password Reset OTP - MCC Lost & Found',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -29,8 +36,8 @@ const sendOTPEmail = async (email, otp) => {
     `
   };
 
-  const result = await sgMail.send(msg);
-  console.log(`✅ Email sent successfully via SendGrid!`);
+  const result = await transporter.sendMail(mailOptions);
+  console.log(`✅ Email sent successfully via Gmail OAuth2!`);
   return result;
 };
 

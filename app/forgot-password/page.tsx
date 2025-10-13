@@ -24,6 +24,7 @@ export default function ForgotPasswordPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState("")
 
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -55,28 +56,27 @@ export default function ForgotPasswordPage() {
           return
         }
         
-        // Move to step 2 immediately, send email in background
-        setStep(2)
-        
-        // Send email via EmailJS in background
+        // Send email via EmailJS with optimized settings
         const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toLocaleTimeString()
-        console.log('📧 Sending email via EmailJS in background...')
+        console.log('📧 Sending OTP email...')
         
-        // Don't wait for email - let it send in background
-        emailjs.send(
-          process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
-          process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
-          {
-            to_email: email,
-            passcode: otpCode,
-            time: expiryTime
-          },
-          process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
-        ).then(() => {
-          console.log('✅ EmailJS success - email sent in background')
-        }).catch((emailError) => {
+        try {
+          await emailjs.send(
+            process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+            process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
+            {
+              to_email: email,
+              passcode: otpCode,
+              time: expiryTime
+            },
+            process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
+          )
+          console.log('✅ EmailJS success - OTP sent to email')
+          setStep(2)
+        } catch (emailError) {
           console.error('❌ EmailJS error:', emailError)
-        })
+          setError('Failed to send email. Please try again.')
+        }
       } else {
         const data = await response.json()
         console.error('❌ Backend error:', data)
@@ -161,6 +161,7 @@ export default function ForgotPasswordPage() {
                       maxLength={6}
                       required
                     />
+                    <p className="text-xs text-gray-500 mt-1">Check your email for the 6-digit OTP code.</p>
                   </div>
 
                   <div>

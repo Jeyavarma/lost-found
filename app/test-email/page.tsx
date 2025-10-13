@@ -27,9 +27,9 @@ export default function TestEmailPage() {
         process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
         process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
         {
-          to_email: email,
-          otp_code: "123456",
-          user_name: email.split('@')[0]
+          email: email,
+          passcode: "123456",
+          time: 10
         },
         process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
       )

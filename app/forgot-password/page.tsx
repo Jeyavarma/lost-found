@@ -47,69 +47,43 @@ export default function ForgotPasswordPage() {
         const data = await response.json()
         console.log('✅ Backend response:', data)
         
-        // Extract OTP from backend response (handle all formats)
-        let otpCode = data.otp || data.passcode || data.code
+        console.log('📝 Backend response:', data)
         
-        // Primary extraction: from message field
-        if (!otpCode && data.message) {
-          // Decode HTML entities first
+        // Check if Resend email was sent successfully
+        if (data.message && data.message.includes('via Resend')) {
+          console.log('✅ Resend email sent - proceeding to OTP step')
+          setStep(2)
+          return
+        }
+        
+        // Fallback: extract OTP from message if email service failed
+        let otpCode = null
+        if (data.message) {
           const decodedMessage = data.message.replace(/&#39;/g, "'").replace(/&quot;/g, '"')
-          console.log('📝 Decoded message:', decodedMessage)
-          
-          // Try direct regex match for 6 digits
           const otpMatch = decodedMessage.match(/\d{6}/)
           if (otpMatch) {
             otpCode = otpMatch[0]
-            console.log('🔍 Extracted OTP via regex:', otpCode)
+            console.log('🔢 Fallback OTP extracted:', otpCode)
           }
         }
         
-        console.log('🔢 Final OTP to send:', otpCode)
-        console.log('📝 Full backend response for debugging:', JSON.stringify(data, null, 2))
-        
-        if (!otpCode) {
-          setError('Failed to extract OTP from backend response')
-          console.error('❌ No OTP found in response:', data)
-          return
+        if (otpCode) {
+          setError('Email service unavailable. Check console for OTP.')
+          setStep(2)
+        } else {
+          setError('Failed to send OTP. Please try again.')
         }
         
         // Send email via EmailJS with timeout and retry
         const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toLocaleTimeString()
-        console.log('📧 Sending OTP email...')
-        
-        try {
-          // Add timeout wrapper
-          const emailPromise = emailjs.send(
-            process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
-            process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
-            {
-              to_email: email,
-              passcode: otpCode,
-              time: expiryTime
-            },
-            process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
-          )
-          
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Email timeout')), 15000)
-          )
-          
-          await Promise.race([emailPromise, timeoutPromise])
-          console.log('✅ EmailJS success - OTP sent to email')
+        // Backend now handles email sending via Resend
+        if (data.message.includes('via Resend')) {
+          console.log('✅ Resend email sent successfully')
           setStep(2)
-        } catch (emailError) {
-          console.error('❌ EmailJS error:', emailError)
-          
-          // For debugging: proceed anyway and show OTP in console
+        } else {
+          // Fallback: OTP displayed in response
           console.log('🔢 DEBUG: OTP for testing:', otpCode)
-          
-          if (emailError.message === 'Email timeout') {
-            setError('Email is taking longer than usual. Check console for OTP or try again.')
-          } else {
-            setError('Email failed. Check console for OTP or try again.')
-          }
-          
-          // Proceed to step 2 for testing
+          setError('Email service unavailable. Use OTP from console.')
           setStep(2)
         }
       } else {
@@ -196,7 +170,7 @@ export default function ForgotPasswordPage() {
                       maxLength={6}
                       required
                     />
-                    <p className="text-xs text-gray-500 mt-1">Check your email for the 6-digit OTP code.</p>
+                    <p className="text-xs text-gray-500 mt-1">Check your email for the 6-digit OTP code. Should arrive within 5-10 seconds.</p>
                   </div>
 
                   <div>

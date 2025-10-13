@@ -23,6 +23,8 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true)
     setError("")
 
+    console.log('🔵 Frontend: Submitting forgot password for:', email)
+
     try {
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
@@ -30,13 +32,25 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email })
       })
 
+      console.log('📡 Frontend: Response status:', response.status)
+      
       if (response.ok) {
+        const data = await response.json()
+        console.log('📄 Frontend: Response data:', data)
+        
+        // Show OTP if it's displayed in response (fallback mode)
+        if (data.message && data.message.includes('Your OTP is:')) {
+          setError(data.message)
+        }
+        
         setStep(2)
       } else {
         const data = await response.json()
+        console.log('❌ Frontend: Error data:', data)
         setError(data.error || 'Failed to send OTP')
       }
     } catch (error) {
+      console.error('❌ Frontend: Network error:', error)
       setError('Network error. Please try again.')
     } finally {
       setIsSubmitting(false)

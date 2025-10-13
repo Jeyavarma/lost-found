@@ -42,13 +42,15 @@ export default function ForgotPasswordPage() {
         
         // Send email via EmailJS
         try {
+          const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toLocaleTimeString()
+          
           await emailjs.send(
             process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
             process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
             {
-              email: email,
+              to_email: email,
               passcode: data.otp,
-              time: 10
+              time: expiryTime
             },
             process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
           )

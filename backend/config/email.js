@@ -1,20 +1,16 @@
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
-const transporter = nodemailer.createTransporter({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendOTPEmail = async (email, otp) => {
-  console.log(`📧 Attempting to send OTP ${otp} to ${email}`);
-  console.log(`📧 From: ${process.env.EMAIL_USER}`);
+  console.log(`📧 Sending OTP ${otp} to ${email} via SendGrid`);
   
-  const mailOptions = {
-    from: `"MCC Lost & Found" <${process.env.EMAIL_USER}>`,
+  const msg = {
     to: email,
+    from: {
+      email: process.env.SENDGRID_FROM_EMAIL || 'noreply@mcc.edu.in',
+      name: 'MCC Lost & Found'
+    },
     subject: 'Password Reset OTP - MCC Lost & Found',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -33,16 +29,8 @@ const sendOTPEmail = async (email, otp) => {
     `
   };
 
-  const result = await transporter.sendMail(mailOptions);
-  console.log(`✅ Email sent successfully! Message ID: ${result.messageId}`);
-  console.log(`📊 Email details:`, {
-    from: mailOptions.from,
-    to: mailOptions.to,
-    subject: mailOptions.subject,
-    accepted: result.accepted,
-    rejected: result.rejected
-  });
-  
+  const result = await sgMail.send(msg);
+  console.log(`✅ Email sent successfully via SendGrid!`);
   return result;
 };
 

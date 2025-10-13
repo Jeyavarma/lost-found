@@ -158,11 +158,13 @@ export default function ReportFoundPage() {
       }
     }
     
-    console.log('🔵 FOUND ITEM REQUEST - Sending via API route:')
-    const apiUrl = '/api/items'
+    console.log('🔵 FOUND ITEM REQUEST - Sending to backend:')
+    const apiUrl = 'https://lost-found-79xn.onrender.com/api/items'
     console.log('📍 URL:', apiUrl)
     console.log('📝 Method: POST')
     console.log('🔐 Auth:', isAuthenticated ? 'With Token' : 'Anonymous')
+    console.log('🔑 Auth Headers:', authHeaders)
+    console.log('📋 Form Data entries:', Object.fromEntries(submitData.entries()))
     
     try {
       const response = await fetch(apiUrl, {

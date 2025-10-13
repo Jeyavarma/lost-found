@@ -116,12 +116,12 @@ export default function EventHighlights() {
 
   return (
     <div className="mb-12">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-3xl font-bold mcc-text-primary font-serif">Event Highlights</h2>
-          <p className="text-brand-text-dark">Items commonly lost during MCC events and activities</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="text-center sm:text-left">
+          <h2 className="text-2xl sm:text-3xl font-bold mcc-text-primary font-serif">Event Highlights</h2>
+          <p className="text-sm sm:text-base text-brand-text-dark">Items commonly lost during MCC events and activities</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center sm:justify-end gap-2">
           <Button 
             variant="outline" 
             size="icon" 

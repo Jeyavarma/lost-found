@@ -395,7 +395,8 @@ export default function ReportLostPage() {
                           id="itemImage" 
                           type="file" 
                           className="hidden" 
-                          accept="image/*" 
+                          accept="image/*,image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                          capture="environment"
                           onChange={(e) => handleImageChange(e, 'item')}
                         />
                       </label>
@@ -423,7 +424,8 @@ export default function ReportLostPage() {
                           id="locationImage" 
                           type="file" 
                           className="hidden" 
-                          accept="image/*" 
+                          accept="image/*,image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                          capture="environment"
                           onChange={(e) => handleImageChange(e, 'location')}
                         />
                       </label>

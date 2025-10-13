@@ -46,14 +46,9 @@ export default function ForgotPasswordPage() {
         const data = await response.json()
         console.log('✅ Backend response:', data)
         
-        // Extract OTP from message or use otp field
-        let otpCode = data.otp
-        if (!otpCode && data.message) {
-          const otpMatch = data.message.match(/Your OTP is: (\d{6})/)
-          otpCode = otpMatch ? otpMatch[1] : null
-        }
-        
-        console.log('🔢 Extracted OTP:', otpCode)
+        // Use OTP directly from backend
+        const otpCode = data.otp
+        console.log('🔢 Backend OTP:', otpCode)
         
         if (!otpCode) {
           setError('Failed to get OTP from backend')

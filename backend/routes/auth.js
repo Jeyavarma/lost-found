@@ -3,7 +3,6 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
-const { sendOTPEmail } = require('../config/email');
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
@@ -78,14 +77,13 @@ router.post('/forgot-password', async (req, res) => {
     await OTP.deleteMany({ email });
     await new OTP({ email, otp }).save();
     
-    // Skip email - display OTP directly for instant response
     res.json({ 
-      message: `Your OTP is: ${otp}`,
-      note: 'Use this OTP to reset your password'
+      message: 'OTP sent to your email',
+      otp: otp // Send OTP to frontend for EmailJS
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ error: 'Failed to send OTP' });
+    res.status(500).json({ error: 'Failed to generate OTP' });
   }
 });
 
@@ -110,27 +108,7 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-router.post('/test-email', async (req, res) => {
-  try {
-    const { email } = req.body;
-    console.log(`🧪 Testing Gmail OAuth2 email to: ${email}`);
-    
-    const testOTP = '123456';
-    const result = await sendOTPEmail(email, testOTP);
-    
-    res.json({ 
-      success: true,
-      message: 'Gmail OAuth2 email sent successfully',
-      messageId: result.messageId
-    });
-  } catch (error) {
-    console.error('❌ Gmail OAuth2 email failed:', error);
-    res.status(500).json({ 
-      success: false,
-      error: error.message
-    });
-  }
-});
+
 
 router.get('/validate', async (req, res) => {
   try {

@@ -50,19 +50,17 @@ export default function ForgotPasswordPage() {
         // Extract OTP from backend response (handle all formats)
         let otpCode = data.otp || data.passcode || data.code
         
-        // Fallback 1: extract from message field
+        // Primary extraction: from message field
         if (!otpCode && data.message) {
-          const otpMatch = data.message.match(/\d{6}/)
-          otpCode = otpMatch ? otpMatch[0] : null
-          console.log('🔍 Extracted OTP from message:', otpCode)
-        }
-        
-        // Fallback 2: check if message contains "Your OTP is:"
-        if (!otpCode && data.message && data.message.includes('Your OTP is:')) {
-          const parts = data.message.split('Your OTP is:')
-          if (parts[1]) {
-            otpCode = parts[1].trim().match(/\d{6}/)?.[0]
-            console.log('🔍 Extracted OTP from "Your OTP is:":', otpCode)
+          // Decode HTML entities first
+          const decodedMessage = data.message.replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+          console.log('📝 Decoded message:', decodedMessage)
+          
+          // Try direct regex match for 6 digits
+          const otpMatch = decodedMessage.match(/\d{6}/)
+          if (otpMatch) {
+            otpCode = otpMatch[0]
+            console.log('🔍 Extracted OTP via regex:', otpCode)
           }
         }
         

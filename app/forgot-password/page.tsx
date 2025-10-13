@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
     console.log('🔵 Frontend: Submitting forgot password for:', email)
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetch('https://lost-found-79xn.onrender.com/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

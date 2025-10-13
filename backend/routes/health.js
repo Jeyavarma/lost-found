@@ -13,9 +13,16 @@ router.get('/health', (req, res) => {
 
   res.json({
     status: 'OK',
+    service: 'MCC Lost & Found API',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
     database: statusMap[dbStatus],
+    mongodb_connected: dbStatus === 1,
     timestamp: new Date().toISOString(),
-    mongodb_connected: dbStatus === 1
+    uptime: process.uptime(),
+    cors_enabled: true,
+    rate_limiting: true,
+    security_headers: true
   });
 });
 

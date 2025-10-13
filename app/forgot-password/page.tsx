@@ -46,6 +46,20 @@ export default function ForgotPasswordPage() {
         const data = await response.json()
         console.log('✅ Backend response:', data)
         
+        // Extract OTP from message or use otp field
+        let otpCode = data.otp
+        if (!otpCode && data.message) {
+          const otpMatch = data.message.match(/Your OTP is: (\d{6})/)
+          otpCode = otpMatch ? otpMatch[1] : null
+        }
+        
+        console.log('🔢 Extracted OTP:', otpCode)
+        
+        if (!otpCode) {
+          setError('Failed to get OTP from backend')
+          return
+        }
+        
         // Send email via EmailJS
         try {
           const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toLocaleTimeString()
@@ -54,12 +68,10 @@ export default function ForgotPasswordPage() {
             service: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
             template: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
             to_email: email,
-            passcode: data.otp,
+            passcode: otpCode,
             time: expiryTime
           })
           
-          // Ensure OTP is a string
-          const otpCode = String(data.otp)
           console.log('🔢 OTP being sent:', otpCode)
           
           const emailResult = await emailjs.send(

@@ -7,9 +7,11 @@
     "dev": "REACT_EDITOR=code next dev -p 3002",
     "lint": "next lint",
     "start": "next start",
-    "setup": "npm install && cd backend && npm install && cd ..",
+    "setup": "npm install --legacy-peer-deps && cd backend && npm install && cd ..",
     "seed": "cd backend && npm run seed && cd ..",
-    "dev:full": "./start-dev.sh"
+    "dev:full": "./start-dev.sh",
+    "vercel-build": "npm install --legacy-peer-deps && npm run build",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

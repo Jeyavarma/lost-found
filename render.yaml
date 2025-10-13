@@ -14,16 +14,18 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
-        # TODO: Replace with secure environment variable
-        value: "SET_IN_RENDER_DASHBOARD"
+        # Set your MongoDB connection string in Render dashboard
+        value: "mongodb+srv://username:password@cluster.mongodb.net/database"
       - key: JWT_SECRET
-        # TODO: Generate strong random secret
-        value: "SET_IN_RENDER_DASHBOARD"
+        # Generate a strong random secret (32+ characters)
+        value: "your-super-secure-jwt-secret-key-here"
       - key: PORT
         value: 10000
       - key: CLOUDINARY_CLOUD_NAME
-        value: "SET_IN_RENDER_DASHBOARD"
+        value: "your-cloudinary-cloud-name"
       - key: CLOUDINARY_API_KEY
-        value: "SET_IN_RENDER_DASHBOARD"
+        value: "your-cloudinary-api-key"
       - key: CLOUDINARY_API_SECRET
-        value: "SET_IN_RENDER_DASHBOARD"
+        value: "your-cloudinary-api-secret"
+      - key: FRONTEND_URL
+        value: "https://your-app.vercel.app"

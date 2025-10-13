@@ -28,9 +28,18 @@ app.use(securityHeaders);
 app.use(csrfProtection);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://lost-found-mcc.vercel.app', 'https://lost-found-79xn.onrender.com']
+    ? [
+        'https://lost-found-mcc.vercel.app',
+        'https://mcc-lost-found.vercel.app', 
+        'https://lost-found-79xn.onrender.com',
+        /\.vercel\.app$/,
+        'http://localhost:3000',
+        'http://localhost:3002'
+      ]
     : true,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With']
 }));
 app.use(express.json({ limit: '10mb' }));
 

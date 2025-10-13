@@ -424,7 +424,7 @@ export default function BrowsePage() {
                           </Button>
 
                         </div>
-                        <a href={`mailto:${item.reportedBy?.email}`}>
+                        <a href={`mailto:${item.reportedBy?.email || item.email}`}>
                           <Button size="sm" className="mcc-accent hover:bg-red-800">
                             <MessageCircle className="w-4 h-4 mr-1" />
                             Contact
@@ -493,10 +493,12 @@ export default function BrowsePage() {
                                 {likedItems.has(item._id) ? 1 : 0}
                               </div>
                             </div>
-                            <Button size="sm" className="mcc-accent hover:bg-red-800 text-xs sm:text-sm">
-                              <MessageCircle className="w-4 h-4 mr-1" />
-                              Contact
-                            </Button>
+                            <a href={`mailto:${item.reportedBy?.email || item.email}`}>
+                              <Button size="sm" className="mcc-accent hover:bg-red-800 text-xs sm:text-sm">
+                                <MessageCircle className="w-4 h-4 mr-1" />
+                                Contact
+                              </Button>
+                            </a>
                           </div>
                         </div>
                       </div>

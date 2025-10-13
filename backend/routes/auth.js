@@ -117,27 +117,21 @@ router.post('/reset-password', async (req, res) => {
 router.post('/test-email', async (req, res) => {
   try {
     const { email } = req.body;
-    console.log(`🧪 Testing email delivery to: ${email}`);
+    console.log(`🧪 Testing SendGrid email to: ${email}`);
     
     const testOTP = '123456';
     const result = await sendOTPEmail(email, testOTP);
     
     res.json({ 
       success: true,
-      message: 'Test email sent successfully',
-      details: {
-        messageId: result.messageId,
-        accepted: result.accepted,
-        rejected: result.rejected
-      }
+      message: 'SendGrid email sent successfully',
+      statusCode: result[0].statusCode
     });
   } catch (error) {
-    console.error('❌ Test email failed:', error);
-    res.json({ 
+    console.error('❌ SendGrid email failed:', error);
+    res.status(500).json({ 
       success: false,
-      error: error.message,
-      message: 'SMTP connection failed - Render blocks email ports',
-      solution: 'Use EmailJS or SendGrid instead'
+      error: error.message
     });
   }
 });

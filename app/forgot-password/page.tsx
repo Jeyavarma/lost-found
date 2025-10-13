@@ -47,17 +47,27 @@ export default function ForgotPasswordPage() {
         const data = await response.json()
         console.log('✅ Backend response:', data)
         
-        // Extract OTP from backend response (multiple formats)
-        let otpCode = data.otp || data.passcode
+        // Extract OTP from backend response (handle all formats)
+        let otpCode = data.otp || data.passcode || data.code
         
-        // Fallback: extract from message if otp field is missing
+        // Fallback 1: extract from message field
         if (!otpCode && data.message) {
           const otpMatch = data.message.match(/\d{6}/)
           otpCode = otpMatch ? otpMatch[0] : null
           console.log('🔍 Extracted OTP from message:', otpCode)
         }
         
+        // Fallback 2: check if message contains "Your OTP is:"
+        if (!otpCode && data.message && data.message.includes('Your OTP is:')) {
+          const parts = data.message.split('Your OTP is:')
+          if (parts[1]) {
+            otpCode = parts[1].trim().match(/\d{6}/)?.[0]
+            console.log('🔍 Extracted OTP from "Your OTP is:":', otpCode)
+          }
+        }
+        
         console.log('🔢 Final OTP to send:', otpCode)
+        console.log('📝 Full backend response for debugging:', JSON.stringify(data, null, 2))
         
         if (!otpCode) {
           setError('Failed to extract OTP from backend response')
@@ -91,11 +101,18 @@ export default function ForgotPasswordPage() {
           setStep(2)
         } catch (emailError) {
           console.error('❌ EmailJS error:', emailError)
+          
+          // For debugging: proceed anyway and show OTP in console
+          console.log('🔢 DEBUG: OTP for testing:', otpCode)
+          
           if (emailError.message === 'Email timeout') {
-            setError('Email is taking longer than usual. Please check your inbox in 1-2 minutes or try again.')
+            setError('Email is taking longer than usual. Check console for OTP or try again.')
           } else {
-            setError('Failed to send email. Please try again.')
+            setError('Email failed. Check console for OTP or try again.')
           }
+          
+          // Proceed to step 2 for testing
+          setStep(2)
         }
       } else {
         const data = await response.json()

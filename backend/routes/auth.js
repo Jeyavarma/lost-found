@@ -117,18 +117,18 @@ router.post('/reset-password', async (req, res) => {
 router.post('/test-email', async (req, res) => {
   try {
     const { email } = req.body;
-    console.log(`🧪 Testing SendGrid email to: ${email}`);
+    console.log(`🧪 Testing Gmail OAuth2 email to: ${email}`);
     
     const testOTP = '123456';
     const result = await sendOTPEmail(email, testOTP);
     
     res.json({ 
       success: true,
-      message: 'SendGrid email sent successfully',
-      statusCode: result[0].statusCode
+      message: 'Gmail OAuth2 email sent successfully',
+      messageId: result.messageId
     });
   } catch (error) {
-    console.error('❌ SendGrid email failed:', error);
+    console.error('❌ Gmail OAuth2 email failed:', error);
     res.status(500).json({ 
       success: false,
       error: error.message

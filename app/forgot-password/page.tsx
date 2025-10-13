@@ -47,21 +47,31 @@ export default function ForgotPasswordPage() {
         const data = await response.json()
         console.log('✅ Backend response:', data)
         
-        // Use OTP directly from backend
-        const otpCode = data.otp
-        console.log('🔢 Backend OTP:', otpCode)
+        // Extract OTP from backend response (multiple formats)
+        let otpCode = data.otp || data.passcode
+        
+        // Fallback: extract from message if otp field is missing
+        if (!otpCode && data.message) {
+          const otpMatch = data.message.match(/\d{6}/)
+          otpCode = otpMatch ? otpMatch[0] : null
+          console.log('🔍 Extracted OTP from message:', otpCode)
+        }
+        
+        console.log('🔢 Final OTP to send:', otpCode)
         
         if (!otpCode) {
-          setError('Failed to get OTP from backend')
+          setError('Failed to extract OTP from backend response')
+          console.error('❌ No OTP found in response:', data)
           return
         }
         
-        // Send email via EmailJS with optimized settings
+        // Send email via EmailJS with timeout and retry
         const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toLocaleTimeString()
         console.log('📧 Sending OTP email...')
         
         try {
-          await emailjs.send(
+          // Add timeout wrapper
+          const emailPromise = emailjs.send(
             process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
             process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
             {
@@ -71,11 +81,21 @@ export default function ForgotPasswordPage() {
             },
             process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
           )
+          
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Email timeout')), 15000)
+          )
+          
+          await Promise.race([emailPromise, timeoutPromise])
           console.log('✅ EmailJS success - OTP sent to email')
           setStep(2)
         } catch (emailError) {
           console.error('❌ EmailJS error:', emailError)
-          setError('Failed to send email. Please try again.')
+          if (emailError.message === 'Email timeout') {
+            setError('Email is taking longer than usual. Please check your inbox in 1-2 minutes or try again.')
+          } else {
+            setError('Failed to send email. Please try again.')
+          }
         }
       } else {
         const data = await response.json()

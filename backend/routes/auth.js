@@ -77,19 +77,10 @@ router.post('/forgot-password', async (req, res) => {
     await OTP.deleteMany({ email });
     await new OTP({ email, otp }).save();
     
-    // Try Resend first
-    const { sendOTPEmail } = require('../services/resend');
-    const emailResult = await sendOTPEmail(email, otp);
-    
-    if (emailResult.success) {
-      res.json({ message: 'OTP sent to your email via Resend' });
-    } else {
-      // Fallback: return OTP in response if email fails
-      res.json({ 
-        message: `Your OTP is: ${otp}`,
-        note: 'Email service unavailable - OTP displayed'
-      });
-    }
+    res.json({ 
+      message: 'OTP sent to your email',
+      otp: otp
+    });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Failed to generate OTP' });

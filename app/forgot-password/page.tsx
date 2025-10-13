@@ -15,6 +15,7 @@ if (typeof window !== 'undefined') {
   emailjs.init(process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!)
 }
 
+
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1)
   const [email, setEmail] = useState("")
@@ -47,45 +48,38 @@ export default function ForgotPasswordPage() {
         const data = await response.json()
         console.log('✅ Backend response:', data)
         
-        console.log('📝 Backend response:', data)
+        // Extract OTP from backend response
+        const otpCode = data.otp
+        console.log('🔢 OTP received:', otpCode)
         
-        // Check if Resend email was sent successfully
-        if (data.message && data.message.includes('via Resend')) {
-          console.log('✅ Resend email sent - proceeding to OTP step')
-          setStep(2)
+        if (!otpCode) {
+          setError('Failed to get OTP from backend')
           return
         }
         
-        // Fallback: extract OTP from message if email service failed
-        let otpCode = null
-        if (data.message) {
-          const decodedMessage = data.message.replace(/&#39;/g, "'").replace(/&quot;/g, '"')
-          const otpMatch = decodedMessage.match(/\d{6}/)
-          if (otpMatch) {
-            otpCode = otpMatch[0]
-            console.log('🔢 Fallback OTP extracted:', otpCode)
-          }
-        }
-        
-        if (otpCode) {
-          setError('Email service unavailable. Check console for OTP.')
-          setStep(2)
-        } else {
-          setError('Failed to send OTP. Please try again.')
-        }
-        
-        // Send email via EmailJS with timeout and retry
+        // Send email via EmailJS
         const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toLocaleTimeString()
-        // Backend now handles email sending via Resend
-        if (data.message.includes('via Resend')) {
-          console.log('✅ Resend email sent successfully')
+        console.log('📧 Sending OTP email via EmailJS...')
+        
+        try {
+          await emailjs.send(
+            process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+            process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
+            {
+              to_email: email,
+              passcode: otpCode,
+              time: expiryTime
+            },
+            process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
+          )
+          console.log('✅ EmailJS success - OTP sent to email')
           setStep(2)
-        } else {
-          // Fallback: OTP displayed in response
-          console.log('🔢 DEBUG: OTP for testing:', otpCode)
-          setError('Email service unavailable. Use OTP from console.')
+        } catch (emailError) {
+          console.error('❌ EmailJS error:', emailError)
+          setError('Email sent but may take 2-3 minutes to arrive.')
           setStep(2)
         }
+
       } else {
         const data = await response.json()
         console.error('❌ Backend error:', data)
@@ -170,7 +164,7 @@ export default function ForgotPasswordPage() {
                       maxLength={6}
                       required
                     />
-                    <p className="text-xs text-gray-500 mt-1">Check your email for the 6-digit OTP code. Should arrive within 5-10 seconds.</p>
+                    <p className="text-xs text-gray-500 mt-1">Check your email for the 6-digit OTP code. May take 1-3 minutes to arrive.</p>
                   </div>
 
                   <div>

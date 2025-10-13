@@ -29,41 +29,63 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true)
     setError("")
 
+    console.log('🔍 Starting forgot password for:', email)
+
     try {
       // Generate OTP and save to backend
+      console.log('📡 Calling backend API...')
       const response = await fetch('https://lost-found-79xn.onrender.com/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       })
 
+      console.log('📡 Backend response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Backend response:', data)
         
         // Send email via EmailJS
         try {
           const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toLocaleTimeString()
+          console.log('📧 Sending email via EmailJS...')
+          console.log('📧 EmailJS params:', {
+            service: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+            template: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
+            to_email: email,
+            passcode: data.otp,
+            time: expiryTime
+          })
           
-          await emailjs.send(
+          // Ensure OTP is a string
+          const otpCode = String(data.otp)
+          console.log('🔢 OTP being sent:', otpCode)
+          
+          const emailResult = await emailjs.send(
             process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
             process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
             {
               to_email: email,
-              passcode: data.otp,
+              passcode: otpCode,
               time: expiryTime
             },
             process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
           )
+          console.log('✅ EmailJS success:', emailResult)
           setStep(2)
         } catch (emailError) {
-          setError('Failed to send email. Please try again.')
+          console.error('❌ EmailJS error:', emailError)
+          setError(`Failed to send email: ${emailError}`)
         }
       } else {
         const data = await response.json()
+        console.error('❌ Backend error:', data)
         setError(data.error || 'Failed to send OTP')
       }
     } catch (error) {
-      setError('Network error. Please try again.')
+      console.error('❌ Network error:', error)
+      setError(`Network error: ${error}`)
     } finally {
       setIsSubmitting(false)
     }

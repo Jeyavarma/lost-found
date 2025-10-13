@@ -8,6 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, CheckCircle } from "lucide-react"
 import Navigation from "@/components/navigation"
+import emailjs from '@emailjs/browser'
+
+// Initialize EmailJS
+if (typeof window !== 'undefined') {
+  emailjs.init(process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!)
+}
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1)
@@ -23,34 +29,38 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true)
     setError("")
 
-    console.log('🔵 Frontend: Submitting forgot password for:', email)
-
     try {
+      // Generate OTP and save to backend
       const response = await fetch('https://lost-found-79xn.onrender.com/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       })
 
-      console.log('📡 Frontend: Response status:', response.status)
-      
       if (response.ok) {
         const data = await response.json()
-        console.log('📄 Frontend: Response data:', data)
         
-        // Show OTP if it's displayed in response (fallback mode)
-        if (data.message && data.message.includes('Your OTP is:')) {
-          setError(data.message)
+        // Send email via EmailJS
+        try {
+          await emailjs.send(
+            process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+            process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
+            {
+              to_email: email,
+              otp_code: data.otp,
+              user_name: email.split('@')[0]
+            },
+            process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
+          )
+          setStep(2)
+        } catch (emailError) {
+          setError('Failed to send email. Please try again.')
         }
-        
-        setStep(2)
       } else {
         const data = await response.json()
-        console.log('❌ Frontend: Error data:', data)
         setError(data.error || 'Failed to send OTP')
       }
     } catch (error) {
-      console.error('❌ Frontend: Network error:', error)
       setError('Network error. Please try again.')
     } finally {
       setIsSubmitting(false)

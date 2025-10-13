@@ -79,7 +79,7 @@ router.post('/forgot-password', async (req, res) => {
     
     res.json({ 
       message: 'OTP sent to your email',
-      otp: otp // Send OTP to frontend for EmailJS
+      otp: otp
     });
   } catch (error) {
     console.error('Forgot password error:', error);

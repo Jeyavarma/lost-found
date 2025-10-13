@@ -78,16 +78,11 @@ router.post('/forgot-password', async (req, res) => {
     await OTP.deleteMany({ email });
     await new OTP({ email, otp }).save();
     
-    try {
-      await sendOTPEmail(email, otp);
-      res.json({ message: 'OTP sent to your email' });
-    } catch (emailError) {
-      console.error('Email failed, showing OTP:', emailError.message);
-      res.json({ 
-        message: `Your OTP is: ${otp}`,
-        note: 'Email service unavailable - OTP displayed'
-      });
-    }
+    // Skip email - display OTP directly for instant response
+    res.json({ 
+      message: `Your OTP is: ${otp}`,
+      note: 'Use this OTP to reset your password'
+    });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Failed to send OTP' });

@@ -15,3 +15,22 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const authHeader = request.headers.get('authorization')
+    const response = await fetch(`${BACKEND_URL}/api/items/${params.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': authHeader || ''
+      }
+    })
+    const data = await response.json()
+    return NextResponse.json(data, { status: response.status })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 })
+  }
+}
+

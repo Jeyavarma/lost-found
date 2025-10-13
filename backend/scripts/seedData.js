@@ -17,7 +17,7 @@ const seedData = async () => {
       {
         name: 'John Student',
         email: 'student@mcc.edu.in',
-        password: 'password123',
+        password: process.env.STUDENT_PASSWORD || 'tempStudent123',
         role: 'student',
         studentId: 'MCC2024001',
         shift: 'aided',
@@ -27,13 +27,13 @@ const seedData = async () => {
       {
         name: 'Jane Staff',
         email: 'staff@mcc.edu.in',
-        password: 'password123',
+        password: process.env.STAFF_PASSWORD || 'tempStaff123',
         role: 'staff'
       },
       {
         name: 'Admin User',
         email: 'admin@mcc.edu.in',
-        password: 'password123',
+        password: process.env.ADMIN_PASSWORD || 'tempAdmin123',
         role: 'admin'
       }
     ]);

@@ -230,6 +230,19 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
   try {
     const { contactName, contactEmail, contactPhone, date, time, status, ...otherFields } = req.body;
     
+    // Input validation
+    if (!status || !['lost', 'found'].includes(status)) {
+      return res.status(400).json({ message: 'Valid status (lost/found) is required' });
+    }
+    
+    if (!contactName || !contactEmail) {
+      return res.status(400).json({ message: 'Contact name and email are required' });
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+      return res.status(400).json({ message: 'Valid email address is required' });
+    }
+    
     console.log('📝 Item submission - Status:', status, 'User ID:', req.userId || 'None');
     
     // Business rule: Lost items require authentication, Found items can be anonymous

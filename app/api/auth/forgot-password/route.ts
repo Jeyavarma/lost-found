@@ -5,21 +5,27 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://lost-found-7
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    console.log('🔵 Frontend API: Forgot password request for:', body.email)
+    
+    // Input validation
+    if (!body.email || typeof body.email !== 'string') {
+      return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
+    }
+    
+    // Sanitize email
+    const email = body.email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
+    }
     
     const response = await fetch(`${BACKEND_URL}/api/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({ email })
     })
     
-    console.log('📡 Backend response status:', response.status)
     const data = await response.json()
-    console.log('📄 Backend response data:', data)
-    
     return NextResponse.json(data, { status: response.status })
   } catch (error) {
-    console.error('❌ Frontend API error:', error)
     return NextResponse.json({ error: 'Failed to send OTP' }, { status: 500 })
   }
 }

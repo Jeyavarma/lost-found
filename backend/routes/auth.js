@@ -9,6 +9,11 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
+    // Input validation
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+    
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -31,6 +36,11 @@ router.post('/login', async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, phone, studentId, shift, department, year, rollNumber } = req.body;
+    
+    // Input validation
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email and password are required' });
+    }
     
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -67,6 +77,11 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     
+    // Input validation
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+    
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -90,6 +105,11 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   try {
     const { email, otp, password } = req.body;
+    
+    // Input validation
+    if (!email || !otp || !password) {
+      return res.status(400).json({ error: 'Email, OTP and password are required' });
+    }
     
     const otpDoc = await OTP.findOne({ email, otp });
     if (!otpDoc) {

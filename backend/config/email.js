@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 // More reliable on Render
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         type: 'OAuth2',

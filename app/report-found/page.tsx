@@ -193,6 +193,28 @@ export default function ReportFoundPage() {
   }
 
   const handleInputChange = (field: string, value: string) => {
+    // Validate time if it's a time field and date is today
+    if (field === 'time' && formData.date) {
+      const today = new Date().toISOString().split('T')[0]
+      const currentTime = new Date().toTimeString().slice(0, 5)
+      
+      if (formData.date === today && value > currentTime) {
+        alert('Cannot select a future time for today. Please select a time that has already passed.')
+        return
+      }
+    }
+    
+    // Validate date and reset time if date changes to today with future time
+    if (field === 'date') {
+      const today = new Date().toISOString().split('T')[0]
+      const currentTime = new Date().toTimeString().slice(0, 5)
+      
+      if (value === today && formData.time > currentTime) {
+        setFormData(prev => ({ ...prev, [field]: value, time: '' }))
+        return
+      }
+    }
+    
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -479,6 +501,7 @@ export default function ReportFoundPage() {
                           type="date"
                           value={formData.date}
                           onChange={(e) => handleInputChange("date", e.target.value)}
+                          max={new Date().toISOString().split('T')[0]}
                           required
                         />
                       </div>

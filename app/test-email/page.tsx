@@ -22,18 +22,22 @@ export default function TestEmailPage() {
     setIsSubmitting(true)
     setMessage("")
 
+    // Generate random 6-digit OTP for testing
+    const testOTP = Math.floor(100000 + Math.random() * 900000).toString()
+    const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toLocaleTimeString()
+
     try {
       await emailjs.send(
         process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
         process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
         {
-          email: email,
-          passcode: "123456",
-          time: 10
+          to_email: email,
+          passcode: testOTP,
+          time: expiryTime
         },
         process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
       )
-      setMessage("✅ Test email sent successfully!")
+      setMessage(`✅ Test email sent with OTP: ${testOTP}`)
     } catch (error) {
       setMessage("❌ Failed to send email. Check your EmailJS configuration.")
       console.error('EmailJS error:', error)

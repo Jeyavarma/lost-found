@@ -228,7 +228,7 @@ export default function BrowsePage() {
                     <SelectTrigger className="border-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg">
                       {categories.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
@@ -245,7 +245,7 @@ export default function BrowsePage() {
                     <SelectTrigger className="border-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg">
                       <SelectItem value="All">All Items</SelectItem>
                       <SelectItem value="lost">Lost Items</SelectItem>
                       <SelectItem value="found">Found Items</SelectItem>
@@ -260,7 +260,7 @@ export default function BrowsePage() {
                     <SelectTrigger className="border-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg">
                       {buildings.map((building) => (
                         <SelectItem key={building} value={building}>
                           {building}
@@ -277,7 +277,7 @@ export default function BrowsePage() {
                     <SelectTrigger className="border-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg">
                       {culturalEvents.map((event) => (
                         <SelectItem key={event} value={event}>
                           {event}
@@ -296,7 +296,7 @@ export default function BrowsePage() {
                     <SelectTrigger className="border-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg">
                       <SelectItem value="newest">Newest First</SelectItem>
                       <SelectItem value="oldest">Oldest First</SelectItem>
                       <SelectItem value="most-viewed">Most Viewed</SelectItem>

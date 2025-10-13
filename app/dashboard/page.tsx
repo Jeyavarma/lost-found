@@ -29,11 +29,13 @@ interface Item {
   createdAt: string
   itemImageUrl?: string
   imageUrl?: string
+  matchScore?: number
 }
 
 export default function DashboardPage() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [myItems, setMyItems] = useState<Item[]>([])
+  const [potentialMatches, setPotentialMatches] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [deleteModal, setDeleteModal] = useState<{show: boolean, item: Item | null}>({show: false, item: null})
@@ -66,6 +68,34 @@ export default function DashboardPage() {
       }
     } catch (err) {
       setError('Network error loading items')
+    }
+  }
+
+  const loadPotentialMatches = async () => {
+    try {
+      const token = getAuthToken()
+      // Try API route first, fallback to direct backend call
+      let response = await fetch('/api/items/potential-matches', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      // If API route fails (404), try direct backend call
+      if (response.status === 404) {
+        response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://lost-found-79xn.onrender.com'}/api/items/potential-matches`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+      }
+      
+      if (response.ok) {
+        const matches = await response.json()
+        setPotentialMatches(matches)
+      }
+    } catch (err) {
+      console.error('Error loading potential matches:', err)
     }
   }
 
@@ -122,12 +152,14 @@ export default function DashboardPage() {
       setUser(userData)
       
       await loadUserItems()
+      await loadPotentialMatches()
       setLoading(false)
     }
 
     const handleItemSubmitted = () => {
       console.log('Item submitted event received, reloading items...')
       loadUserItems()
+      loadPotentialMatches()
     }
     
     window.addEventListener('itemSubmitted', handleItemSubmitted)
@@ -136,6 +168,7 @@ export default function DashboardPage() {
     // Also listen for storage events in case of multiple tabs
     const handleStorageChange = () => {
       loadUserItems()
+      loadPotentialMatches()
     }
     window.addEventListener('storage', handleStorageChange)
     
@@ -246,11 +279,68 @@ export default function DashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No potential matches found yet</p>
-                  <p className="text-sm text-gray-500">We'll notify you when similar items are reported</p>
-                </div>
+                {potentialMatches.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No potential matches found yet</p>
+                    <p className="text-sm text-gray-500">We'll notify you when similar items are reported</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {potentialMatches.map((item) => (
+                      <div key={item._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex gap-4">
+                            {(item.itemImageUrl || item.imageUrl) && (
+                              <img 
+                                src={item.itemImageUrl || item.imageUrl} 
+                                alt={item.title}
+                                className="w-16 h-16 object-cover rounded-lg"
+                              />
+                            )}
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold">{item.title}</h3>
+                                <Badge className={item.status === 'lost' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}>
+                                  {item.status === 'lost' ? 'Lost' : 'Found'}
+                                </Badge>
+                                {item.matchScore && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.matchScore >= 60 ? '🔥 High Match' : 
+                                     item.matchScore >= 40 ? '⭐ Good Match' : 
+                                     '💡 Possible Match'}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {item.location}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {new Date(item.date || item.createdAt).toLocaleDateString()}
+                                </div>
+                                {item.matchScore && (
+                                  <div className="flex items-center gap-1 text-blue-600">
+                                    <span className="text-xs font-medium">Match: {item.matchScore}%</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

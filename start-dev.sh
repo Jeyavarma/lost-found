@@ -25,7 +25,9 @@ fi
 # Start the backend server
 echo "Starting backend server..."
 cd backend
-if ! npm run dev & then
+npm run dev &
+BACKEND_PID=$!
+if ! kill -0 $BACKEND_PID 2>/dev/null; then
     echo "Error: Failed to start backend server"
     exit 1
 fi
@@ -38,12 +40,13 @@ sleep 5
 
 # Start the frontend server
 echo "Starting frontend server..."
-if ! npm run dev & then
+npm run dev &
+FRONTEND_PID=$!
+if ! kill -0 $FRONTEND_PID 2>/dev/null; then
     echo "Error: Failed to start frontend server"
     cleanup
     exit 1
 fi
-FRONTEND_PID=$!
 
 echo "✅ Both servers are running!"
 echo "📱 Frontend: http://localhost:3002"

@@ -4,11 +4,12 @@ const BACKEND_URL = process.env.BACKEND_URL || 'https://lost-found-79xn.onrender
 
 export async function GET(
   request: Request,
-  { params }: { params: { eventName: string } }
+  { params }: { params: Promise<{ eventName: string }> }
 ) {
+  const { eventName } = await params
   try {
-    const eventName = decodeURIComponent(params.eventName)
-    const response = await fetch(`${BACKEND_URL}/api/items/events/${encodeURIComponent(eventName)}`, {
+    const decodedEventName = decodeURIComponent(eventName)
+    const response = await fetch(`${BACKEND_URL}/api/items/events/${encodeURIComponent(decodedEventName)}`, {
       headers: {
         'Content-Type': 'application/json',
       },

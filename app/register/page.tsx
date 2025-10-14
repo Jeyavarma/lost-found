@@ -160,7 +160,8 @@ export default function RegisterPage(): JSX.Element {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch('https://lost-found-79xn.onrender.com/api/auth/register', {
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register` : '/api/auth/register'
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -28,8 +28,8 @@ NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your-emailjs-public-key
 ```
 NODE_ENV=production
 PORT=10000
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
-JWT_SECRET=your-super-secure-jwt-secret-32-chars-min
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>
+JWT_SECRET=<generate-secure-32-char-secret>
 CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
 CLOUDINARY_API_KEY=your-cloudinary-api-key
 CLOUDINARY_API_SECRET=your-cloudinary-api-secret

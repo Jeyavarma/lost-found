@@ -77,20 +77,23 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     
-    // Input validation
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // Input validation with safer regex
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email || !emailRegex.test(email)) {
       return res.status(400).json({ error: 'Valid email is required' });
     }
     
-    const user = await User.findOne({ email });
+    // Sanitize email
+    const sanitizedEmail = String(email).toLowerCase().trim();
+    const user = await User.findOne({ email: sanitizedEmail });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    await OTP.deleteMany({ email });
-    await new OTP({ email, otp }).save();
+    await OTP.deleteMany({ email: sanitizedEmail });
+    await new OTP({ email: sanitizedEmail, otp }).save();
     
     res.json({ 
       message: 'OTP sent to your email',
@@ -111,12 +114,16 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Email, OTP and password are required' });
     }
     
-    const otpDoc = await OTP.findOne({ email, otp });
+    // Sanitize inputs
+    const sanitizedEmail = String(email).toLowerCase().trim();
+    const sanitizedOtp = String(otp).replace(/[^0-9]/g, '');
+    
+    const otpDoc = await OTP.findOne({ email: sanitizedEmail, otp: sanitizedOtp });
     if (!otpDoc) {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
     
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: sanitizedEmail });
     user.password = password;
     await user.save();
     

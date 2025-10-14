@@ -415,50 +415,7 @@ export default function LoginPage() {
               </CardContent>
             </Card>
 
-            {/* Admin Dashboard Preview */}
-            {selectedPortal === "admin" && (
-              <Card className="mcc-card border-2 border-brand-accent/20">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold mcc-text-primary flex items-center gap-2">
-                    <Settings className="w-5 h-5" />
-                    Dashboard Preview
-                  </CardTitle>
-                  <CardDescription>Live system statistics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg border border-brand-primary/20">
-                      <div className="flex items-center justify-center mb-2">
-                        <TrendingUp className="w-6 h-6 mcc-text-primary" />
-                      </div>
-                      <div className="text-2xl font-bold mcc-text-primary">{adminStats.totalItems}</div>
-                      <div className="text-sm text-brand-text-dark">Total Items</div>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex items-center justify-center mb-2">
-                        <Clock className="w-6 h-6 text-green-600" />
-                      </div>
-                      <div className="text-2xl font-bold text-green-700">{adminStats.activeItems}</div>
-                      <div className="text-sm text-brand-text-dark">Active Items</div>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 rounded-lg border border-brand-accent/20">
-                      <div className="flex items-center justify-center mb-2">
-                        <Star className="w-6 h-6 mcc-text-accent" />
-                      </div>
-                      <div className="text-2xl font-bold mcc-text-accent">{adminStats.resolvedThisWeek}</div>
-                      <div className="text-sm text-brand-text-dark">Resolved This Week</div>
-                    </div>
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <div className="flex items-center justify-center mb-2">
-                        <Shield className="w-6 h-6 text-yellow-600" />
-                      </div>
-                      <div className="text-2xl font-bold text-yellow-700">{adminStats.pendingVerification}</div>
-                      <div className="text-sm text-brand-text-dark">Pending Verification</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+
 
             {/* Security Notice */}
             <Card className="mcc-card border-2 border-green-200 bg-green-50">

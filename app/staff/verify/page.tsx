@@ -50,11 +50,11 @@ export default function StaffVerifyPage() {
     }
   ])
 
-  const [selectedItem, setSelectedItem] = useState(null)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
   const [verificationNotes, setVerificationNotes] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
 
-  const handleVerify = (itemId, action) => {
+  const handleVerify = (itemId: number, action: string) => {
     setItems(prev => prev.map(item => 
       item.id === itemId 
         ? { ...item, status: action, verificationNotes }

@@ -360,7 +360,7 @@ export default function BrowsePage() {
                 {sortedItems.map((item) => (
                   <Card
                     key={item._id}
-                    className="mcc-card hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden border-2 border-gray-200 h-full flex flex-col"
+                    className="mcc-card hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden border-2 border-gray-200 h-[420px] flex flex-col"
                   >
                     <div className="relative">
                       <img
@@ -391,14 +391,14 @@ export default function BrowsePage() {
                         <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</span>
                       </div>
 
-                      <CardTitle className="text-base sm:text-lg mb-2 group-hover:text-brand-primary transition-colors font-serif">
+                      <CardTitle className="text-base sm:text-lg mb-2 group-hover:text-brand-primary transition-colors font-serif min-h-[1.75rem] line-clamp-1">
                         {item.title}
                       </CardTitle>
                       <CardDescription className="mb-3 line-clamp-2 text-brand-text-dark min-h-[2.5rem]">
                         {item.description}
                       </CardDescription>
 
-                      <div className="space-y-1 text-xs sm:text-sm text-brand-text-dark mb-3 sm:mb-4">
+                      <div className="space-y-1 text-xs sm:text-sm text-brand-text-dark mb-3 sm:mb-4 min-h-[2.5rem]">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4 mcc-text-primary" />
                           <span className="truncate">{item.location}</span>

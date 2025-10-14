@@ -394,7 +394,7 @@ export default function BrowsePage() {
                       <CardTitle className="text-base sm:text-lg mb-2 group-hover:text-brand-primary transition-colors font-serif">
                         {item.title}
                       </CardTitle>
-                      <CardDescription className="mb-3 line-clamp-2 text-brand-text-dark flex-1">
+                      <CardDescription className="mb-3 line-clamp-2 text-brand-text-dark min-h-[2.5rem]">
                         {item.description}
                       </CardDescription>
 

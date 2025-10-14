@@ -151,6 +151,12 @@ export default function DashboardPage() {
       const userData = getUserData()
       setUser(userData)
       
+      // Redirect staff users to staff portal
+      if (userData?.role === 'staff') {
+        window.location.href = '/staff'
+        return
+      }
+      
       await loadUserItems()
       await loadPotentialMatches()
       setLoading(false)

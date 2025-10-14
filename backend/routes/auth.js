@@ -35,7 +35,7 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone, studentId, shift, department, year, rollNumber } = req.body;
+    const { name, email, password, phone, studentId, shift, department, year, rollNumber, role } = req.body;
     
     // Input validation
     if (!name || !email || !password) {
@@ -47,11 +47,15 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Validate role if provided
+    const validRoles = ['student', 'staff', 'admin'];
+    const userRole = role && validRoles.includes(role) ? role : 'student';
+
     const user = new User({ 
       name, 
       email, 
       password, 
-      role: 'student',
+      role: userRole,
       phone,
       studentId,
       shift,
@@ -65,7 +69,9 @@ router.post('/register', async (req, res) => {
     
     res.status(201).json({
       token,
+      userId: user._id,
       name: user.name,
+      email: user.email,
       role: user.role
     });
   } catch (error) {

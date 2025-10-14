@@ -378,6 +378,21 @@ export default function LoginPage() {
                       </Link>
                     </div>
                   )}
+
+                  {selectedPortal === "admin" && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <p className="text-sm text-brand-text-dark mb-3">Need to create an account?</p>
+                      <Link href="/admin/register">
+                        <Button
+                          variant="outline"
+                          className="w-full border-brand-accent/30 mcc-text-accent hover:bg-red-50 bg-transparent"
+                        >
+                          <Shield className="w-4 h-4 mr-2" />
+                          Create Admin Account
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

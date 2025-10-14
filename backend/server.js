@@ -13,6 +13,9 @@ const { authLimiter, apiLimiter, securityHeaders, csrfProtection } = require('./
 
 const app = express();
 
+// Trust proxy for rate limiting on Render
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {

@@ -159,7 +159,7 @@ export default function ReportFoundPage() {
     }
     
     console.log('🔵 FOUND ITEM REQUEST - Sending to backend:')
-    const apiUrl = 'https://lost-found-79xn.onrender.com/api/items'
+    const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/items` : '/api/items'
     console.log('📍 URL:', apiUrl)
     console.log('📝 Method: POST')
     console.log('🔐 Auth:', isAuthenticated ? 'With Token' : 'Anonymous')
@@ -418,7 +418,7 @@ export default function ReportFoundPage() {
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
                           {itemImagePreview ? (
                             <>
-                              <img src={itemImagePreview} alt="Item Preview" className="h-32 w-full object-cover rounded-lg mb-2" />
+                              <Image src={itemImagePreview} alt="Item Preview" className="h-32 w-full object-cover rounded-lg mb-2" width={200} height={128} />
                               <p className="text-xs text-gray-500">Click to change</p>
                             </>
                           ) : (
@@ -446,7 +446,7 @@ export default function ReportFoundPage() {
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
                           {locationImagePreview ? (
                             <>
-                              <img src={locationImagePreview} alt="Location Preview" className="h-32 w-full object-cover rounded-lg mb-2" />
+                              <Image src={locationImagePreview} alt="Location Preview" className="h-32 w-full object-cover rounded-lg mb-2" width={200} height={128} />
                               <p className="text-xs text-gray-500">Click to change</p>
                             </>
                           ) : (

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Upload, User, GraduationCap, CheckCircle, Home } from "lucide-react"
+import Image from "next/image"
 import Navigation from "@/components/navigation"
 
 const categories = ["ID Card", "Mobile Phone", "Laptop", "Wallet", "Keys", "Books", "Clothing", "Jewelry", "Other"]
@@ -141,7 +142,8 @@ export default function ReportLostPage() {
         console.log('⚠️ WARNING: No token available for submission!')
       }
       
-      const response = await fetch('https://lost-found-79xn.onrender.com/api/items', {
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/items` : '/api/items'
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers,
         body: submitData
@@ -402,7 +404,7 @@ export default function ReportLostPage() {
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
                           {itemImagePreview ? (
                             <>
-                              <img src={itemImagePreview} alt="Item Preview" className="h-32 w-full object-cover rounded-lg mb-2" />
+                              <Image src={itemImagePreview} alt="Item Preview" className="h-32 w-full object-cover rounded-lg mb-2" width={200} height={128} />
                               <p className="text-xs text-gray-500">Click to change</p>
                             </>
                           ) : (
@@ -430,7 +432,7 @@ export default function ReportLostPage() {
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
                           {locationImagePreview ? (
                             <>
-                              <img src={locationImagePreview} alt="Location Preview" className="h-32 w-full object-cover rounded-lg mb-2" />
+                              <Image src={locationImagePreview} alt="Location Preview" className="h-32 w-full object-cover rounded-lg mb-2" width={200} height={128} />
                               <p className="text-xs text-gray-500">Click to change</p>
                             </>
                           ) : (

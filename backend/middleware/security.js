@@ -41,14 +41,15 @@ const csrfProtection = (req, res, next) => {
       'https://lost-found-79xn.onrender.com'
     ];
     
-    // Also allow any vercel.app subdomain in production
-    const isVercelDomain = requestOrigin && requestOrigin.match(/https:\/\/.*\.vercel\.app$/);
-    
     if (!origin && !referer) {
       return res.status(403).json({ error: 'Missing origin header' });
     }
     
     const requestOrigin = origin || (referer && new URL(referer).origin);
+    
+    // Also allow any vercel.app subdomain in production
+    const isVercelDomain = requestOrigin && requestOrigin.match(/https:\/\/.*\.vercel\.app$/);
+    
     if (!allowedOrigins.includes(requestOrigin) && !isVercelDomain) {
       return res.status(403).json({ error: 'Invalid origin' });
     }

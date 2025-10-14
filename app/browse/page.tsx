@@ -360,7 +360,7 @@ export default function BrowsePage() {
                 {sortedItems.map((item) => (
                   <Card
                     key={item._id}
-                    className="mcc-card hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden border-2 border-gray-200"
+                    className="mcc-card hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden border-2 border-gray-200 h-full flex flex-col"
                   >
                     <div className="relative">
                       <img
@@ -383,7 +383,7 @@ export default function BrowsePage() {
 
                     </div>
 
-                    <CardContent className="p-3 sm:p-4">
+                    <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
                       <div className="flex items-center justify-between mb-2">
                         <Badge variant="outline" className="text-xs border-brand-primary/30 mcc-text-primary">
                           {item.category}
@@ -394,7 +394,7 @@ export default function BrowsePage() {
                       <CardTitle className="text-base sm:text-lg mb-2 group-hover:text-brand-primary transition-colors font-serif">
                         {item.title}
                       </CardTitle>
-                      <CardDescription className="mb-3 line-clamp-2 text-brand-text-dark">
+                      <CardDescription className="mb-3 line-clamp-2 text-brand-text-dark flex-1">
                         {item.description}
                       </CardDescription>
 
@@ -409,9 +409,7 @@ export default function BrowsePage() {
                         </div>
                       </div>
 
-
-
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mt-auto">
                         <div className="flex items-center gap-3">
                           <Button
                             variant="ghost"
@@ -424,7 +422,7 @@ export default function BrowsePage() {
                           </Button>
 
                         </div>
-                        <a href={`mailto:${item.reportedBy?.email || item.email}`}>
+                        <a href={`mailto:${item.reportedBy?.email || item.email || 'lostfound@mcc.edu.in'}`}>
                           <Button size="sm" className="mcc-accent hover:bg-red-800">
                             <MessageCircle className="w-4 h-4 mr-1" />
                             Contact
@@ -493,7 +491,7 @@ export default function BrowsePage() {
                                 {likedItems.has(item._id) ? 1 : 0}
                               </div>
                             </div>
-                            <a href={`mailto:${item.reportedBy?.email || item.email}`}>
+                            <a href={`mailto:${item.reportedBy?.email || item.email || 'lostfound@mcc.edu.in'}`}>
                               <Button size="sm" className="mcc-accent hover:bg-red-800 text-xs sm:text-sm">
                                 <MessageCircle className="w-4 h-4 mr-1" />
                                 Contact

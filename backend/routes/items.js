@@ -239,9 +239,19 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
       return res.status(400).json({ message: 'Contact name and email are required' });
     }
     
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+    // Use safer email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(contactEmail)) {
       return res.status(400).json({ message: 'Valid email address is required' });
     }
+    
+    // Sanitize inputs
+    const sanitize = (str) => String(str).replace(/[<>"'&]/g, '').trim();
+    const sanitizedData = {
+      contactName: sanitize(contactName),
+      contactEmail: sanitize(contactEmail),
+      contactPhone: contactPhone ? sanitize(contactPhone) : undefined
+    };
     
     console.log('📝 Item submission - Status:', status, 'User ID:', req.userId || 'None');
     
@@ -255,7 +265,7 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
       ...otherFields,
       status,
       reportedBy: req.userId || null,
-      contactInfo: `${contactName} - ${contactEmail}${contactPhone ? ` - ${contactPhone}` : ''}`,
+      contactInfo: `${sanitizedData.contactName} - ${sanitizedData.contactEmail}${sanitizedData.contactPhone ? ` - ${sanitizedData.contactPhone}` : ''}`,
       dateLostFound: date ? new Date(date) : undefined,
       timeLostFound: time || undefined,
       timeReported: new Date().toLocaleTimeString('en-IN', { 

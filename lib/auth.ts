@@ -8,6 +8,11 @@ export interface User {
 export const AUTH_TOKEN_KEY = 'authToken'
 export const USER_DATA_KEY = 'userData'
 
+// Get backend URL from environment
+const getBackendUrl = () => {
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+}
+
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem(AUTH_TOKEN_KEY)
@@ -35,12 +40,19 @@ export function getUserData(): User | null {
 
 export function setUserData(user: User): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(USER_DATA_KEY, JSON.stringify(user))
+  // Sanitize user data before storing
+  const sanitizedUser = {
+    id: String(user.id).replace(/[<>"'&]/g, ''),
+    name: String(user.name).replace(/[<>"'&]/g, ''),
+    email: String(user.email).replace(/[<>"'&]/g, ''),
+    role: user.role
+  }
+  localStorage.setItem(USER_DATA_KEY, JSON.stringify(sanitizedUser))
 }
 
 export async function validateToken(token: string): Promise<boolean> {
   try {
-    const response = await fetch('https://lost-found-79xn.onrender.com/api/auth/validate', {
+    const response = await fetch(`${getBackendUrl()}/api/auth/validate`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`

@@ -356,11 +356,11 @@ export default function BrowsePage() {
                 ))}
               </div>
             ) : viewMode === "grid" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-fr">
                 {sortedItems.map((item) => (
                   <Card
                     key={item._id}
-                    className="mcc-card hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden border-2 border-gray-200 h-[420px] flex flex-col"
+                    className="mcc-card hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden border-2 border-gray-200 flex flex-col"
                   >
                     <div className="relative">
                       <img

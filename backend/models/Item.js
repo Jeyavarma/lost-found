@@ -5,7 +5,7 @@ const itemSchema = new mongoose.Schema({
   description: { type: String, required: true },
   category: { type: String, required: true },
   location: { type: String, required: true },
-  status: { type: String, enum: ['lost', 'found', 'resolved'], default: 'lost' },
+  status: { type: String, enum: ['lost', 'found', 'resolved', 'claimed', 'verified'], default: 'lost' },
   reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
   contactInfo: { type: String, required: true },
   imageUrl: String,
@@ -32,7 +32,13 @@ const itemSchema = new mongoose.Schema({
       'Games Fury',
       'Founders Day'
     ]
-  }
+  },
+  claimedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  claimDate: { type: Date },
+  verificationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  ownershipProof: String,
+  additionalClaimInfo: String,
+  adminNotes: String
 }, { timestamps: true });
 
 module.exports = mongoose.model('Item', itemSchema);

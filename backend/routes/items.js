@@ -411,4 +411,37 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Claim an item
+router.post('/:id/claim', auth, async (req, res) => {
+  try {
+    const { ownershipProof, additionalInfo } = req.body;
+    
+    const item = await Item.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    
+    if (item.status !== 'found') {
+      return res.status(400).json({ message: 'Item is not available for claiming' });
+    }
+    
+    if (item.claimedBy) {
+      return res.status(400).json({ message: 'Item is already claimed' });
+    }
+    
+    item.status = 'claimed';
+    item.claimedBy = req.userId;
+    item.claimDate = new Date();
+    item.ownershipProof = ownershipProof;
+    item.additionalClaimInfo = additionalInfo;
+    item.verificationStatus = 'pending';
+    
+    await item.save();
+    
+    res.json({ message: 'Claim submitted successfully. Awaiting admin verification.', item });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

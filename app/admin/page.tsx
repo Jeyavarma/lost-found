@@ -23,9 +23,7 @@ import {
   Trash2,
   Calendar,
   MapPin,
-  MessageCircle,
-  Trash2,
-  Shield
+  MessageCircle
 } from 'lucide-react'
 import Link from 'next/link'
 import Navigation from '@/components/navigation'
@@ -35,11 +33,10 @@ import { BACKEND_URL } from '@/lib/config'
 interface AdminStats {
   totalUsers: number
   totalItems: number
-  pendingItems: number
-  resolvedItems: number
-  todayReports: number
   lostItems: number
   foundItems: number
+  todayReports: number
+  totalFeedback: number
 }
 
 interface Item {
@@ -63,11 +60,10 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     totalItems: 0,
-    pendingItems: 0,
-    resolvedItems: 0,
-    todayReports: 0,
     lostItems: 0,
-    foundItems: 0
+    foundItems: 0,
+    todayReports: 0,
+    totalFeedback: 0
   })
   const [recentItems, setRecentItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
@@ -95,41 +91,40 @@ export default function AdminDashboard() {
   const fetchAdminData = async () => {
     try {
       const token = getAuthToken()
+      console.log('Fetching admin data with token:', token ? 'Token present' : 'No token')
+      console.log('Backend URL:', BACKEND_URL)
       
-      // Fetch all items and users to calculate stats
-      const [itemsResponse, usersResponse] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/items`, {
+      const [statsResponse, itemsResponse] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/admin/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch(`${BACKEND_URL}/api/admin/users`, {
+        fetch(`${BACKEND_URL}/api/admin/items`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ])
       
-      if (itemsResponse.ok && usersResponse.ok) {
+      console.log('Stats response status:', statsResponse.status)
+      console.log('Items response status:', itemsResponse.status)
+      
+      if (statsResponse.ok && itemsResponse.ok) {
+        const statsData = await statsResponse.json()
         const items = await itemsResponse.json()
-        const users = await usersResponse.json()
         
-        const today = new Date().toDateString()
-        const todayItems = items.filter((item: Item) => 
-          new Date(item.createdAt).toDateString() === today
-        )
+        console.log('Stats data:', statsData)
+        console.log('Items count:', items.length)
         
-        const lostItems = items.filter((item: Item) => item.status === 'lost')
-        const foundItems = items.filter((item: Item) => item.status === 'found')
-        
-        setStats({
-          totalUsers: users.length,
-          totalItems: items.length,
-          pendingItems: lostItems.length,
-          resolvedItems: foundItems.length,
-          todayReports: todayItems.length,
-          lostItems: lostItems.length,
-          foundItems: foundItems.length
-        })
-        
-        // Set recent items (last 10)
+        setStats(statsData)
         setRecentItems(items.slice(0, 10))
+      } else {
+        console.error('Failed to fetch admin data')
+        if (!statsResponse.ok) {
+          const errorText = await statsResponse.text()
+          console.error('Stats error:', errorText)
+        }
+        if (!itemsResponse.ok) {
+          const errorText = await itemsResponse.text()
+          console.error('Items error:', errorText)
+        }
       }
     } catch (error) {
       console.error('Error fetching admin data:', error)
@@ -172,6 +167,7 @@ export default function AdminDashboard() {
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="text-lg">System Stats</CardTitle>
+                <p className="text-xs text-gray-500">Debug: Backend URL - {BACKEND_URL}</p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -201,6 +197,13 @@ export default function AdminDashboard() {
                     <p className="text-xl font-bold text-purple-600">{stats.foundItems}</p>
                   </div>
                   <CheckCircle className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Feedback</p>
+                    <p className="text-xl font-bold text-orange-600">{stats.totalFeedback}</p>
+                  </div>
+                  <MessageCircle className="w-6 h-6 text-orange-600" />
                 </div>
               </CardContent>
             </Card>
@@ -248,7 +251,7 @@ export default function AdminDashboard() {
                 <CardTitle className="text-lg">Account Creation</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Link href="/admin/dashboard">
+                <Link href="/register">
                   <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Create Student
@@ -372,53 +375,49 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Pending Approvals */}
+            {/* Recent Activity */}
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Pending Approvals
+                  <Activity className="w-5 h-5" />
+                  Recent Activity
                 </CardTitle>
                 <CardDescription>
-                  Items waiting for admin review and approval
+                  Latest system activities and reports
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentItems.filter(item => !item.approved).slice(0, 3).map((item) => (
-                    <div key={item._id} className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                <div className="space-y-3">
+                  {recentItems.slice(0, 3).map((item) => (
+                    <div key={item._id} className="border rounded-lg p-3">
                       <div className="flex items-start justify-between">
-                        <div className="flex gap-4">
+                        <div className="flex gap-3">
                           {(item.itemImageUrl || item.imageUrl) && (
                             <img 
                               src={item.itemImageUrl || item.imageUrl} 
                               alt={item.title}
-                              className="w-12 h-12 object-cover rounded-lg"
+                              className="w-10 h-10 object-cover rounded"
                             />
                           )}
                           <div>
-                            <h3 className="font-semibold text-sm">{item.title}</h3>
-                            <p className="text-xs text-gray-600">{item.description.slice(0, 50)}...</p>
-                            <Badge className={item.status === 'lost' ? 'bg-red-500 text-white text-xs' : 'bg-green-500 text-white text-xs'}>
-                              {item.status === 'lost' ? 'Lost' : 'Found'}
-                            </Badge>
+                            <h4 className="font-medium text-sm">{item.title}</h4>
+                            <p className="text-xs text-gray-600">{item.description.slice(0, 40)}...</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge className={item.status === 'lost' ? 'bg-red-500 text-white text-xs' : 'bg-green-500 text-white text-xs'}>
+                                {item.status}
+                              </Badge>
+                              <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</span>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1">
-                            Approve
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-xs px-2 py-1">
-                            Reject
-                          </Button>
                         </div>
                       </div>
                     </div>
                   ))}
-                  {recentItems.filter(item => !item.approved).length === 0 && (
+                  {recentItems.length === 0 && (
                     <div className="text-center py-4">
-                      <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">No pending approvals</p>
+                      <Activity className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">No recent activity</p>
+                      <p className="text-xs text-gray-500">Check browser console for debug info</p>
                     </div>
                   )}
                 </div>

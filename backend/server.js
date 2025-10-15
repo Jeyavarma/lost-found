@@ -9,6 +9,7 @@ const itemRoutes = require('./routes/items');
 const notificationRoutes = require('./routes/notifications');
 const feedbackRoutes = require('./routes/feedback');
 const healthRoutes = require('./routes/health');
+const adminRoutes = require('./routes/admin');
 const { authLimiter, apiLimiter, securityHeaders, csrfProtection } = require('./middleware/security');
 
 const app = express();
@@ -54,6 +55,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/items', apiLimiter, itemRoutes);
 app.use('/api/notifications', apiLimiter, notificationRoutes);
 app.use('/api/feedback', apiLimiter, feedbackRoutes);
+app.use('/api/admin', apiLimiter, adminRoutes);
 app.use('/api', healthRoutes);
 app.use('/uploads', express.static('uploads'));
 

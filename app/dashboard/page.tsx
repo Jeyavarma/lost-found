@@ -43,21 +43,11 @@ export default function DashboardPage() {
   const loadUserItems = async () => {
     try {
       const token = getAuthToken()
-      // Try API route first, fallback to direct backend call
-      let response = await fetch('/api/items/my-items', {
+      const response = await fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      
-      // If API route fails (404), try direct backend call
-      if (response.status === 404) {
-        response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://lost-found-79xn.onrender.com'}/api/items/my-items`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-      }
 
       if (response.ok) {
         const items = await response.json()
@@ -74,21 +64,11 @@ export default function DashboardPage() {
   const loadPotentialMatches = async () => {
     try {
       const token = getAuthToken()
-      // Try API route first, fallback to direct backend call
-      let response = await fetch('/api/items/potential-matches', {
+      const response = await fetch('https://lost-found-79xn.onrender.com/api/items/potential-matches', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      
-      // If API route fails (404), try direct backend call
-      if (response.status === 404) {
-        response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://lost-found-79xn.onrender.com'}/api/items/potential-matches`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-      }
       
       if (response.ok) {
         const matches = await response.json()
@@ -104,23 +84,12 @@ export default function DashboardPage() {
     
     try {
       const token = getAuthToken()
-      // Try API route first, fallback to direct backend call
-      let response = await fetch(`/api/items/${deleteModal.item._id}`, {
+      const response = await fetch(`https://lost-found-79xn.onrender.com/api/items/${deleteModal.item._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      
-      // If API route fails (404), try direct backend call
-      if (response.status === 404) {
-        response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://lost-found-79xn.onrender.com'}/api/items/${deleteModal.item._id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-      }
       
       if (response.ok) {
         setMyItems(prev => prev.filter(item => item._id !== deleteModal.item!._id))

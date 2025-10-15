@@ -66,8 +66,8 @@ export default function HomePage() {
       try {
         console.log('🔄 Fetching all items from backend...')
         const [itemsResponse, recentResponse] = await Promise.all([
-          fetch('/api/items'),
-          fetch('/api/items/recent?limit=10')
+          fetch('https://lost-found-79xn.onrender.com/api/items'),
+          fetch('https://lost-found-79xn.onrender.com/api/items/recent?limit=10')
         ])
         
         if (itemsResponse.ok) {

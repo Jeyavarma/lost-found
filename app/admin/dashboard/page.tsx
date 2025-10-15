@@ -30,7 +30,7 @@ export default function AdminDashboard() {
     setMessage('');
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('https://lost-found-79xn.onrender.com/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

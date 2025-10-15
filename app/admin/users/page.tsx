@@ -37,7 +37,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('all')
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -52,6 +52,8 @@ export default function AdminUsersPage() {
   })
   const [showResetPassword, setShowResetPassword] = useState(false)
   const [resetPasswordData, setResetPasswordData] = useState({ email: '', newPassword: '' })
+  const [showEditUser, setShowEditUser] = useState(false)
+  const [editingUserId, setEditingUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const checkAuth = () => {
@@ -239,7 +241,8 @@ export default function AdminUsersPage() {
   }
 
   const startEdit = (user: User) => {
-    setEditingUser(user)
+    setEditingUserId(user._id)
+    setShowEditUser(true)
     setFormData({
       name: user.name,
       email: user.email,
@@ -252,6 +255,41 @@ export default function AdminUsersPage() {
       year: user.year || '',
       rollNumber: user.rollNumber || ''
     })
+  }
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUserId) return
+    
+    try {
+      const token = getAuthToken()
+      const updateData = { ...formData }
+      if (!updateData.password) {
+        delete updateData.password // Don't update password if empty
+      }
+      
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/${editingUserId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updateData)
+      })
+      
+      if (response.ok) {
+        fetchUsers()
+        setShowEditUser(false)
+        setEditingUserId(null)
+        resetForm()
+        alert('User updated successfully')
+      } else {
+        alert('Failed to update user')
+      }
+    } catch (error) {
+      console.error('Error updating user:', error)
+      alert('Error updating user')
+    }
   }
 
   if (loading) {
@@ -433,7 +471,7 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={() => startEdit(user)} size="sm" variant="outline">
+                      <Button onClick={() => startEdit(user)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button onClick={() => handleDeleteUser(user._id)} size="sm" variant="outline" className="text-red-600">
@@ -447,23 +485,27 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
 
-        {editingUser && (
-          <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Edit User</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleUpdateUser} className="space-y-4">
+        {/* Edit User Modal */}
+        <Dialog open={showEditUser} onOpenChange={() => { setShowEditUser(false); setEditingUserId(null); }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit User Details</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleEditUser} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>Name</Label>
+                  <Label>Full Name *</Label>
                   <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
                 </div>
                 <div>
-                  <Label>Email</Label>
+                  <Label>Email Address *</Label>
                   <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required />
                 </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>Role</Label>
+                  <Label>Role *</Label>
                   <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
                     <SelectTrigger>
                       <SelectValue />
@@ -476,22 +518,92 @@ export default function AdminUsersPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Phone</Label>
-                  <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                  <Label>Phone Number</Label>
+                  <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} placeholder="Enter phone number" />
                 </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Student ID</Label>
-                  <Input value={formData.studentId} onChange={(e) => setFormData({...formData, studentId: e.target.value})} />
+                  <Input value={formData.studentId} onChange={(e) => setFormData({...formData, studentId: e.target.value})} placeholder="Enter student ID" />
                 </div>
                 <div>
-                  <Label>Department</Label>
-                  <Input value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} />
+                  <Label>Roll Number</Label>
+                  <Input value={formData.rollNumber} onChange={(e) => setFormData({...formData, rollNumber: e.target.value})} placeholder="Enter roll number" />
                 </div>
-                <Button type="submit" className="w-full">Update User</Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Department</Label>
+                  <Select value={formData.department} onValueChange={(value) => setFormData({...formData, department: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Computer Science">Computer Science</SelectItem>
+                      <SelectItem value="Information Technology">Information Technology</SelectItem>
+                      <SelectItem value="Electronics">Electronics</SelectItem>
+                      <SelectItem value="Mechanical">Mechanical</SelectItem>
+                      <SelectItem value="Civil">Civil</SelectItem>
+                      <SelectItem value="Electrical">Electrical</SelectItem>
+                      <SelectItem value="Chemical">Chemical</SelectItem>
+                      <SelectItem value="Biotechnology">Biotechnology</SelectItem>
+                      <SelectItem value="Mathematics">Mathematics</SelectItem>
+                      <SelectItem value="Physics">Physics</SelectItem>
+                      <SelectItem value="Chemistry">Chemistry</SelectItem>
+                      <SelectItem value="English">English</SelectItem>
+                      <SelectItem value="Tamil">Tamil</SelectItem>
+                      <SelectItem value="Commerce">Commerce</SelectItem>
+                      <SelectItem value="Economics">Economics</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Year</Label>
+                  <Select value={formData.year} onValueChange={(value) => setFormData({...formData, year: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="I">I Year</SelectItem>
+                      <SelectItem value="II">II Year</SelectItem>
+                      <SelectItem value="III">III Year</SelectItem>
+                      <SelectItem value="IV">IV Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Shift</Label>
+                  <Select value={formData.shift} onValueChange={(value) => setFormData({...formData, shift: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select shift" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Morning">Morning</SelectItem>
+                      <SelectItem value="Afternoon">Afternoon</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div>
+                <Label>New Password (leave empty to keep current)</Label>
+                <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Enter new password or leave empty" />
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                  Update User
+                </Button>
+                <Button type="button" variant="outline" onClick={() => { setShowEditUser(false); setEditingUserId(null); }}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

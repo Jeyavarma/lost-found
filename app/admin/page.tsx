@@ -22,7 +22,8 @@ import {
   Edit,
   Trash2,
   Calendar,
-  MapPin
+  MapPin,
+  MessageCircle
 } from 'lucide-react'
 import Link from 'next/link'
 import Navigation from '@/components/navigation'
@@ -204,7 +205,7 @@ export default function AdminDashboard() {
 
             <Card className="mcc-card">
               <CardHeader>
-                <CardTitle className="text-lg">Admin Actions</CardTitle>
+                <CardTitle className="text-lg">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Link href="/admin/users">
@@ -229,6 +230,38 @@ export default function AdminDashboard() {
                   <Button variant="outline" className="w-full">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Create Staff
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="mcc-card">
+              <CardHeader>
+                <CardTitle className="text-lg">System Management</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Link href="/admin/notifications">
+                  <Button variant="outline" className="w-full">
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Notifications
+                  </Button>
+                </Link>
+                <Link href="/admin/reports">
+                  <Button variant="outline" className="w-full">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Reports
+                  </Button>
+                </Link>
+                <Link href="/admin/settings">
+                  <Button variant="outline" className="w-full">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </Button>
+                </Link>
+                <Link href="/admin/backup">
+                  <Button variant="outline" className="w-full">
+                    <Database className="w-4 h-4 mr-2" />
+                    Backup
                   </Button>
                 </Link>
               </CardContent>
@@ -276,6 +309,97 @@ export default function AdminDashboard() {
                       </div>
                       <Users className="w-8 h-8 text-purple-200" />
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pending Approvals */}
+            <Card className="mcc-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Pending Approvals
+                </CardTitle>
+                <CardDescription>
+                  Items waiting for admin review and approval
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recentItems.filter(item => !item.approved).slice(0, 3).map((item) => (
+                    <div key={item._id} className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex gap-4">
+                          {(item.itemImageUrl || item.imageUrl) && (
+                            <img 
+                              src={item.itemImageUrl || item.imageUrl} 
+                              alt={item.title}
+                              className="w-12 h-12 object-cover rounded-lg"
+                            />
+                          )}
+                          <div>
+                            <h3 className="font-semibold text-sm">{item.title}</h3>
+                            <p className="text-xs text-gray-600">{item.description.slice(0, 50)}...</p>
+                            <Badge className={item.status === 'lost' ? 'bg-red-500 text-white text-xs' : 'bg-green-500 text-white text-xs'}>
+                              {item.status === 'lost' ? 'Lost' : 'Found'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1">
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-xs px-2 py-1">
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {recentItems.filter(item => !item.approved).length === 0 && (
+                    <div className="text-center py-4">
+                      <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">No pending approvals</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* System Alerts */}
+            <Card className="mcc-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  System Alerts
+                </CardTitle>
+                <CardDescription>
+                  Important system notifications and alerts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="border border-yellow-200 rounded-lg p-3 bg-yellow-50">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                      <span className="text-sm font-medium">High Volume Alert</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">{stats.todayReports} items reported today - above average</p>
+                  </div>
+                  <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium">New Users</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">5 new users registered this week</p>
+                  </div>
+                  <div className="border border-green-200 rounded-lg p-3 bg-green-50">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium">System Status</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">All systems operational</p>
                   </div>
                 </div>
               </CardContent>

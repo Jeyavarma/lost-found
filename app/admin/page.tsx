@@ -117,6 +117,18 @@ export default function AdminDashboard() {
   })
   const [resetEmail, setResetEmail] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
+  const [showEditUser, setShowEditUser] = useState(false)
+  const [editUserData, setEditUserData] = useState({
+    _id: '',
+    name: '',
+    email: '',
+    role: 'student',
+    phone: '',
+    studentId: '',
+    department: '',
+    year: '',
+    shift: ''
+  })
 
   useEffect(() => {
     const checkAuth = () => {
@@ -240,6 +252,33 @@ export default function AdminDashboard() {
     } catch (error) {
       setError('Failed to delete item')
     }
+  }
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setMessage('User updated successfully')
+      setShowEditUser(false)
+      setEditUserData({ _id: '', name: '', email: '', role: 'student', phone: '', studentId: '', department: '', year: '', shift: '' })
+    } catch (error) {
+      setError('Failed to update user')
+    }
+  }
+
+  const openEditUser = (userId: string) => {
+    // Demo data - in real app, fetch user details
+    setEditUserData({
+      _id: userId,
+      name: 'John Doe',
+      email: 'john@mcc.edu',
+      role: 'student',
+      phone: '+91 9876543210',
+      studentId: 'MCC2024001',
+      department: 'Computer Science',
+      year: 'III',
+      shift: 'Morning'
+    })
+    setShowEditUser(true)
   }
 
   if (loading && stats.totalUsers === 0) {
@@ -419,6 +458,10 @@ export default function AdminDashboard() {
                     Users
                   </Button>
                 </Link>
+                <Button onClick={() => openEditUser('demo')} className="w-full text-sm" variant="outline">
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit User
+                </Button>
                 <Link href="/admin/items">
                   <Button className="w-full text-sm" variant="outline">
                     <Package className="w-4 h-4 mr-2" />
@@ -641,6 +684,112 @@ export default function AdminDashboard() {
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Edit User Modal */}
+        <Dialog open={showEditUser} onOpenChange={setShowEditUser}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit User Details</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleEditUser} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Full Name *</Label>
+                  <Input value={editUserData.name} onChange={(e) => setEditUserData({...editUserData, name: e.target.value})} required />
+                </div>
+                <div>
+                  <Label>Email Address *</Label>
+                  <Input type="email" value={editUserData.email} onChange={(e) => setEditUserData({...editUserData, email: e.target.value})} required />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Role *</Label>
+                  <Select value={editUserData.role} onValueChange={(value) => setEditUserData({...editUserData, role: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Phone Number</Label>
+                  <Input value={editUserData.phone} onChange={(e) => setEditUserData({...editUserData, phone: e.target.value})} />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Student ID</Label>
+                  <Input value={editUserData.studentId} onChange={(e) => setEditUserData({...editUserData, studentId: e.target.value})} />
+                </div>
+                <div>
+                  <Label>Department</Label>
+                  <Select value={editUserData.department} onValueChange={(value) => setEditUserData({...editUserData, department: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Computer Science">Computer Science</SelectItem>
+                      <SelectItem value="Information Technology">Information Technology</SelectItem>
+                      <SelectItem value="Electronics">Electronics</SelectItem>
+                      <SelectItem value="Mechanical">Mechanical</SelectItem>
+                      <SelectItem value="Civil">Civil</SelectItem>
+                      <SelectItem value="Mathematics">Mathematics</SelectItem>
+                      <SelectItem value="Physics">Physics</SelectItem>
+                      <SelectItem value="Chemistry">Chemistry</SelectItem>
+                      <SelectItem value="English">English</SelectItem>
+                      <SelectItem value="Commerce">Commerce</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Year</Label>
+                  <Select value={editUserData.year} onValueChange={(value) => setEditUserData({...editUserData, year: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="I">I Year</SelectItem>
+                      <SelectItem value="II">II Year</SelectItem>
+                      <SelectItem value="III">III Year</SelectItem>
+                      <SelectItem value="IV">IV Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Shift</Label>
+                  <Select value={editUserData.shift} onValueChange={(value) => setEditUserData({...editUserData, shift: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select shift" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Morning">Morning</SelectItem>
+                      <SelectItem value="Afternoon">Afternoon</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                  Update User
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowEditUser(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

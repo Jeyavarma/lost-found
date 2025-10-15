@@ -198,4 +198,52 @@ router.put('/users/:id/toggle-status', authMiddleware, adminMiddleware, async (r
   }
 });
 
+// Get pending claims
+router.get('/claims/pending', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const claims = await Item.find({ 
+      status: 'claimed',
+      verificationStatus: 'pending'
+    }).populate('reportedBy claimedBy', 'name email').sort({ claimDate: -1 });
+    
+    res.json(claims);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Approve/Reject claim
+router.put('/claims/:itemId/:action', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { itemId, action } = req.params;
+    const { adminNotes } = req.body;
+    
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ message: 'Invalid action' });
+    }
+    
+    const item = await Item.findById(itemId);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    
+    if (action === 'approve') {
+      item.status = 'verified';
+      item.verificationStatus = 'approved';
+    } else {
+      item.status = 'found'; // Reset to found status
+      item.verificationStatus = 'rejected';
+      item.claimedBy = undefined;
+      item.claimDate = undefined;
+    }
+    
+    item.adminNotes = adminNotes;
+    await item.save();
+    
+    res.json({ message: `Claim ${action}d successfully`, item });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

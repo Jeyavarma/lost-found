@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Users, 
   Package, 
@@ -23,7 +28,11 @@ import {
   Trash2,
   Calendar,
   MapPin,
-  MessageCircle
+  MessageCircle,
+  Key,
+  UserX,
+  RefreshCw,
+  Lock
 } from 'lucide-react'
 import Link from 'next/link'
 import Navigation from '@/components/navigation'
@@ -67,6 +76,20 @@ export default function AdminDashboard() {
   })
   const [recentItems, setRecentItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
+  const [showCreateUser, setShowCreateUser] = useState(false)
+  const [showResetPassword, setShowResetPassword] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'student',
+    phone: '',
+    studentId: '',
+    department: ''
+  })
+  const [resetEmail, setResetEmail] = useState('')
 
   useEffect(() => {
     const checkAuth = () => {
@@ -91,8 +114,6 @@ export default function AdminDashboard() {
   const fetchAdminData = async () => {
     try {
       const token = getAuthToken()
-      console.log('Fetching admin data with token:', token ? 'Token present' : 'No token')
-      console.log('Backend URL:', BACKEND_URL)
       
       const [statsResponse, itemsResponse] = await Promise.all([
         fetch(`${BACKEND_URL}/api/admin/stats`, {
@@ -103,33 +124,75 @@ export default function AdminDashboard() {
         })
       ])
       
-      console.log('Stats response status:', statsResponse.status)
-      console.log('Items response status:', itemsResponse.status)
-      
       if (statsResponse.ok && itemsResponse.ok) {
         const statsData = await statsResponse.json()
         const items = await itemsResponse.json()
         
-        console.log('Stats data:', statsData)
-        console.log('Items count:', items.length)
-        
         setStats(statsData)
-        setRecentItems(items.slice(0, 10))
-      } else {
-        console.error('Failed to fetch admin data')
-        if (!statsResponse.ok) {
-          const errorText = await statsResponse.text()
-          console.error('Stats error:', errorText)
-        }
-        if (!itemsResponse.ok) {
-          const errorText = await itemsResponse.text()
-          console.error('Items error:', errorText)
-        }
+        setRecentItems(items.slice(0, 5))
       }
     } catch (error) {
       console.error('Error fetching admin data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setMessage('')
+    setError('')
+    
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      })
+      
+      if (response.ok) {
+        setMessage(`${formData.role} account created successfully`)
+        setFormData({ name: '', email: '', password: '', role: 'student', phone: '', studentId: '', department: '' })
+        setShowCreateUser(false)
+        fetchAdminData()
+      } else {
+        const data = await response.json()
+        setError(data.message || 'Failed to create user')
+      }
+    } catch (error) {
+      setError('Network error')
+    }
+  }
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setMessage('')
+    setError('')
+    
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ email: resetEmail })
+      })
+      
+      if (response.ok) {
+        setMessage('Password reset email sent successfully')
+        setResetEmail('')
+        setShowResetPassword(false)
+      } else {
+        setError('Failed to send reset email')
+      }
+    } catch (error) {
+      setError('Network error')
     }
   }
 
@@ -161,56 +224,167 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
+        {message && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <CheckCircle className="w-4 h-4" />
+            <AlertDescription className="text-green-800">{message}</AlertDescription>
+          </Alert>
+        )}
+
+        {error && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <AlertTriangle className="w-4 h-4" />
+            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Stats Cards */}
+          <div className="lg:col-span-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+              <Card className="mcc-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Users</p>
+                      <p className="text-2xl font-bold text-blue-600">{stats.totalUsers}</p>
+                    </div>
+                    <Users className="w-8 h-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mcc-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Items</p>
+                      <p className="text-2xl font-bold text-green-600">{stats.totalItems}</p>
+                    </div>
+                    <Package className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mcc-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Lost Items</p>
+                      <p className="text-2xl font-bold text-red-600">{stats.lostItems}</p>
+                    </div>
+                    <AlertTriangle className="w-8 h-8 text-red-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mcc-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Found Items</p>
+                      <p className="text-2xl font-bold text-purple-600">{stats.foundItems}</p>
+                    </div>
+                    <CheckCircle className="w-8 h-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mcc-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                      <p className="text-2xl font-bold text-orange-600">{stats.totalItems > 0 ? Math.round((stats.foundItems / stats.totalItems) * 100) : 0}%</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-orange-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Admin Actions Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             <Card className="mcc-card">
               <CardHeader>
-                <CardTitle className="text-lg">System Stats</CardTitle>
-                <p className="text-xs text-gray-500">Debug: Backend URL - {BACKEND_URL}</p>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Admin Controls
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Users</p>
-                    <p className="text-xl font-bold text-blue-600">{stats.totalUsers}</p>
-                  </div>
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Items</p>
-                    <p className="text-xl font-bold text-green-600">{stats.totalItems}</p>
-                  </div>
-                  <Package className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Lost Items</p>
-                    <p className="text-xl font-bold text-red-600">{stats.lostItems}</p>
-                  </div>
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
-                </div>
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Found Items</p>
-                    <p className="text-xl font-bold text-purple-600">{stats.foundItems}</p>
-                  </div>
-                  <CheckCircle className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Feedback</p>
-                    <p className="text-xl font-bold text-orange-600">{stats.totalFeedback}</p>
-                  </div>
-                  <MessageCircle className="w-6 h-6 text-orange-600" />
-                </div>
+              <CardContent className="space-y-3">
+                <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Create Account
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Create New Account</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateUser} className="space-y-4">
+                      <div>
+                        <Label>Name</Label>
+                        <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
+                      </div>
+                      <div>
+                        <Label>Email</Label>
+                        <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required />
+                      </div>
+                      <div>
+                        <Label>Password</Label>
+                        <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required />
+                      </div>
+                      <div>
+                        <Label>Role</Label>
+                        <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="student">Student</SelectItem>
+                            <SelectItem value="staff">Staff</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button type="submit" className="w-full">Create Account</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+                
+                <Dialog open={showResetPassword} onOpenChange={setShowResetPassword}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <Key className="w-4 h-4 mr-2" />
+                      Reset Password
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Reset User Password</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleResetPassword} className="space-y-4">
+                      <div>
+                        <Label>User Email</Label>
+                        <Input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} placeholder="Enter user email" required />
+                      </div>
+                      <Button type="submit" className="w-full">Send Reset Email</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+
               </CardContent>
             </Card>
 
             <Card className="mcc-card">
               <CardHeader>
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
+                <CardTitle className="text-lg">Management</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Link href="/admin/users">
@@ -234,39 +408,7 @@ export default function AdminDashboard() {
                 <Link href="/admin/control">
                   <Button className="w-full bg-gray-800 hover:bg-gray-900 text-white">
                     <Database className="w-4 h-4 mr-2" />
-                    Control Panel
-                  </Button>
-                </Link>
-                <Link href="/admin/staff">
-                  <Button variant="outline" className="w-full">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Create Staff
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="mcc-card">
-              <CardHeader>
-                <CardTitle className="text-lg">Account Creation</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Link href="/register">
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Create Student
-                  </Button>
-                </Link>
-                <Link href="/admin/register">
-                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
-                    <Shield className="w-4 h-4 mr-2" />
-                    Create Admin
-                  </Button>
-                </Link>
-                <Link href="/admin/staff">
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
-                    <Users className="w-4 h-4 mr-2" />
-                    Create Staff
+                    System Control
                   </Button>
                 </Link>
               </CardContent>
@@ -276,51 +418,19 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle className="text-lg">System Tools</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Link href="/admin/moderation">
-                  <Button variant="outline" className="w-full">
-                    <Shield className="w-4 h-4 mr-2" />
-                    Moderation
-                  </Button>
-                </Link>
-                <Link href="/admin/audit">
-                  <Button variant="outline" className="w-full">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Security Audit
-                  </Button>
-                </Link>
-                <Link href="/admin/monitoring">
-                  <Button variant="outline" className="w-full">
-                    <Activity className="w-4 h-4 mr-2" />
-                    Monitoring
-                  </Button>
-                </Link>
-                <Link href="/admin/system">
-                  <Button variant="outline" className="w-full">
-                    <Settings className="w-4 h-4 mr-2" />
-                    System Config
-                  </Button>
-                </Link>
-                <Link href="/admin/notifications">
-                  <Button variant="outline" className="w-full">
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Notifications
-                  </Button>
-                </Link>
-                <Link href="/admin/reports">
-                  <Button variant="outline" className="w-full">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Reports
-                  </Button>
-                </Link>
+              <CardContent className="space-y-2">
+                <Button onClick={fetchAdminData} variant="outline" className="w-full text-sm">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh Data
+                </Button>
                 <Link href="/admin/settings">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full text-sm">
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
                   </Button>
                 </Link>
                 <Link href="/admin/backup">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full text-sm">
                     <Database className="w-4 h-4 mr-2" />
                     Backup
                   </Button>
@@ -331,197 +441,7 @@ export default function AdminDashboard() {
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
-            {/* System Overview */}
-            <Card className="mcc-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5" />
-                  System Overview
-                </CardTitle>
-                <CardDescription>
-                  Real-time system statistics and performance metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-100">Today's Reports</p>
-                        <p className="text-2xl font-bold">{stats.todayReports}</p>
-                      </div>
-                      <TrendingUp className="w-8 h-8 text-blue-200" />
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-green-100">Success Rate</p>
-                        <p className="text-2xl font-bold">{stats.totalItems > 0 ? Math.round((stats.foundItems / stats.totalItems) * 100) : 0}%</p>
-                      </div>
-                      <CheckCircle className="w-8 h-8 text-green-200" />
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-purple-100">Active Users</p>
-                        <p className="text-2xl font-bold">{stats.totalUsers}</p>
-                      </div>
-                      <Users className="w-8 h-8 text-purple-200" />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card className="mcc-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5" />
-                  Recent Activity
-                </CardTitle>
-                <CardDescription>
-                  Latest system activities and reports
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {recentItems.slice(0, 3).map((item) => (
-                    <div key={item._id} className="border rounded-lg p-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex gap-3">
-                          {(item.itemImageUrl || item.imageUrl) && (
-                            <img 
-                              src={item.itemImageUrl || item.imageUrl} 
-                              alt={item.title}
-                              className="w-10 h-10 object-cover rounded"
-                            />
-                          )}
-                          <div>
-                            <h4 className="font-medium text-sm">{item.title}</h4>
-                            <p className="text-xs text-gray-600">{item.description.slice(0, 40)}...</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge className={item.status === 'lost' ? 'bg-red-500 text-white text-xs' : 'bg-green-500 text-white text-xs'}>
-                                {item.status}
-                              </Badge>
-                              <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {recentItems.length === 0 && (
-                    <div className="text-center py-4">
-                      <Activity className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">No recent activity</p>
-                      <p className="text-xs text-gray-500">Check browser console for debug info</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* System Alerts */}
-            <Card className="mcc-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" />
-                  System Alerts
-                </CardTitle>
-                <CardDescription>
-                  Important system notifications and alerts
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="border border-yellow-200 rounded-lg p-3 bg-yellow-50">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                      <span className="text-sm font-medium">High Volume Alert</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">{stats.todayReports} items reported today - above average</p>
-                  </div>
-                  <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium">New Users</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">5 new users registered this week</p>
-                  </div>
-                  <div className="border border-green-200 rounded-lg p-3 bg-green-50">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium">System Status</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">All systems operational</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick CRUD Operations */}
-            <Card className="mcc-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="w-5 h-5" />
-                  Quick Operations
-                </CardTitle>
-                <CardDescription>
-                  Perform CRUD operations on system data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Users</h4>
-                    <div className="space-y-1">
-                      <Button size="sm" className="w-full text-xs bg-green-600 hover:bg-green-700">
-                        <UserPlus className="w-3 h-3 mr-1" />
-                        Add User
-                      </Button>
-                      <Button size="sm" variant="outline" className="w-full text-xs">
-                        <Eye className="w-3 h-3 mr-1" />
-                        View All
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Items</h4>
-                    <div className="space-y-1">
-                      <Button size="sm" className="w-full text-xs bg-blue-600 hover:bg-blue-700">
-                        <Package className="w-3 h-3 mr-1" />
-                        Add Item
-                      </Button>
-                      <Button size="sm" variant="outline" className="w-full text-xs">
-                        <Eye className="w-3 h-3 mr-1" />
-                        View All
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t">
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button size="sm" variant="outline" className="text-xs">
-                      <Edit className="w-3 h-3 mr-1" />
-                      Bulk Edit
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-xs">
-                      <Trash2 className="w-3 h-3 mr-1" />
-                      Bulk Delete
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-xs">
-                      <Database className="w-3 h-3 mr-1" />
-                      Export
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Items with CRUD */}
+            {/* Recent Items */}
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -529,14 +449,12 @@ export default function AdminDashboard() {
                     <Package className="w-5 h-5" />
                     Recent Items
                   </div>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                    <UserPlus className="w-4 h-4 mr-1" />
-                    Add New
-                  </Button>
+                  <Link href="/admin/items">
+                    <Button size="sm" variant="outline">
+                      View All
+                    </Button>
+                  </Link>
                 </CardTitle>
-                <CardDescription>
-                  Latest items with full CRUD operations
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 {recentItems.length === 0 ? (
@@ -547,8 +465,8 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {recentItems.slice(0, 5).map((item) => (
-                      <div key={item._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    {recentItems.map((item) => (
+                      <div key={item._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between">
                           <div className="flex gap-4">
                             {(item.itemImageUrl || item.imageUrl) && (
@@ -562,10 +480,10 @@ export default function AdminDashboard() {
                               <div className="flex items-center gap-2 mb-2">
                                 <h3 className="font-semibold">{item.title}</h3>
                                 <Badge className={item.status === 'lost' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}>
-                                  {item.status === 'lost' ? 'Lost' : 'Found'}
+                                  {item.status}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                              <p className="text-sm text-gray-600 mb-2">{item.description.slice(0, 100)}...</p>
                               <div className="flex items-center gap-4 text-xs text-gray-500">
                                 <span>By: {item.reportedBy?.name || 'Anonymous'}</span>
                                 <div className="flex items-center gap-1">
@@ -579,29 +497,91 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="outline" className="text-xs px-2">
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="text-xs px-2">
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="text-xs px-2 text-red-600 hover:bg-red-50">
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
+                          <div className="flex gap-2">
+                            <Link href={`/admin/items`}>
+                              <Button size="sm" variant="outline">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </Link>
                           </div>
                         </div>
                       </div>
                     ))}
-                    <div className="text-center pt-4">
-                      <Link href="/admin/items">
-                        <Button variant="outline" size="sm">
-                          View All Items ({recentItems.length})
-                        </Button>
-                      </Link>
-                    </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* System Status */}
+            <Card className="mcc-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  System Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <span className="font-medium">Database</span>
+                    </div>
+                    <p className="text-sm text-gray-600">Connected and operational</p>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <span className="font-medium">API Server</span>
+                    </div>
+                    <p className="text-sm text-gray-600">Running smoothly</p>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium">Performance</span>
+                    </div>
+                    <p className="text-sm text-gray-600">Optimal response times</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="mcc-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Link href="/admin/users">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center bg-blue-600 hover:bg-blue-700 text-white">
+                      <Users className="w-6 h-6 mb-2" />
+                      <span className="text-sm">Users</span>
+                    </Button>
+                  </Link>
+                  <Link href="/admin/items">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center bg-green-600 hover:bg-green-700 text-white">
+                      <Package className="w-6 h-6 mb-2" />
+                      <span className="text-sm">Items</span>
+                    </Button>
+                  </Link>
+                  <Link href="/admin/analytics">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center bg-purple-600 hover:bg-purple-700 text-white">
+                      <BarChart3 className="w-6 h-6 mb-2" />
+                      <span className="text-sm">Analytics</span>
+                    </Button>
+                  </Link>
+                  <Link href="/admin/control">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center bg-gray-800 hover:bg-gray-900 text-white">
+                      <Database className="w-6 h-6 mb-2" />
+                      <span className="text-sm">Control</span>
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </div>

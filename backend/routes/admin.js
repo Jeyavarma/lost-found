@@ -162,4 +162,40 @@ router.post('/bulk-delete-users', authMiddleware, adminMiddleware, async (req, r
   }
 });
 
+// Reset user password
+router.post('/reset-password', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    user.password = newPassword;
+    await user.save();
+    
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Toggle user status
+router.put('/users/:id/toggle-status', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    user.isActive = !user.isActive;
+    await user.save();
+    
+    res.json({ message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`, user });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

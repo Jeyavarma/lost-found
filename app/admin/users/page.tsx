@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Users, Plus, Edit, Trash2, Search, Filter, Download } from 'lucide-react'
+import { Users, Plus, Edit, Trash2, Search, Filter, Download, Key } from 'lucide-react'
 import Navigation from '@/components/navigation'
 import { isAuthenticated, getUserData, getAuthToken } from '@/lib/auth'
 import { BACKEND_URL } from '@/lib/config'
@@ -50,6 +50,8 @@ export default function AdminUsersPage() {
     year: '',
     rollNumber: ''
   })
+  const [showResetPassword, setShowResetPassword] = useState(false)
+  const [resetPasswordData, setResetPasswordData] = useState({ email: '', newPassword: '' })
 
   useEffect(() => {
     const checkAuth = () => {
@@ -195,6 +197,32 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(resetPasswordData)
+      })
+      
+      if (response.ok) {
+        alert('Password reset successfully')
+        setShowResetPassword(false)
+        setResetPasswordData({ email: '', newPassword: '' })
+      } else {
+        alert('Failed to reset password')
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error)
+      alert('Error resetting password')
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -264,6 +292,40 @@ export default function AdminUsersPage() {
                     Delete ({selectedUsers.length})
                   </Button>
                 )}
+                <Dialog open={showResetPassword} onOpenChange={setShowResetPassword}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Key className="w-4 h-4 mr-1" />
+                      Reset Password
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Reset User Password</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleResetPassword} className="space-y-4">
+                      <div>
+                        <Label>User Email</Label>
+                        <Input 
+                          type="email" 
+                          value={resetPasswordData.email} 
+                          onChange={(e) => setResetPasswordData({...resetPasswordData, email: e.target.value})} 
+                          required 
+                        />
+                      </div>
+                      <div>
+                        <Label>New Password</Label>
+                        <Input 
+                          type="password" 
+                          value={resetPasswordData.newPassword} 
+                          onChange={(e) => setResetPasswordData({...resetPasswordData, newPassword: e.target.value})} 
+                          required 
+                        />
+                      </div>
+                      <Button type="submit" className="w-full">Reset Password</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
                 <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                   <DialogTrigger asChild>
                     <Button className="bg-green-600 hover:bg-green-700">

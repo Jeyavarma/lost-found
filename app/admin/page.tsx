@@ -23,7 +23,9 @@ import {
   Trash2,
   Calendar,
   MapPin,
-  MessageCircle
+  MessageCircle,
+  Trash2,
+  Shield
 } from 'lucide-react'
 import Link from 'next/link'
 import Navigation from '@/components/navigation'
@@ -226,6 +228,12 @@ export default function AdminDashboard() {
                     Analytics
                   </Button>
                 </Link>
+                <Link href="/admin/control">
+                  <Button className="w-full bg-gray-800 hover:bg-gray-900 text-white">
+                    <Database className="w-4 h-4 mr-2" />
+                    Control Panel
+                  </Button>
+                </Link>
                 <Link href="/admin/staff">
                   <Button variant="outline" className="w-full">
                     <UserPlus className="w-4 h-4 mr-2" />
@@ -237,9 +245,59 @@ export default function AdminDashboard() {
 
             <Card className="mcc-card">
               <CardHeader>
-                <CardTitle className="text-lg">System Management</CardTitle>
+                <CardTitle className="text-lg">Account Creation</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <Link href="/admin/dashboard">
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Create Student
+                  </Button>
+                </Link>
+                <Link href="/admin/register">
+                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Create Admin
+                  </Button>
+                </Link>
+                <Link href="/admin/staff">
+                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Users className="w-4 h-4 mr-2" />
+                    Create Staff
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="mcc-card">
+              <CardHeader>
+                <CardTitle className="text-lg">System Tools</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Link href="/admin/moderation">
+                  <Button variant="outline" className="w-full">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Moderation
+                  </Button>
+                </Link>
+                <Link href="/admin/audit">
+                  <Button variant="outline" className="w-full">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Security Audit
+                  </Button>
+                </Link>
+                <Link href="/admin/monitoring">
+                  <Button variant="outline" className="w-full">
+                    <Activity className="w-4 h-4 mr-2" />
+                    Monitoring
+                  </Button>
+                </Link>
+                <Link href="/admin/system">
+                  <Button variant="outline" className="w-full">
+                    <Settings className="w-4 h-4 mr-2" />
+                    System Config
+                  </Button>
+                </Link>
                 <Link href="/admin/notifications">
                   <Button variant="outline" className="w-full">
                     <MessageCircle className="w-4 h-4 mr-2" />
@@ -405,15 +463,80 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Recent Items */}
+            {/* Quick CRUD Operations */}
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5" />
-                  Recent Items
+                  <Database className="w-5 h-5" />
+                  Quick Operations
                 </CardTitle>
                 <CardDescription>
-                  Latest items reported in the system
+                  Perform CRUD operations on system data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Users</h4>
+                    <div className="space-y-1">
+                      <Button size="sm" className="w-full text-xs bg-green-600 hover:bg-green-700">
+                        <UserPlus className="w-3 h-3 mr-1" />
+                        Add User
+                      </Button>
+                      <Button size="sm" variant="outline" className="w-full text-xs">
+                        <Eye className="w-3 h-3 mr-1" />
+                        View All
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Items</h4>
+                    <div className="space-y-1">
+                      <Button size="sm" className="w-full text-xs bg-blue-600 hover:bg-blue-700">
+                        <Package className="w-3 h-3 mr-1" />
+                        Add Item
+                      </Button>
+                      <Button size="sm" variant="outline" className="w-full text-xs">
+                        <Eye className="w-3 h-3 mr-1" />
+                        View All
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t">
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button size="sm" variant="outline" className="text-xs">
+                      <Edit className="w-3 h-3 mr-1" />
+                      Bulk Edit
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs">
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Bulk Delete
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs">
+                      <Database className="w-3 h-3 mr-1" />
+                      Export
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Items with CRUD */}
+            <Card className="mcc-card">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-5 h-5" />
+                    Recent Items
+                  </div>
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    Add New
+                  </Button>
+                </CardTitle>
+                <CardDescription>
+                  Latest items with full CRUD operations
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -425,7 +548,7 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {recentItems.map((item) => (
+                    {recentItems.slice(0, 5).map((item) => (
                       <div key={item._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between">
                           <div className="flex gap-4">
@@ -457,19 +580,27 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="outline" className="text-xs px-2">
+                              <Eye className="w-3 h-3" />
                             </Button>
-                            <Button size="sm" variant="outline">
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
+                            <Button size="sm" variant="outline" className="text-xs px-2">
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs px-2 text-red-600 hover:bg-red-50">
+                              <Trash2 className="w-3 h-3" />
                             </Button>
                           </div>
                         </div>
                       </div>
                     ))}
+                    <div className="text-center pt-4">
+                      <Link href="/admin/items">
+                        <Button variant="outline" size="sm">
+                          View All Items ({recentItems.length})
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 )}
               </CardContent>

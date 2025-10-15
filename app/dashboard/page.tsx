@@ -127,6 +127,12 @@ export default function DashboardPage() {
         return
       }
       
+      // Redirect admin users to admin portal
+      if (userData?.role === 'admin') {
+        window.location.href = '/admin'
+        return
+      }
+      
       await loadUserItems()
       await loadPotentialMatches()
       setLoading(false)

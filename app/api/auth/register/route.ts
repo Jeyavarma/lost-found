@@ -4,9 +4,7 @@ const BACKEND_URL = 'https://lost-found-79xn.onrender.com'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Backend URL:', BACKEND_URL)
     const body = await request.json()
-    console.log('Request body:', body)
     
     const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'POST',
@@ -17,10 +15,34 @@ export async function POST(request: NextRequest) {
     })
     
     const data = await response.json()
-    console.log('Backend response:', response.status, data)
-    return NextResponse.json(data, { status: response.status })
+    
+    return new NextResponse(JSON.stringify(data), {
+      status: response.status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    })
   } catch (error) {
-    console.error('Registration error:', error)
-    return NextResponse.json({ error: 'Registration failed' }, { status: 500 })
+    return new NextResponse(JSON.stringify({ error: 'Registration failed' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
 }

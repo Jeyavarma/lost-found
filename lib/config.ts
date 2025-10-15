@@ -1,0 +1,1 @@
+export const BACKEND_URL = 'https://lost-found-79xn.onrender.com'

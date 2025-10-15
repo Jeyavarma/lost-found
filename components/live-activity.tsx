@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Zap, Eye } from "lucide-react"
+import { BACKEND_URL } from "@/lib/config"
 
 interface ActivityItem {
   _id: string
@@ -28,7 +29,7 @@ export default function LiveActivity() {
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch('/api/items/recent?limit=5')
+      const response = await fetch(`${BACKEND_URL}/api/items?sort=createdAt&order=desc&limit=5`)
       if (response.ok) {
         const data = await response.json()
         setActivities(Array.isArray(data) ? data.slice(0, 5) : [])
@@ -43,7 +44,7 @@ export default function LiveActivity() {
   const fetchAllActivities = async () => {
     setLoadingAll(true)
     try {
-      const response = await fetch('/api/items/recent?limit=1000')
+      const response = await fetch(`${BACKEND_URL}/api/items?sort=createdAt&order=desc&limit=100`)
       if (response.ok) {
         const data = await response.json()
         setAllActivities(data)

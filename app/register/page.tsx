@@ -5,6 +5,7 @@ import { ArrowLeft, GraduationCap, User, Mail, Phone, BookOpen, Shield, CheckCir
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { BACKEND_URL } from "@/lib/config";
 // Type definitions
 interface RegisterData {
   name: string
@@ -160,7 +161,7 @@ export default function RegisterPage(): JSX.Element {
     setIsSubmitting(true)
 
     try {
-      const apiUrl = 'https://lost-found-79xn.onrender.com/api/auth/register'
+      const apiUrl = `${BACKEND_URL}/api/auth/register`
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {

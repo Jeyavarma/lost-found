@@ -39,6 +39,7 @@ import MccCampusMap from "@/components/mcc-campus-map"
 import LiveActivity from "@/components/live-activity"
 import EventHighlights from "@/components/event-highlights"
 import Navigation from "@/components/navigation"
+import { BACKEND_URL } from "@/lib/config"
 
 
 
@@ -66,8 +67,8 @@ export default function HomePage() {
       try {
         console.log('🔄 Fetching all items from backend...')
         const [itemsResponse, recentResponse] = await Promise.all([
-          fetch('https://lost-found-79xn.onrender.com/api/items'),
-          fetch('https://lost-found-79xn.onrender.com/api/items/recent?limit=10')
+          fetch(`${BACKEND_URL}/api/items`),
+          fetch(`${BACKEND_URL}/api/items?sort=createdAt&order=desc&limit=10`)
         ])
         
         if (itemsResponse.ok) {

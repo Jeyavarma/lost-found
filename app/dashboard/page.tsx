@@ -17,6 +17,7 @@ import {
 import Navigation from "@/components/navigation"
 import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } from "@/lib/auth"
 import Link from "next/link"
+import { BACKEND_URL } from "@/lib/config"
 
 interface Item {
   _id: string
@@ -43,7 +44,7 @@ export default function DashboardPage() {
   const loadUserItems = async () => {
     try {
       const token = getAuthToken()
-      const response = await fetch('https://lost-found-79xn.onrender.com/api/items/my-items', {
+      const response = await fetch(`${BACKEND_URL}/api/items/my-items`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -64,7 +65,7 @@ export default function DashboardPage() {
   const loadPotentialMatches = async () => {
     try {
       const token = getAuthToken()
-      const response = await fetch('https://lost-found-79xn.onrender.com/api/items/potential-matches', {
+      const response = await fetch(`${BACKEND_URL}/api/items/potential-matches`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -84,7 +85,7 @@ export default function DashboardPage() {
     
     try {
       const token = getAuthToken()
-      const response = await fetch(`https://lost-found-79xn.onrender.com/api/items/${deleteModal.item._id}`, {
+      const response = await fetch(`${BACKEND_URL}/api/items/${deleteModal.item._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

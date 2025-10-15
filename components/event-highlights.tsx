@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar, MapPin, Users, Eye, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react"
+import { BACKEND_URL } from "@/lib/config"
 
 const eventTemplates = [
   { name: 'Deepwoods', icon: '🌲', description: 'Annual cultural fest with music, dance, and art performances where instruments and props go missing.', eventDate: 'Feb 15-17, 2024' },
@@ -32,9 +33,52 @@ export default function EventHighlights() {
 
   const fetchEventData = async () => {
     try {
-      const response = await fetch('/api/events')
+      const response = await fetch(`${BACKEND_URL}/api/items`)
       if (response.ok) {
-        const eventData = await response.json()
+        const items = await response.json()
+        
+        // Group items by event-related keywords and create event data
+        const eventGroups: { [key: string]: any[] } = {}
+        
+        items.forEach((item: any) => {
+          const description = item.description?.toLowerCase() || ''
+          const title = item.title?.toLowerCase() || ''
+          const location = item.location?.toLowerCase() || ''
+          
+          // Check for event-related keywords
+          if (description.includes('deepwoods') || title.includes('deepwoods') || location.includes('deepwoods')) {
+            if (!eventGroups['Deepwoods']) eventGroups['Deepwoods'] = []
+            eventGroups['Deepwoods'].push(item)
+          } else if (description.includes('moonshadow') || title.includes('moonshadow') || location.includes('moonshadow')) {
+            if (!eventGroups['Moonshadow']) eventGroups['Moonshadow'] = []
+            eventGroups['Moonshadow'].push(item)
+          } else if (description.includes('octavia') || title.includes('octavia') || location.includes('octavia')) {
+            if (!eventGroups['Octavia']) eventGroups['Octavia'] = []
+            eventGroups['Octavia'].push(item)
+          } else if (description.includes('barnes') || title.includes('barnes') || location.includes('barnes')) {
+            if (!eventGroups['Barnes Hall Day']) eventGroups['Barnes Hall Day'] = []
+            eventGroups['Barnes Hall Day'].push(item)
+          } else if (description.includes('martin') || title.includes('martin') || location.includes('martin')) {
+            if (!eventGroups['Martin Hall Day']) eventGroups['Martin Hall Day'] = []
+            eventGroups['Martin Hall Day'].push(item)
+          } else if (description.includes('games') || title.includes('games') || location.includes('games')) {
+            if (!eventGroups['Games Fury']) eventGroups['Games Fury'] = []
+            eventGroups['Games Fury'].push(item)
+          } else if (description.includes('founder') || title.includes('founder') || location.includes('founder')) {
+            if (!eventGroups['Founders Day']) eventGroups['Founders Day'] = []
+            eventGroups['Founders Day'].push(item)
+          } else if (description.includes('cultural') || title.includes('cultural') || location.includes('cultural')) {
+            if (!eventGroups['Cultural Festival']) eventGroups['Cultural Festival'] = []
+            eventGroups['Cultural Festival'].push(item)
+          }
+        })
+        
+        // Convert to event data format
+        const eventData = Object.keys(eventGroups).map(eventName => ({
+          name: eventName,
+          totalItems: eventGroups[eventName].length,
+          items: eventGroups[eventName]
+        }))
         
         // Map backend event data to frontend template format
         const mappedEvents = eventData.map((backendEvent: any) => {
@@ -245,7 +289,7 @@ export default function EventHighlights() {
                 <h4 className="font-semibold mb-2">Item Photo</h4>
                 {selectedItem?.imageUrl ? (
                   <img 
-                    src={selectedItem.imageUrl.startsWith('http') ? selectedItem.imageUrl : `https://lost-found-79xn.onrender.com${selectedItem.imageUrl}`} 
+                    src={selectedItem.imageUrl.startsWith('http') ? selectedItem.imageUrl : `${BACKEND_URL}${selectedItem.imageUrl}`} 
                     alt="Item" 
                     className="w-full h-32 object-cover rounded-lg"
                   />
@@ -259,7 +303,7 @@ export default function EventHighlights() {
                 <h4 className="font-semibold mb-2">Location Photo</h4>
                 {selectedItem?.locationImageUrl ? (
                   <img 
-                    src={selectedItem.locationImageUrl.startsWith('http') ? selectedItem.locationImageUrl : `https://lost-found-79xn.onrender.com${selectedItem.locationImageUrl}`} 
+                    src={selectedItem.locationImageUrl.startsWith('http') ? selectedItem.locationImageUrl : `${BACKEND_URL}${selectedItem.locationImageUrl}`} 
                     alt="Location" 
                     className="w-full h-32 object-cover rounded-lg"
                   />

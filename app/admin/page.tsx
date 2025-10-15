@@ -167,8 +167,11 @@ export default function AdminDashboard() {
                 <Link href="/admin/users">
                   <Button className="w-full" variant="outline">View All Users</Button>
                 </Link>
+                <Link href="/admin/staff">
+                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white">Create Staff Login</Button>
+                </Link>
                 <Link href="/admin/dashboard">
-                  <Button className="w-full" variant="outline">Create Account</Button>
+                  <Button className="w-full" variant="outline">Create Student Account</Button>
                 </Link>
               </div>
             </CardContent>

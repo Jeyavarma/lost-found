@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, CheckCircle } from "lucide-react"
 import Navigation from "@/components/navigation"
 import emailjs from '@emailjs/browser'
+import { BACKEND_URL } from "@/lib/config"
 
 // Initialize EmailJS
 if (typeof window !== 'undefined') {
@@ -36,7 +37,7 @@ export default function ForgotPasswordPage() {
     try {
       // Generate OTP and save to backend
       console.log('📡 Calling backend API...')
-      const response = await fetch('https://lost-found-79xn.onrender.com/api/auth/forgot-password', {
+      const response = await fetch(`${BACKEND_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -105,7 +106,7 @@ export default function ForgotPasswordPage() {
     setError("")
 
     try {
-      const response = await fetch('https://lost-found-79xn.onrender.com/api/auth/reset-password', {
+      const response = await fetch(`${BACKEND_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, password })

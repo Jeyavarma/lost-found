@@ -11,7 +11,8 @@ const userSchema = new mongoose.Schema({
   shift: String,
   department: String,
   year: String,
-  rollNumber: String
+  rollNumber: String,
+  lastLogin: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {

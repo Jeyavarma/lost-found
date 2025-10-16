@@ -38,7 +38,9 @@ const itemSchema = new mongoose.Schema({
   verificationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   ownershipProof: String,
   additionalClaimInfo: String,
-  adminNotes: String
+  adminNotes: String,
+  approved: { type: Boolean, default: true },
+  flagged: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Item', itemSchema);

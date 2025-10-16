@@ -155,62 +155,60 @@ export default function AdminDashboard() {
     try {
       const token = getAuthToken()
       
-      // Static data for demo
-      setStats({
-        totalUsers: 245,
-        totalItems: 89,
-        lostItems: 34,
-        foundItems: 55,
-        pendingClaims: 12,
-        verifiedClaims: 23
+      // Fetch live data from backend
+      const [statsResponse, itemsResponse] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/admin/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${BACKEND_URL}/api/admin/recent-items`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ])
+      
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setStats({
+          totalUsers: statsData.totalUsers,
+          totalItems: statsData.totalItems,
+          lostItems: statsData.lostItems,
+          foundItems: statsData.foundItems,
+          pendingClaims: statsData.pendingItems,
+          verifiedClaims: statsData.resolvedItems
+        })
+      }
+      
+      if (itemsResponse.ok) {
+        const itemsData = await itemsResponse.json()
+        setRecentItems(itemsData)
+      }
+      
+      // Fetch pending items for moderation
+      const pendingResponse = await fetch(`${BACKEND_URL}/api/admin/pending-items`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       
-      setRecentItems([
-        {
-          _id: '1',
-          title: 'iPhone 13 Pro',
-          description: 'Black iPhone with cracked screen',
-          category: 'Electronics',
-          status: 'lost',
-          location: 'Library',
-          createdAt: new Date().toISOString(),
-          reportedBy: { _id: '1', name: 'John Doe', email: 'john@mcc.edu' }
-        },
-        {
-          _id: '2',
-          title: 'Blue Backpack',
-          description: 'Nike blue backpack with laptop',
-          category: 'Bags',
-          status: 'found',
-          location: 'Cafeteria',
-          createdAt: new Date().toISOString(),
-          reportedBy: { _id: '2', name: 'Jane Smith', email: 'jane@mcc.edu' }
-        }
-      ])
-      
-      setPendingClaims([
-        {
-          _id: '1',
-          itemId: '1',
-          claimantId: '3',
-          ownershipProof: 'I have the receipt and can describe the wallpaper',
-          additionalInfo: 'Lost it yesterday during lunch break',
+      if (pendingResponse.ok) {
+        const pendingData = await pendingResponse.json()
+        // Convert pending items to claims format for display
+        const mockClaims = pendingData.items.slice(0, 3).map((item: any) => ({
+          _id: item._id,
+          itemId: item._id,
+          claimantId: item.reportedBy?._id || 'unknown',
+          ownershipProof: 'Pending verification',
+          additionalInfo: item.description,
           status: 'pending',
-          createdAt: new Date().toISOString(),
-          item: {
-            _id: '1',
-            title: 'iPhone 13 Pro',
-            description: 'Black iPhone with cracked screen',
-            category: 'Electronics',
-            status: 'lost',
-            location: 'Library',
-            createdAt: new Date().toISOString()
-          },
-          claimant: { name: 'Mike Johnson', email: 'mike@mcc.edu' }
-        }
-      ])
+          createdAt: item.createdAt,
+          item: item,
+          claimant: {
+            name: item.reportedBy?.name || 'Anonymous',
+            email: item.reportedBy?.email || 'unknown@mcc.edu'
+          }
+        }))
+        setPendingClaims(mockClaims)
+      }
     } catch (error) {
       console.error('Error fetching admin data:', error)
+      setError('Failed to load admin data')
     } finally {
       setLoading(false)
     }
@@ -246,9 +244,19 @@ export default function AdminDashboard() {
     if (!confirm('Are you sure you want to delete this item?')) return
     
     try {
-      setMessage('Item deleted successfully')
-      setRecentItems(prev => prev.filter(item => item._id !== itemId))
-      fetchAdminData()
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/items/${itemId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        setMessage('Item deleted successfully')
+        setRecentItems(prev => prev.filter(item => item._id !== itemId))
+        fetchAdminData()
+      } else {
+        setError('Failed to delete item')
+      }
     } catch (error) {
       setError('Failed to delete item')
     }

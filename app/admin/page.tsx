@@ -154,6 +154,8 @@ export default function AdminDashboard() {
     setLoading(true)
     try {
       const token = getAuthToken()
+      console.log('Fetching admin data from:', BACKEND_URL)
+      console.log('Token:', token ? 'Present' : 'Missing')
       
       // Fetch live data from backend
       const [statsResponse, itemsResponse] = await Promise.all([
@@ -165,21 +167,33 @@ export default function AdminDashboard() {
         })
       ])
       
+      console.log('Stats response status:', statsResponse.status)
+      console.log('Items response status:', itemsResponse.status)
+      
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
+        console.log('Stats data:', statsData)
         setStats({
-          totalUsers: statsData.totalUsers,
-          totalItems: statsData.totalItems,
-          lostItems: statsData.lostItems,
-          foundItems: statsData.foundItems,
-          pendingClaims: statsData.pendingItems,
-          verifiedClaims: statsData.resolvedItems
+          totalUsers: statsData.totalUsers || 0,
+          totalItems: statsData.totalItems || 0,
+          lostItems: statsData.lostItems || 0,
+          foundItems: statsData.foundItems || 0,
+          pendingClaims: statsData.pendingItems || 0,
+          verifiedClaims: statsData.resolvedItems || 0
         })
+      } else {
+        const errorText = await statsResponse.text()
+        console.error('Stats API error:', errorText)
+        setError(`Stats API error: ${statsResponse.status}`)
       }
       
       if (itemsResponse.ok) {
         const itemsData = await itemsResponse.json()
-        setRecentItems(itemsData)
+        console.log('Items data:', itemsData)
+        setRecentItems(itemsData || [])
+      } else {
+        const errorText = await itemsResponse.text()
+        console.error('Items API error:', errorText)
       }
       
       // Fetch pending items for moderation
@@ -189,8 +203,9 @@ export default function AdminDashboard() {
       
       if (pendingResponse.ok) {
         const pendingData = await pendingResponse.json()
+        console.log('Pending data:', pendingData)
         // Convert pending items to claims format for display
-        const mockClaims = pendingData.items.slice(0, 3).map((item: any) => ({
+        const mockClaims = (pendingData.items || []).slice(0, 3).map((item: any) => ({
           _id: item._id,
           itemId: item._id,
           claimantId: item.reportedBy?._id || 'unknown',
@@ -205,10 +220,12 @@ export default function AdminDashboard() {
           }
         }))
         setPendingClaims(mockClaims)
+      } else {
+        console.error('Pending items API error:', pendingResponse.status)
       }
     } catch (error) {
       console.error('Error fetching admin data:', error)
-      setError('Failed to load admin data')
+      setError(`Failed to load admin data: ${error}`)
     } finally {
       setLoading(false)
     }
@@ -499,6 +516,21 @@ export default function AdminDashboard() {
                 <Button onClick={fetchAdminData} variant="outline" className="w-full text-sm" disabled={loading}>
                   <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                   Refresh
+                </Button>
+                <Button onClick={async () => {
+                  try {
+                    const token = getAuthToken()
+                    const response = await fetch(`${BACKEND_URL}/api/admin/test`, {
+                      headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                    const data = await response.json()
+                    alert(`Connection test: ${response.ok ? 'SUCCESS' : 'FAILED'}\n${JSON.stringify(data, null, 2)}`)
+                  } catch (error) {
+                    alert(`Connection test FAILED: ${error}`)
+                  }
+                }} variant="outline" className="w-full text-sm">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Test API
                 </Button>
                 <Button variant="outline" className="w-full text-sm">
                   <Database className="w-4 h-4 mr-2" />

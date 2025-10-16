@@ -53,6 +53,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/items', apiLimiter, itemRoutes);
+app.use('/api/claims', apiLimiter, require('./routes/claims'));
 app.use('/api/notifications', apiLimiter, notificationRoutes);
 app.use('/api/feedback', apiLimiter, feedbackRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);

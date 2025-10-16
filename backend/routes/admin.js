@@ -12,6 +12,15 @@ const adminAuth = (req, res, next) => {
   next();
 };
 
+// Test endpoint
+router.get('/test', auth, adminAuth, async (req, res) => {
+  res.json({ 
+    message: 'Admin API is working!', 
+    user: req.user,
+    timestamp: new Date()
+  });
+});
+
 // Get admin dashboard stats
 router.get('/stats', auth, adminAuth, async (req, res) => {
   try {
@@ -27,7 +36,10 @@ router.get('/stats', auth, adminAuth, async (req, res) => {
     });
 
     const pendingItems = await Item.countDocuments({ 
-      approved: { $ne: true } 
+      $or: [
+        { approved: { $exists: false } },
+        { approved: false }
+      ]
     });
 
     res.json({
@@ -71,9 +83,16 @@ router.get('/users', auth, adminAuth, async (req, res) => {
 // Get pending items for moderation
 router.get('/pending-items', auth, adminAuth, async (req, res) => {
   try {
-    const items = await Item.find({ approved: { $ne: true } })
+    // Get items that don't have approved field or are not approved
+    const items = await Item.find({ 
+      $or: [
+        { approved: { $exists: false } },
+        { approved: false }
+      ]
+    })
       .populate('reportedBy', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(5);
     
     res.json({ items });
   } catch (error) {

@@ -35,6 +35,7 @@
 
 .mcc-accent {
   background-color: var(--brand-accent);
+  color: white;
 }
 
 .mcc-text-primary {

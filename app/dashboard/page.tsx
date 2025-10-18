@@ -492,7 +492,7 @@ export default function DashboardPage() {
                 Cancel
               </Button>
               <Button 
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-red-600 hover:bg-red-700 text-white"
                 onClick={handleDelete}
               >
                 Delete

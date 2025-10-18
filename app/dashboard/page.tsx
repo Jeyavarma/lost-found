@@ -228,13 +228,13 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Link href="/report-lost">
-                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                  <Button className="w-full bg-red-500 hover:bg-red-600 text-white">
                     <Search className="w-4 h-4 mr-2" />
                     Report Lost Item
                   </Button>
                 </Link>
                 <Link href="/report-found">
-                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                  <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
                     <Package className="w-4 h-4 mr-2" />
                     Report Found Item
                   </Button>
@@ -342,7 +342,7 @@ export default function DashboardPage() {
                     <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-4">No lost items reported</p>
                     <Link href="/report-lost">
-                      <Button className="bg-red-600 hover:bg-red-700">
+                      <Button className="bg-red-500 hover:bg-red-600 text-white">
                         Report Lost Item
                       </Button>
                     </Link>
@@ -416,7 +416,7 @@ export default function DashboardPage() {
                     <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-4">No found items reported</p>
                     <Link href="/report-found">
-                      <Button className="bg-green-600 hover:bg-green-700">
+                      <Button className="bg-green-500 hover:bg-green-600 text-white">
                         Report Found Item
                       </Button>
                     </Link>

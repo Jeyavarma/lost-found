@@ -60,7 +60,7 @@ export default function ReportSuccessPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/">
-                <Button className="bg-red-600 hover:bg-red-700 flex items-center gap-2">
+                <Button className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2">
                   <Home className="w-4 h-4" />
                   Back to Home
                 </Button>

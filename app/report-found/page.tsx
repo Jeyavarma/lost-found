@@ -312,7 +312,7 @@ export default function ReportFoundPage() {
             <CardContent className="p-4">
               <div className="flex gap-3">
                 <Link href="/login">
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                  <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
                     <User className="w-4 h-4 mr-2" />
                     Login
                   </Button>

@@ -151,7 +151,7 @@ export default function ForgotPasswordPage() {
                   
                   {error && <div className="text-red-600 text-sm">{error}</div>}
                   
-                  <Button type="submit" className="w-full bg-red-800" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white" disabled={isSubmitting}>
                     {isSubmitting ? 'Sending...' : 'Send OTP'}
                   </Button>
                   
@@ -187,7 +187,7 @@ export default function ForgotPasswordPage() {
                   
                   {error && <div className="text-red-600 text-sm">{error}</div>}
                   
-                  <Button type="submit" className="w-full bg-red-800" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white" disabled={isSubmitting}>
                     {isSubmitting ? 'Resetting...' : 'Reset Password'}
                   </Button>
                 </form>
@@ -197,7 +197,7 @@ export default function ForgotPasswordPage() {
                 <CheckCircle className="w-16 h-16 text-green-600 mx-auto" />
                 <h3 className="text-lg font-semibold">Password Reset!</h3>
                 <Link href="/login">
-                  <Button className="bg-red-800">Login Now</Button>
+                  <Button className="bg-red-600 hover:bg-red-700 text-white">Login Now</Button>
                 </Link>
               </div>
             )}

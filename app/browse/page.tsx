@@ -423,7 +423,7 @@ export default function BrowsePage() {
 
                         </div>
                         <a href={`mailto:${item.reportedBy?.email || item.email || 'lostfound@mcc.edu.in'}`}>
-                          <Button size="sm" className="mcc-accent hover:bg-red-800">
+                          <Button size="sm" className="mcc-accent hover:bg-red-700 text-white">
                             <MessageCircle className="w-4 h-4 mr-1" />
                             Contact
                           </Button>
@@ -492,7 +492,7 @@ export default function BrowsePage() {
                               </div>
                             </div>
                             <a href={`mailto:${item.reportedBy?.email || item.email || 'lostfound@mcc.edu.in'}`}>
-                              <Button size="sm" className="mcc-accent hover:bg-red-800 text-xs sm:text-sm">
+                              <Button size="sm" className="mcc-accent hover:bg-red-700 text-white text-xs sm:text-sm">
                                 <MessageCircle className="w-4 h-4 mr-1" />
                                 Contact
                               </Button>
@@ -523,7 +523,7 @@ export default function BrowsePage() {
                     setEventFilter("All Events")
                     setShowRewardOnly(false)
                   }}
-                  className="mcc-accent hover:bg-red-800"
+                  className="mcc-accent hover:bg-red-700 text-white"
                 >
                   Clear All Filters
                 </Button>

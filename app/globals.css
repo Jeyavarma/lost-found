@@ -29,13 +29,28 @@
   --muted: #f9fafb;
 }
 
+/* Force white text on dark buttons */
+.bg-red-500, .bg-red-600, .bg-red-700, .bg-red-800,
+.bg-green-500, .bg-green-600, .bg-green-700, .bg-green-800,
+.bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-blue-800,
+.bg-purple-500, .bg-purple-600, .bg-purple-700, .bg-purple-800,
+.bg-orange-500, .bg-orange-600, .bg-orange-700, .bg-orange-800,
+.bg-indigo-500, .bg-indigo-600, .bg-indigo-700, .bg-indigo-800 {
+  color: white !important;
+}
+
+/* Force white text on mcc-accent */
+.mcc-accent {
+  color: white !important;
+}
+
 .mcc-primary {
   background-color: var(--brand-primary);
 }
 
 .mcc-accent {
   background-color: var(--brand-accent);
-  color: white;
+  color: white !important;
 }
 
 .mcc-text-primary {

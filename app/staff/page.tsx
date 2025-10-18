@@ -87,13 +87,13 @@ export default function StaffDashboard() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="text-white hover:bg-green-700">
+              <Button variant="ghost" className="text-white hover:bg-green-600">
                 <Bell className="w-5 h-5" />
               </Button>
-              <Button variant="ghost" className="text-white hover:bg-green-700">
+              <Button variant="ghost" className="text-white hover:bg-green-600">
                 <Settings className="w-5 h-5" />
               </Button>
-              <Button variant="ghost" className="text-white hover:bg-green-700">
+              <Button variant="ghost" className="text-white hover:bg-green-600">
                 <LogOut className="w-5 h-5" />
               </Button>
             </div>
@@ -177,7 +177,7 @@ export default function StaffDashboard() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Link href="/report-found">
-                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                  <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
                     <Plus className="w-4 h-4 mr-2" />
                     Report Found Item
                   </Button>
@@ -288,7 +288,7 @@ export default function StaffDashboard() {
                               View
                             </Button>
                             {item.needsVerification && (
-                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                              <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
                                 <CheckCircle className="w-4 h-4 mr-1" />
                                 Verify
                               </Button>

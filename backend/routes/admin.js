@@ -281,4 +281,199 @@ router.put('/items/:id', auth, adminAuth, async (req, res) => {
   }
 });
 
+// Create new user
+router.post('/users', auth, adminAuth, async (req, res) => {
+  try {
+    const { name, email, password, role, phone, studentId, department, year, shift, rollNumber } = req.body;
+    
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    const user = new User({ 
+      name, 
+      email, 
+      password, 
+      role: role || 'student', 
+      phone, 
+      studentId, 
+      department, 
+      year, 
+      shift, 
+      rollNumber 
+    });
+    
+    await user.save();
+    
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    
+    res.status(201).json({ message: 'User created successfully', user: userResponse });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user details
+router.get('/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update user
+router.put('/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+    if (!updateData.password) {
+      delete updateData.password;
+    }
+    
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ message: 'User updated successfully', user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete user
+router.delete('/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset user password
+router.post('/reset-password', auth, adminAuth, async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    user.password = newPassword;
+    await user.save();
+    
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get pending claims
+router.get('/claims/pending', auth, adminAuth, async (req, res) => {
+  try {
+    const claims = await Item.find({ 
+      status: 'claimed',
+      verificationStatus: 'pending'
+    })
+    .populate('reportedBy claimedBy', 'name email')
+    .sort({ claimDate: -1 });
+    
+    res.json(claims);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approve/Reject claim
+router.post('/claims/:itemId/:action', auth, adminAuth, async (req, res) => {
+  try {
+    const { itemId, action } = req.params;
+    const { adminNotes } = req.body;
+    
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+    
+    const item = await Item.findById(itemId);
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    
+    if (action === 'approve') {
+      item.status = 'verified';
+      item.verificationStatus = 'approved';
+    } else {
+      item.status = 'found';
+      item.verificationStatus = 'rejected';
+      item.claimedBy = undefined;
+      item.claimDate = undefined;
+      item.ownershipProof = undefined;
+    }
+    
+    item.adminNotes = adminNotes;
+    await item.save();
+    
+    res.json({ message: `Claim ${action}d successfully` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Export database
+router.get('/export-database', auth, adminAuth, async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    const items = await Item.find().populate('reportedBy', 'name email');
+    
+    const exportData = {
+      timestamp: new Date().toISOString(),
+      users,
+      items,
+      stats: {
+        totalUsers: users.length,
+        totalItems: items.length
+      }
+    };
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=mcc-backup-${new Date().toISOString().split('T')[0]}.json`);
+    res.json(exportData);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Clear all data (DANGEROUS)
+router.delete('/clear-all-data', auth, adminAuth, async (req, res) => {
+  try {
+    // Only allow in development or with special confirmation
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Operation not allowed in production' });
+    }
+    
+    await User.deleteMany({ role: { $ne: 'admin' } }); // Keep admin users
+    await Item.deleteMany({});
+    
+    res.json({ message: 'All data cleared successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -129,6 +129,16 @@ export default function AdminDashboard() {
     year: '',
     shift: ''
   })
+  const [showEditItem, setShowEditItem] = useState(false)
+  const [editItemData, setEditItemData] = useState({
+    _id: '',
+    title: '',
+    description: '',
+    category: '',
+    status: '',
+    location: '',
+    contactInfo: ''
+  })
 
   useEffect(() => {
     const checkAuth = () => {
@@ -196,32 +206,32 @@ export default function AdminDashboard() {
         console.error('Items API error:', errorText)
       }
       
-      // Fetch pending items for moderation
-      const pendingResponse = await fetch(`${BACKEND_URL}/api/admin/pending-items`, {
+      // Fetch pending claims
+      const claimsResponse = await fetch(`${BACKEND_URL}/api/admin/claims/pending`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       
-      if (pendingResponse.ok) {
-        const pendingData = await pendingResponse.json()
-        console.log('Pending data:', pendingData)
-        // Convert pending items to claims format for display
-        const mockClaims = (pendingData.items || []).slice(0, 3).map((item: any) => ({
+      if (claimsResponse.ok) {
+        const claimsData = await claimsResponse.json()
+        console.log('Claims data:', claimsData)
+        // Convert claims to display format
+        const formattedClaims = claimsData.map((item: any) => ({
           _id: item._id,
           itemId: item._id,
-          claimantId: item.reportedBy?._id || 'unknown',
-          ownershipProof: 'Pending verification',
-          additionalInfo: item.description,
+          claimantId: item.claimedBy?._id || 'unknown',
+          ownershipProof: item.ownershipProof || 'No proof provided',
+          additionalInfo: item.additionalClaimInfo || item.description,
           status: 'pending',
-          createdAt: item.createdAt,
+          createdAt: item.claimDate || item.createdAt,
           item: item,
           claimant: {
-            name: item.reportedBy?.name || 'Anonymous',
-            email: item.reportedBy?.email || 'unknown@mcc.edu'
+            name: item.claimedBy?.name || 'Anonymous',
+            email: item.claimedBy?.email || 'unknown@mcc.edu'
           }
         }))
-        setPendingClaims(mockClaims)
+        setPendingClaims(formattedClaims)
       } else {
-        console.error('Pending items API error:', pendingResponse.status)
+        console.error('Claims API error:', claimsResponse.status)
       }
     } catch (error) {
       console.error('Error fetching admin data:', error)
@@ -233,25 +243,82 @@ export default function AdminDashboard() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
-    setMessage(`${formData.role} account created successfully`)
-    setFormData({ name: '', email: '', password: '', role: 'student', phone: '', studentId: '', department: '' })
-    setShowCreateUser(false)
-    fetchAdminData()
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setMessage(data.message)
+        setFormData({ name: '', email: '', password: '', role: 'student', phone: '', studentId: '', department: '' })
+        setShowCreateUser(false)
+        fetchAdminData()
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Failed to create user')
+      }
+    } catch (error) {
+      setError('Failed to create user')
+    }
   }
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    setMessage('Password reset email sent successfully')
-    setResetEmail('')
-    setShowResetPassword(false)
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ email: resetEmail, newPassword: 'MCC@2024' })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setMessage(data.message)
+        setResetEmail('')
+        setShowResetPassword(false)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Failed to reset password')
+      }
+    } catch (error) {
+      setError('Failed to reset password')
+    }
   }
 
   const handleClaimAction = async (claimId: string, action: 'approve' | 'reject') => {
     try {
-      setMessage(`Claim ${action}d successfully`)
-      setPendingClaims(prev => prev.filter(claim => claim._id !== claimId))
-      setShowClaimDetails(null)
-      fetchAdminData()
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/claims/${claimId}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ adminNotes })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setMessage(data.message)
+        setPendingClaims(prev => prev.filter(claim => claim._id !== claimId))
+        setShowClaimDetails(null)
+        setAdminNotes('')
+        fetchAdminData()
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || `Failed to ${action} claim`)
+      }
     } catch (error) {
       setError(`Failed to ${action} claim`)
     }
@@ -282,28 +349,98 @@ export default function AdminDashboard() {
   const handleEditUser = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      setMessage('User updated successfully')
-      setShowEditUser(false)
-      setEditUserData({ _id: '', name: '', email: '', role: 'student', phone: '', studentId: '', department: '', year: '', shift: '' })
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/${editUserData._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editUserData)
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setMessage(data.message)
+        setShowEditUser(false)
+        setEditUserData({ _id: '', name: '', email: '', role: 'student', phone: '', studentId: '', department: '', year: '', shift: '' })
+        fetchAdminData()
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Failed to update user')
+      }
     } catch (error) {
       setError('Failed to update user')
     }
   }
 
-  const openEditUser = (userId: string) => {
-    // Demo data - in real app, fetch user details
-    setEditUserData({
-      _id: userId,
-      name: 'John Doe',
-      email: 'john@mcc.edu',
-      role: 'student',
-      phone: '+91 9876543210',
-      studentId: 'MCC2024001',
-      department: 'Computer Science',
-      year: 'III',
-      shift: 'Morning'
+  const openEditUser = async (userId: string) => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        const userData = await response.json()
+        setEditUserData({
+          _id: userData._id,
+          name: userData.name || '',
+          email: userData.email || '',
+          role: userData.role || 'student',
+          phone: userData.phone || '',
+          studentId: userData.studentId || '',
+          department: userData.department || '',
+          year: userData.year || '',
+          shift: userData.shift || ''
+        })
+        setShowEditUser(true)
+      } else {
+        setError('Failed to fetch user details')
+      }
+    } catch (error) {
+      setError('Failed to fetch user details')
+    }
+  }
+
+  const handleEditItem = (item: Item) => {
+    setEditItemData({
+      _id: item._id,
+      title: item.title,
+      description: item.description,
+      category: item.category,
+      status: item.status,
+      location: item.location,
+      contactInfo: item.reportedBy?.email || ''
     })
-    setShowEditUser(true)
+    setShowEditItem(true)
+  }
+
+  const handleUpdateItem = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/items/${editItemData._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editItemData)
+      })
+      
+      if (response.ok) {
+        setMessage('Item updated successfully')
+        setShowEditItem(false)
+        setEditItemData({ _id: '', title: '', description: '', category: '', status: '', location: '', contactInfo: '' })
+        fetchAdminData()
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Failed to update item')
+      }
+    } catch (error) {
+      setError('Failed to update item')
+    }
   }
 
   if (loading && stats.totalUsers === 0) {
@@ -409,7 +546,7 @@ export default function AdminDashboard() {
               <CardContent className="space-y-2">
                 <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
                   <DialogTrigger asChild>
-                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
                       <UserPlus className="w-4 h-4 mr-2" />
                       Create Account
                     </Button>
@@ -483,10 +620,12 @@ export default function AdminDashboard() {
                     Users
                   </Button>
                 </Link>
-                <Button onClick={() => openEditUser('demo')} className="w-full text-sm" variant="outline">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit User
-                </Button>
+                <Link href="/admin/users">
+                  <Button className="w-full text-sm" variant="outline">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Manage Users
+                  </Button>
+                </Link>
                 <Link href="/admin/items">
                   <Button className="w-full text-sm" variant="outline">
                     <Package className="w-4 h-4 mr-2" />
@@ -532,7 +671,29 @@ export default function AdminDashboard() {
                   <Activity className="w-4 h-4 mr-2" />
                   Test API
                 </Button>
-                <Button variant="outline" className="w-full text-sm">
+                <Button onClick={async () => {
+                  try {
+                    const token = getAuthToken()
+                    const response = await fetch(`${BACKEND_URL}/api/admin/export-database`, {
+                      headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                    
+                    if (response.ok) {
+                      const blob = await response.blob()
+                      const url = window.URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `mcc-backup-${new Date().toISOString().split('T')[0]}.json`
+                      a.click()
+                      window.URL.revokeObjectURL(url)
+                      setMessage('Database backup downloaded successfully')
+                    } else {
+                      setError('Failed to create backup')
+                    }
+                  } catch (error) {
+                    setError('Failed to create backup')
+                  }
+                }} variant="outline" className="w-full text-sm">
                   <Database className="w-4 h-4 mr-2" />
                   Backup
                 </Button>
@@ -577,14 +738,14 @@ export default function AdminDashboard() {
                             <Button 
                               size="sm" 
                               onClick={() => handleClaimAction(claim._id, 'approve')}
-                              className="bg-green-600 hover:bg-green-700 text-white"
+                              className="bg-green-500 hover:bg-green-600 text-white"
                             >
                               <CheckCircle className="w-4 h-4" />
                             </Button>
                             <Button 
                               size="sm" 
                               onClick={() => handleClaimAction(claim._id, 'reject')}
-                              className="bg-red-600 hover:bg-red-700 text-white"
+                              className="bg-red-500 hover:bg-red-600 text-white"
                             >
                               <XCircle className="w-4 h-4" />
                             </Button>
@@ -632,7 +793,11 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex gap-1">
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEditItem(item)}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
@@ -701,14 +866,14 @@ export default function AdminDashboard() {
                 <div className="flex gap-2 pt-4">
                   <Button 
                     onClick={() => handleClaimAction(showClaimDetails._id, 'approve')}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-500 hover:bg-green-600 text-white"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Approve Claim
                   </Button>
                   <Button 
                     onClick={() => handleClaimAction(showClaimDetails._id, 'reject')}
-                    className="bg-red-600 hover:bg-red-700 text-white"
+                    className="bg-red-500 hover:bg-red-600 text-white"
                   >
                     <XCircle className="w-4 h-4 mr-2" />
                     Reject Claim
@@ -820,10 +985,90 @@ export default function AdminDashboard() {
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
                   Update User
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowEditUser(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Item Modal */}
+        <Dialog open={showEditItem} onOpenChange={setShowEditItem}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Item</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateItem} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Title *</Label>
+                  <Input 
+                    value={editItemData.title} 
+                    onChange={(e) => setEditItemData({...editItemData, title: e.target.value})} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label>Category *</Label>
+                  <Select value={editItemData.category} onValueChange={(value) => setEditItemData({...editItemData, category: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Electronics">Electronics</SelectItem>
+                      <SelectItem value="Books">Books</SelectItem>
+                      <SelectItem value="Clothing">Clothing</SelectItem>
+                      <SelectItem value="Accessories">Accessories</SelectItem>
+                      <SelectItem value="Documents">Documents</SelectItem>
+                      <SelectItem value="Keys">Keys</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div>
+                <Label>Description *</Label>
+                <Textarea 
+                  value={editItemData.description} 
+                  onChange={(e) => setEditItemData({...editItemData, description: e.target.value})} 
+                  required 
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Status *</Label>
+                  <Select value={editItemData.status} onValueChange={(value) => setEditItemData({...editItemData, status: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lost">Lost</SelectItem>
+                      <SelectItem value="found">Found</SelectItem>
+                      <SelectItem value="claimed">Claimed</SelectItem>
+                      <SelectItem value="verified">Verified</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Location *</Label>
+                  <Input 
+                    value={editItemData.location} 
+                    onChange={(e) => setEditItemData({...editItemData, location: e.target.value})} 
+                    required 
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
+                  Update Item
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowEditItem(false)}>
                   Cancel
                 </Button>
               </div>

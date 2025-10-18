@@ -416,7 +416,7 @@ export default function AdminControlPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button className="bg-red-600 hover:bg-red-700 text-white">
+                  <Button className="bg-red-500 hover:bg-red-600 text-white">
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete All Items
                   </Button>

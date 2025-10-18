@@ -172,7 +172,7 @@ export default function AdminSettings() {
         </Card>
 
         <div className="flex justify-end mt-8">
-          <Button onClick={saveSettings} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={saveSettings} className="bg-green-500 hover:bg-green-600 text-white">
             <Save className="w-4 h-4 mr-2" />
             Save All Settings
           </Button>

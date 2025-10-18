@@ -124,39 +124,22 @@ export default function AdminUsersPage() {
       })
       
       if (response.ok) {
+        const data = await response.json()
+        alert(data.message)
         fetchUsers()
         setShowCreateModal(false)
         resetForm()
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to create user')
       }
     } catch (error) {
       console.error('Error creating user:', error)
+      alert('Failed to create user')
     }
   }
 
-  const handleUpdateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingUser) return
-    
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${BACKEND_URL}/api/admin/users/${editingUser._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      })
-      
-      if (response.ok) {
-        fetchUsers()
-        setEditingUser(null)
-        resetForm()
-      }
-    } catch (error) {
-      console.error('Error updating user:', error)
-    }
-  }
+
 
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return
@@ -169,10 +152,16 @@ export default function AdminUsersPage() {
       })
       
       if (response.ok) {
+        const data = await response.json()
+        alert(data.message)
         fetchUsers()
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to delete user')
       }
     } catch (error) {
       console.error('Error deleting user:', error)
+      alert('Failed to delete user')
     }
   }
 
@@ -181,21 +170,20 @@ export default function AdminUsersPage() {
     
     try {
       const token = getAuthToken()
-      const response = await fetch(`${BACKEND_URL}/api/admin/bulk-delete-users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ userIds: selectedUsers })
-      })
+      const promises = selectedUsers.map(userId => 
+        fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      )
       
-      if (response.ok) {
-        fetchUsers()
-        setSelectedUsers([])
-      }
+      await Promise.all(promises)
+      alert(`${selectedUsers.length} users deleted successfully`)
+      fetchUsers()
+      setSelectedUsers([])
     } catch (error) {
       console.error('Error bulk deleting users:', error)
+      alert('Failed to delete users')
     }
   }
 
@@ -213,11 +201,13 @@ export default function AdminUsersPage() {
       })
       
       if (response.ok) {
-        alert('Password reset successfully')
+        const data = await response.json()
+        alert(data.message)
         setShowResetPassword(false)
         setResetPasswordData({ email: '', newPassword: '' })
       } else {
-        alert('Failed to reset password')
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to reset password')
       }
     } catch (error) {
       console.error('Error resetting password:', error)
@@ -265,7 +255,7 @@ export default function AdminUsersPage() {
       const token = getAuthToken()
       const updateData = { ...formData }
       if (!updateData.password) {
-        delete updateData.password // Don't update password if empty
+        delete updateData.password
       }
       
       const response = await fetch(`${BACKEND_URL}/api/admin/users/${editingUserId}`, {
@@ -278,13 +268,15 @@ export default function AdminUsersPage() {
       })
       
       if (response.ok) {
+        const data = await response.json()
+        alert(data.message)
         fetchUsers()
         setShowEditUser(false)
         setEditingUserId(null)
         resetForm()
-        alert('User updated successfully')
       } else {
-        alert('Failed to update user')
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to update user')
       }
     } catch (error) {
       console.error('Error updating user:', error)
@@ -366,7 +358,7 @@ export default function AdminUsersPage() {
                 </Dialog>
                 <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
                   <DialogTrigger asChild>
-                    <Button className="bg-green-600 hover:bg-green-700">
+                    <Button className="bg-green-500 hover:bg-green-600 text-white">
                       <Plus className="w-4 h-4 mr-1" />
                       Add User
                     </Button>
@@ -471,7 +463,7 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={() => startEdit(user)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <Button onClick={() => startEdit(user)} size="sm" className="bg-blue-500 hover:bg-blue-600 text-white">
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button onClick={() => handleDeleteUser(user._id)} size="sm" variant="outline" className="text-red-600">
@@ -594,7 +586,7 @@ export default function AdminUsersPage() {
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
                   Update User
                 </Button>
                 <Button type="button" variant="outline" onClick={() => { setShowEditUser(false); setEditingUserId(null); }}>

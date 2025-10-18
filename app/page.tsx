@@ -163,7 +163,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-2 mr-2">
                     <Button 
                       size="default" 
-                      className="mcc-accent hover:bg-red-800 shadow-lg w-full sm:w-auto"
+                      className="mcc-accent hover:bg-red-700 text-white shadow-lg w-full sm:w-auto"
                       onClick={() => window.location.href = `/browse?search=${encodeURIComponent(searchQuery)}`}
                     >
                       <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
@@ -221,7 +221,7 @@ export default function HomePage() {
             
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/report-lost">
-                <Button size="lg" className="mcc-accent hover:bg-red-800 px-8 py-3 font-semibold shadow-lg">
+                <Button size="lg" className="mcc-accent hover:bg-red-700 text-white px-8 py-3 font-semibold shadow-lg">
                   Report Lost Item
                 </Button>
               </Link>
@@ -262,7 +262,7 @@ export default function HomePage() {
             <p className="text-brand-text-dark text-lg">Help your fellow MCC students find their belongings</p>
           </div>
           <Link href="/browse">
-            <Button size="lg" className="mcc-accent hover:bg-red-800 px-8 py-3">
+            <Button size="lg" className="mcc-accent hover:bg-red-700 text-white px-8 py-3">
               View All Items
             </Button>
           </Link>
@@ -359,7 +359,7 @@ export default function HomePage() {
                       </Button>
                     </div>
                     <a href={`mailto:${item.reportedBy?.email || item.contactEmail}`}>
-                      <Button size="sm" className="mcc-accent hover:bg-red-800 shadow-md font-medium">
+                      <Button size="sm" className="mcc-accent hover:bg-red-700 text-white shadow-md font-medium">
                         <MessageCircle className="w-4 h-4 mr-1" />
                         Contact
                       </Button>

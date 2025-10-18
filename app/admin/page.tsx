@@ -162,27 +162,38 @@ export default function AdminDashboard() {
 
   const fetchAdminData = async () => {
     setLoading(true)
+    setError('')
     try {
       const token = getAuthToken()
-      console.log('Fetching admin data from:', BACKEND_URL)
-      console.log('Token:', token ? 'Present' : 'Missing')
+      console.log('🔗 Backend URL:', BACKEND_URL)
+      console.log('🔑 Token:', token ? 'Present' : 'Missing')
+      
+      // Test basic connectivity first
+      console.log('🧪 Testing backend connectivity...')
+      const testResponse = await fetch(`${BACKEND_URL}/api/admin/test`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      console.log('🧪 Test response:', testResponse.status)
+      
+      if (!testResponse.ok) {
+        const testError = await testResponse.text()
+        console.error('❌ Backend connection failed:', testError)
+        setError(`Backend connection failed: ${testResponse.status} - ${testError}`)
+        return
+      }
       
       // Fetch live data from backend
-      const [statsResponse, itemsResponse] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/admin/stats`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${BACKEND_URL}/api/admin/recent-items`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ])
+      console.log('📊 Fetching admin stats...')
+      const statsResponse = await fetch(`${BACKEND_URL}/api/admin/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
       
-      console.log('Stats response status:', statsResponse.status)
-      console.log('Items response status:', itemsResponse.status)
+      console.log('📊 Stats response:', statsResponse.status)
       
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
-        console.log('Stats data:', statsData)
+        console.log('✅ Stats data received:', statsData)
         setStats({
           totalUsers: statsData.totalUsers || 0,
           totalItems: statsData.totalItems || 0,
@@ -193,29 +204,41 @@ export default function AdminDashboard() {
         })
       } else {
         const errorText = await statsResponse.text()
-        console.error('Stats API error:', errorText)
-        setError(`Stats API error: ${statsResponse.status}`)
+        console.error('❌ Stats API error:', errorText)
+        setError(`Stats API failed: ${statsResponse.status} - ${errorText}`)
+        return
       }
+      
+      // Fetch recent items
+      console.log('📦 Fetching recent items...')
+      const itemsResponse = await fetch(`${BACKEND_URL}/api/admin/recent-items`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      console.log('📦 Items response:', itemsResponse.status)
       
       if (itemsResponse.ok) {
         const itemsData = await itemsResponse.json()
-        console.log('Items data:', itemsData)
+        console.log('✅ Items data received:', itemsData?.length || 0, 'items')
         setRecentItems(itemsData || [])
       } else {
         const errorText = await itemsResponse.text()
-        console.error('Items API error:', errorText)
+        console.error('⚠️ Items API error (non-critical):', errorText)
       }
       
       // Fetch pending claims
+      console.log('⏳ Fetching pending claims...')
       const claimsResponse = await fetch(`${BACKEND_URL}/api/admin/claims/pending`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       
+      console.log('⏳ Claims response:', claimsResponse.status)
+      
       if (claimsResponse.ok) {
         const claimsData = await claimsResponse.json()
-        console.log('Claims data:', claimsData)
+        console.log('✅ Claims data received:', claimsData?.length || 0, 'claims')
         // Convert claims to display format
-        const formattedClaims = claimsData.map((item: any) => ({
+        const formattedClaims = (claimsData || []).map((item: any) => ({
           _id: item._id,
           itemId: item._id,
           claimantId: item.claimedBy?._id || 'unknown',
@@ -231,11 +254,13 @@ export default function AdminDashboard() {
         }))
         setPendingClaims(formattedClaims)
       } else {
-        console.error('Claims API error:', claimsResponse.status)
+        console.error('⚠️ Claims API error (non-critical):', claimsResponse.status)
       }
+      
+      console.log('🎉 Admin data loaded successfully!')
     } catch (error) {
-      console.error('Error fetching admin data:', error)
-      setError(`Failed to load admin data: ${error}`)
+      console.error('💥 Critical error fetching admin data:', error)
+      setError(`Network error: ${error}. Check if backend is running at ${BACKEND_URL}`)
     } finally {
       setLoading(false)
     }

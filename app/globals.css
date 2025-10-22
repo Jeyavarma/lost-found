@@ -108,10 +108,32 @@
 
 .mcc-card {
   transition: all 0.3s ease;
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
 }
 
 .mcc-card:hover {
   transform: translateY(-2px);
+}
+
+/* Force solid backgrounds for admin panels */
+.bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+.bg-white {
+  background-color: #ffffff !important;
+}
+
+/* Remove any transparency from cards and panels */
+.card, .dialog-content, .popover-content {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+}
+
+/* Ensure all admin backgrounds are solid */
+body {
+  background-color: #f9fafb !important;
 }
 
 @keyframes fade-in {

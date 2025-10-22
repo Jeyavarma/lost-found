@@ -131,6 +131,29 @@
   backdrop-filter: none !important;
 }
 
+/* Fix dialog/modal transparency */
+[data-radix-dialog-content] {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Dialog overlay */
+[data-radix-dialog-overlay] {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* All modal/dialog content */
+.fixed.inset-0 > div {
+  background-color: #ffffff !important;
+}
+
+/* Specific dialog content styling */
+div[role="dialog"] {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
 /* Ensure all admin backgrounds are solid */
 body {
   background-color: #f9fafb !important;

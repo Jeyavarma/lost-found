@@ -253,10 +253,8 @@ export default function AdminUsersPage() {
     
     try {
       const token = getAuthToken()
-      const updateData = { ...formData }
-      if (!updateData.password) {
-        delete updateData.password
-      }
+      const { password, ...updateData } = formData
+      const finalData = password ? { ...updateData, password } : updateData
       
       const response = await fetch(`${BACKEND_URL}/api/admin/users/${editingUserId}`, {
         method: 'PUT',
@@ -264,7 +262,7 @@ export default function AdminUsersPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(finalData)
       })
       
       if (response.ok) {

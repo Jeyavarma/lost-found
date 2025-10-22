@@ -27,22 +27,51 @@
   --popover: #ffffff;
   --card: #ffffff;
   --muted: #f9fafb;
+  
+  /* Consistent color palette */
+  --red-600: #dc2626;
+  --green-600: #16a34a;
+  --blue-600: #2563eb;
+  --purple-600: #9333ea;
+  --orange-600: #ea580c;
+  --indigo-600: #4f46e5;
+  --gray-600: #4b5563;
+  --gray-800: #1f2937;
 }
 
-/* Force white text on dark buttons */
+/* Force consistent button colors across environments */
 .bg-red-500, .bg-red-600, .bg-red-700, .bg-red-800,
 .bg-green-500, .bg-green-600, .bg-green-700, .bg-green-800,
 .bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-blue-800,
 .bg-purple-500, .bg-purple-600, .bg-purple-700, .bg-purple-800,
 .bg-orange-500, .bg-orange-600, .bg-orange-700, .bg-orange-800,
-.bg-indigo-500, .bg-indigo-600, .bg-indigo-700, .bg-indigo-800 {
+.bg-indigo-500, .bg-indigo-600, .bg-indigo-700, .bg-indigo-800,
+.bg-gray-800, .bg-gray-900 {
   color: white !important;
+  border: none !important;
 }
+
+/* Hover states */
+.bg-red-600:hover { background-color: #dc2626 !important; }
+.bg-green-600:hover { background-color: #16a34a !important; }
+.bg-blue-600:hover { background-color: #2563eb !important; }
+.bg-purple-600:hover { background-color: #9333ea !important; }
+.bg-orange-600:hover { background-color: #ea580c !important; }
+.bg-indigo-600:hover { background-color: #4f46e5 !important; }
+.bg-gray-800:hover { background-color: #1f2937 !important; }
 
 /* Force white text on mcc-accent */
 .mcc-accent {
   color: white !important;
 }
+
+/* Consistent text colors */
+.text-blue-600 { color: #2563eb !important; }
+.text-green-600 { color: #16a34a !important; }
+.text-red-600 { color: #dc2626 !important; }
+.text-purple-600 { color: #9333ea !important; }
+.text-orange-600 { color: #ea580c !important; }
+.text-gray-600 { color: #4b5563 !important; }
 
 .mcc-primary {
   background-color: var(--brand-primary);

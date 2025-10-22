@@ -476,4 +476,31 @@ router.delete('/clear-all-data', auth, adminAuth, async (req, res) => {
   }
 });
 
+// Admin: Create new user
+router.post('/users', auth, adminAuth, async (req, res) => {
+  try {
+    const { name, email, password, role, phone, studentId, department } = req.body;
+    
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    const user = new User({
+      name,
+      email,
+      password,
+      role: role || 'student',
+      phone,
+      studentId,
+      department
+    });
+    
+    await user.save();
+    res.json({ message: `${role || 'Student'} account created successfully` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

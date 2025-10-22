@@ -697,6 +697,22 @@ export default function AdminDashboard() {
                   Test API
                 </Button>
                 <Button onClick={async () => {
+                  if (!confirm('Populate production database with sample data?')) return
+                  try {
+                    const response = await fetch(`${BACKEND_URL}/api/seed/populate`, {
+                      method: 'POST'
+                    })
+                    const data = await response.json()
+                    alert(`Database populated: ${data.users} users, ${data.items} items`)
+                    fetchAdminData()
+                  } catch (error) {
+                    alert(`Failed to populate database: ${error}`)
+                  }
+                }} variant="outline" className="w-full text-sm">
+                  <Database className="w-4 h-4 mr-2" />
+                  Populate DB
+                </Button>
+                <Button onClick={async () => {
                   try {
                     const token = getAuthToken()
                     const response = await fetch(`${BACKEND_URL}/api/admin/export-database`, {

@@ -51,9 +51,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Validate role if provided
-    const validRoles = ['student', 'staff', 'admin'];
-    const userRole = role && validRoles.includes(role) ? role : 'student';
+    // Prevent admin creation through regular registration
+    const userRole = (role === 'admin') ? 'student' : (role || 'student');
 
     const user = new User({ 
       name, 
@@ -146,6 +145,44 @@ router.post('/reset-password', async (req, res) => {
 });
 
 
+
+// Create first admin account (only if no admin exists)
+router.post('/create-first-admin', async (req, res) => {
+  try {
+    // Check if any admin already exists
+    const existingAdmin = await User.findOne({ role: 'admin' });
+    if (existingAdmin) {
+      return res.status(400).json({ message: 'Admin account already exists. Use login instead.' });
+    }
+
+    const { name, email, password } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email and password are required' });
+    }
+
+    const user = new User({ 
+      name, 
+      email, 
+      password, 
+      role: 'admin'
+    });
+    await user.save();
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    
+    res.status(201).json({
+      message: 'First admin account created successfully',
+      token,
+      userId: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 router.get('/validate', async (req, res) => {
   try {

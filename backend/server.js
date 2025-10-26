@@ -61,6 +61,11 @@ app.use('/api/seed', require('./routes/seed'));
 app.use('/api', healthRoutes);
 app.use('/uploads', express.static('uploads'));
 
+// Serve admin creation page
+app.get('/create-admin', (req, res) => {
+  res.sendFile(__dirname + '/create-admin.html');
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

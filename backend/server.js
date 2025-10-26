@@ -51,6 +51,45 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
+// Special route for first admin creation (no middleware)
+app.post('/api/auth/create-first-admin', express.json(), async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const jwt = require('jsonwebtoken');
+    
+    const existingAdmin = await User.findOne({ role: 'admin' });
+    if (existingAdmin) {
+      return res.status(400).json({ message: 'Admin account already exists' });
+    }
+
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email and password required' });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    const user = new User({ name, email, password, role: 'admin' });
+    await user.save();
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    
+    res.status(201).json({
+      message: 'Admin created successfully',
+      token,
+      userId: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/items', apiLimiter, itemRoutes);
 app.use('/api/claims', apiLimiter, require('./routes/claims'));

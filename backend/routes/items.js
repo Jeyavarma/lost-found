@@ -4,8 +4,23 @@ const Item = require('../models/Item');
 const User = require('../models/User');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
-const imageMatching = require('../services/imageMatching');
 const router = express.Router();
+
+// Load lightweight image matching service
+let imageMatching = null;
+try {
+  // Try hash-based matching first (lightweight)
+  imageMatching = require('../services/hashImageMatching');
+  console.log('✅ Hash-based image matching loaded');
+} catch (error) {
+  try {
+    // Fallback to cloud service
+    imageMatching = require('../services/cloudImageMatching');
+    console.log('✅ Cloud image matching loaded');
+  } catch (error2) {
+    console.log('⚠️ No image matching service available');
+  }
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -230,10 +245,24 @@ router.get('/potential-matches', auth, async (req, res) => {
   }
 });
 
-const uploadFields = upload.fields([
-  { name: 'itemImage', maxCount: 1 },
-  { name: 'locationImage', maxCount: 1 }
-]);
+const uploadFields = (req, res, next) => {
+  console.log('📁 Upload middleware - Processing files...');
+  
+  const uploadHandler = upload.fields([
+    { name: 'itemImage', maxCount: 1 },
+    { name: 'locationImage', maxCount: 1 }
+  ]);
+  
+  uploadHandler(req, res, (err) => {
+    if (err) {
+      console.error('❌ Upload error:', err);
+      return res.status(400).json({ message: 'File upload error', error: err.message });
+    }
+    
+    console.log('✅ Upload completed - Files:', req.files ? Object.keys(req.files) : 'None');
+    next();
+  });
+};
 
 // Optional auth middleware - sets user if token is valid, but doesn't block request
 const optionalAuth = async (req, res, next) => {
@@ -270,20 +299,27 @@ const optionalAuth = async (req, res, next) => {
 
 router.post('/', uploadFields, optionalAuth, async (req, res) => {
   try {
+    console.log('📝 POST /api/items - Request received');
+    console.log('📋 Request body keys:', Object.keys(req.body));
+    console.log('📁 Files:', req.files ? Object.keys(req.files) : 'None');
+    
     const { contactName, contactEmail, contactPhone, date, time, status, ...otherFields } = req.body;
     
     // Input validation
     if (!status || !['lost', 'found'].includes(status)) {
+      console.log('❌ Invalid status:', status);
       return res.status(400).json({ message: 'Valid status (lost/found) is required' });
     }
     
     if (!contactName || !contactEmail) {
+      console.log('❌ Missing required fields - contactName:', !!contactName, 'contactEmail:', !!contactEmail);
       return res.status(400).json({ message: 'Contact name and email are required' });
     }
     
     // Use safer email validation
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(contactEmail)) {
+      console.log('❌ Invalid email format:', contactEmail);
       return res.status(400).json({ message: 'Valid email address is required' });
     }
     
@@ -303,6 +339,13 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
       return res.status(401).json({ message: 'Authentication required to report lost items' });
     }
     
+    // Ensure all required fields are present
+    if (!otherFields.title || !otherFields.description || !otherFields.category || !otherFields.location) {
+      console.log('❌ Missing required item fields');
+      console.log('Title:', !!otherFields.title, 'Description:', !!otherFields.description, 'Category:', !!otherFields.category, 'Location:', !!otherFields.location);
+      return res.status(400).json({ message: 'Title, description, category, and location are required' });
+    }
+    
     const itemData = {
       ...otherFields,
       status,
@@ -319,71 +362,100 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
     if (req.files) {
       if (req.files.itemImage) {
         itemData.imageUrl = req.files.itemImage[0].path;
+        console.log('📷 Item image uploaded:', itemData.imageUrl);
       }
       if (req.files.locationImage) {
         itemData.locationImageUrl = req.files.locationImage[0].path;
+        console.log('📍 Location image uploaded:', itemData.locationImageUrl);
       }
     }
+    
+    console.log('💾 Creating item with data:', { ...itemData, imageUrl: itemData.imageUrl ? 'SET' : 'NONE' });
     
     const item = new Item(itemData);
     await item.save();
     
-    // Extract image features and find matches if image exists
+    console.log('✅ Item saved successfully with ID:', item._id);
+    
+    // Try image matching but don't fail if it doesn't work
     if (itemData.imageUrl) {
       try {
-        console.log('🔍 Extracting image features for:', item.title);
-        const features = await imageMatching.extractFeatures(itemData.imageUrl);
+        console.log('🔍 Attempting image feature extraction for:', item.title);
         
-        if (features) {
-          item.imageFeatures = features;
+        // Check if imageMatching service is available
+        if (imageMatching && typeof imageMatching.extractFeatures === 'function') {
+          const features = await imageMatching.extractFeatures(itemData.imageUrl);
           
-          // Find potential matches
-          const oppositeStatus = item.status === 'lost' ? 'found' : 'lost';
-          const existingItems = await Item.find({ 
-            status: oppositeStatus,
-            imageFeatures: { $exists: true, $ne: [] },
-            _id: { $ne: item._id }
-          });
-          
-          console.log(`🔍 Comparing with ${existingItems.length} ${oppositeStatus} items`);
-          const matches = await imageMatching.findMatches(item, existingItems);
-          
-          if (matches.length > 0) {
-            console.log(`✅ Found ${matches.length} potential matches`);
+          if (features && features.length > 0) {
+            console.log('✅ Features extracted, length:', features.length);
+            item.imageFeatures = features;
             
-            // Save matches to current item
-            item.potentialMatches = matches.map(match => ({
-              itemId: match.item._id,
-              similarity: match.similarity,
-              confidence: match.confidence
-            }));
+            // Find potential matches
+            const oppositeStatus = item.status === 'lost' ? 'found' : 'lost';
+            const existingItems = await Item.find({ 
+              status: oppositeStatus,
+              imageFeatures: { $exists: true, $ne: [] },
+              _id: { $ne: item._id }
+            });
             
-            // Add reverse matches to found items
-            for (const match of matches) {
-              await Item.findByIdAndUpdate(match.item._id, {
-                $push: {
-                  potentialMatches: {
-                    itemId: item._id,
-                    similarity: match.similarity,
-                    confidence: match.confidence
-                  }
+            console.log(`🔍 Comparing with ${existingItems.length} ${oppositeStatus} items`);
+            
+            if (existingItems.length > 0) {
+              const matches = await imageMatching.findMatches(item, existingItems);
+              
+              if (matches.length > 0) {
+                console.log(`✅ Found ${matches.length} potential matches`);
+                
+                // Save matches to current item
+                item.potentialMatches = matches.map(match => ({
+                  itemId: match.item._id,
+                  similarity: match.similarity,
+                  confidence: match.confidence
+                }));
+                
+                // Add reverse matches to found items
+                for (const match of matches) {
+                  await Item.findByIdAndUpdate(match.item._id, {
+                    $push: {
+                      potentialMatches: {
+                        itemId: item._id,
+                        similarity: match.similarity,
+                        confidence: match.confidence
+                      }
+                    }
+                  });
                 }
-              });
+              }
             }
+            
+            await item.save();
+            console.log('✅ Item updated with image features and matches');
+          } else {
+            console.log('⚠️ No features extracted from image');
           }
-          
-          await item.save();
+        } else {
+          console.log('⚠️ Image matching service not available');
         }
       } catch (error) {
-        console.error('❌ Image matching error:', error);
+        console.error('❌ Image matching error (non-fatal):', error.message);
         // Continue without failing the item creation
       }
     }
     
     await item.populate('reportedBy', 'name email');
+    console.log('✅ Item submission completed successfully');
     res.status(201).json(item);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('❌ Item submission error:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Send more specific error message
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ message: 'Validation error', errors: validationErrors });
+    }
+    
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

@@ -6,63 +6,8 @@ const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
 const router = express.Router();
 
-// Load image matching service
-let imageMatching = null;
-try {
-  imageMatching = require('../services/hashImageMatching');
-  console.log('✅ Hash-based image matching loaded');
-} catch (error) {
-  console.log('⚠️ Image matching service not available:', error.message);
-}
-
-// Background image processing function
-async function processImageMatching(item) {
-  if (!imageMatching || !item.imageUrl) return;
-  
-  try {
-    const features = await imageMatching.extractFeatures(item.imageUrl);
-    
-    if (features) {
-      item.imageFeatures = features;
-      
-      const oppositeStatus = item.status === 'lost' ? 'found' : 'lost';
-      const existingItems = await Item.find({ 
-        status: oppositeStatus,
-        imageFeatures: { $exists: true, $ne: [] },
-        _id: { $ne: item._id }
-      });
-      
-      if (existingItems.length > 0) {
-        const matches = await imageMatching.findMatches(item, existingItems);
-        
-        if (matches.length > 0) {
-          item.potentialMatches = matches.map(match => ({
-            itemId: match.item._id,
-            similarity: match.similarity,
-            confidence: match.confidence
-          }));
-          
-          for (const match of matches) {
-            await Item.findByIdAndUpdate(match.item._id, {
-              $push: {
-                potentialMatches: {
-                  itemId: item._id,
-                  similarity: match.similarity,
-                  confidence: match.confidence
-                }
-              }
-            });
-          }
-        }
-      }
-      
-      await item.save();
-      console.log('✅ Background image processing completed for:', item.title);
-    }
-  } catch (error) {
-    console.error('❌ Background image processing error:', error.message);
-  }
-}
+// Image matching disabled - using text-based matching only
+console.log('ℹ️ Using text-based matching only for stability');
 
 router.get('/', async (req, res) => {
   try {
@@ -419,17 +364,8 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
     
     console.log('✅ Item saved successfully with ID:', item._id);
     
-    // Process image matching in background after response
-    if (itemData.imageUrl) {
-      setImmediate(async () => {
-        try {
-          console.log('🔄 Starting background image processing for:', item.title);
-          await processImageMatching(item);
-        } catch (error) {
-          console.error('❌ Background image processing failed:', error.message);
-        }
-      });
-    }
+    // Image matching disabled - forms work without it
+    console.log('ℹ️ Item saved without image matching - using text-based matching only');
     
     await item.populate('reportedBy', 'name email');
     console.log('✅ Item submission completed successfully');

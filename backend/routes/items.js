@@ -6,21 +6,9 @@ const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
 const router = express.Router();
 
-// Load lightweight image matching service
+// Image matching temporarily disabled for stability
 let imageMatching = null;
-try {
-  // Try hash-based matching first (lightweight)
-  imageMatching = require('../services/hashImageMatching');
-  console.log('✅ Hash-based image matching loaded');
-} catch (error) {
-  try {
-    // Fallback to cloud service
-    imageMatching = require('../services/cloudImageMatching');
-    console.log('✅ Cloud image matching loaded');
-  } catch (error2) {
-    console.log('⚠️ No image matching service available');
-  }
-}
+console.log('⚠️ Image matching disabled for backend stability');
 
 router.get('/', async (req, res) => {
   try {
@@ -382,60 +370,7 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
       try {
         console.log('🔍 Attempting image feature extraction for:', item.title);
         
-        // Check if imageMatching service is available
-        if (imageMatching && typeof imageMatching.extractFeatures === 'function') {
-          const features = await imageMatching.extractFeatures(itemData.imageUrl);
-          
-          if (features && features.length > 0) {
-            console.log('✅ Features extracted, length:', features.length);
-            item.imageFeatures = features;
-            
-            // Find potential matches
-            const oppositeStatus = item.status === 'lost' ? 'found' : 'lost';
-            const existingItems = await Item.find({ 
-              status: oppositeStatus,
-              imageFeatures: { $exists: true, $ne: [] },
-              _id: { $ne: item._id }
-            });
-            
-            console.log(`🔍 Comparing with ${existingItems.length} ${oppositeStatus} items`);
-            
-            if (existingItems.length > 0) {
-              const matches = await imageMatching.findMatches(item, existingItems);
-              
-              if (matches.length > 0) {
-                console.log(`✅ Found ${matches.length} potential matches`);
-                
-                // Save matches to current item
-                item.potentialMatches = matches.map(match => ({
-                  itemId: match.item._id,
-                  similarity: match.similarity,
-                  confidence: match.confidence
-                }));
-                
-                // Add reverse matches to found items
-                for (const match of matches) {
-                  await Item.findByIdAndUpdate(match.item._id, {
-                    $push: {
-                      potentialMatches: {
-                        itemId: item._id,
-                        similarity: match.similarity,
-                        confidence: match.confidence
-                      }
-                    }
-                  });
-                }
-              }
-            }
-            
-            await item.save();
-            console.log('✅ Item updated with image features and matches');
-          } else {
-            console.log('⚠️ No features extracted from image');
-          }
-        } else {
-          console.log('⚠️ Image matching service not available');
-        }
+        console.log('⚠️ Image matching temporarily disabled for stability');
       } catch (error) {
         console.error('❌ Image matching error (non-fatal):', error.message);
         // Continue without failing the item creation

@@ -6,8 +6,8 @@ const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
 const router = express.Router();
 
-// Image matching disabled - using text-based matching only
-console.log('ℹ️ Using text-based matching only for stability');
+// Text-based matching only - stable and effective
+console.log('✅ Using text-based matching for item suggestions');
 
 router.get('/', async (req, res) => {
   try {
@@ -364,8 +364,8 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
     
     console.log('✅ Item saved successfully with ID:', item._id);
     
-    // Image matching disabled - forms work without it
-    console.log('ℹ️ Item saved without image matching - using text-based matching only');
+    // Images stored for display only - matching uses text analysis
+    console.log('ℹ️ Item saved with text-based matching enabled');
     
     await item.populate('reportedBy', 'name email');
     console.log('✅ Item submission completed successfully');

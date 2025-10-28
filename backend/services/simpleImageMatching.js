@@ -1,25 +1,27 @@
-const axios = require('axios');
-
-class CloudImageMatchingService {
+// Simple image matching using external API
+class SimpleImageMatchingService {
   constructor() {
     this.enabled = true;
   }
 
   async extractFeatures(imageUrl) {
     try {
-      // Using Google Vision API or similar
-      const response = await axios.post('https://vision.googleapis.com/v1/images:annotate', {
-        requests: [{
-          image: { source: { imageUri: imageUrl } },
-          features: [{ type: 'OBJECT_LOCALIZATION', maxResults: 10 }]
-        }]
-      }, {
-        params: { key: process.env.GOOGLE_VISION_API_KEY }
+      // Use Google Vision API for object detection
+      const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${process.env.GOOGLE_VISION_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [{
+            image: { source: { imageUri: imageUrl } },
+            features: [{ type: 'OBJECT_LOCALIZATION', maxResults: 10 }]
+          }]
+        })
       });
 
-      return response.data.responses[0].localizedObjectAnnotations || [];
+      const data = await response.json();
+      return data.responses[0]?.localizedObjectAnnotations || [];
     } catch (error) {
-      console.error('Cloud vision error:', error);
+      console.error('Vision API error:', error);
       return null;
     }
   }
@@ -36,7 +38,7 @@ class CloudImageMatchingService {
       });
     });
     
-    return matches / Math.max(features1.length, features2.length);
+    return matches / Math.max(features1.length, features2.length, 1);
   }
 
   getConfidenceLevel(similarity) {
@@ -66,4 +68,4 @@ class CloudImageMatchingService {
   }
 }
 
-module.exports = new CloudImageMatchingService();
+module.exports = new SimpleImageMatchingService();

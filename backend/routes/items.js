@@ -6,9 +6,63 @@ const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
 const router = express.Router();
 
-// Image matching temporarily disabled for stability
+// Load image matching service
 let imageMatching = null;
-console.log('⚠️ Image matching disabled for backend stability');
+try {
+  imageMatching = require('../services/hashImageMatching');
+  console.log('✅ Hash-based image matching loaded');
+} catch (error) {
+  console.log('⚠️ Image matching service not available:', error.message);
+}
+
+// Background image processing function
+async function processImageMatching(item) {
+  if (!imageMatching || !item.imageUrl) return;
+  
+  try {
+    const features = await imageMatching.extractFeatures(item.imageUrl);
+    
+    if (features) {
+      item.imageFeatures = features;
+      
+      const oppositeStatus = item.status === 'lost' ? 'found' : 'lost';
+      const existingItems = await Item.find({ 
+        status: oppositeStatus,
+        imageFeatures: { $exists: true, $ne: [] },
+        _id: { $ne: item._id }
+      });
+      
+      if (existingItems.length > 0) {
+        const matches = await imageMatching.findMatches(item, existingItems);
+        
+        if (matches.length > 0) {
+          item.potentialMatches = matches.map(match => ({
+            itemId: match.item._id,
+            similarity: match.similarity,
+            confidence: match.confidence
+          }));
+          
+          for (const match of matches) {
+            await Item.findByIdAndUpdate(match.item._id, {
+              $push: {
+                potentialMatches: {
+                  itemId: item._id,
+                  similarity: match.similarity,
+                  confidence: match.confidence
+                }
+              }
+            });
+          }
+        }
+      }
+      
+      await item.save();
+      console.log('✅ Background image processing completed for:', item.title);
+    }
+  } catch (error) {
+    console.error('❌ Background image processing error:', error.message);
+  }
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -365,16 +419,16 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
     
     console.log('✅ Item saved successfully with ID:', item._id);
     
-    // Try image matching but don't fail if it doesn't work
+    // Process image matching in background after response
     if (itemData.imageUrl) {
-      try {
-        console.log('🔍 Attempting image feature extraction for:', item.title);
-        
-        console.log('⚠️ Image matching temporarily disabled for stability');
-      } catch (error) {
-        console.error('❌ Image matching error (non-fatal):', error.message);
-        // Continue without failing the item creation
-      }
+      setImmediate(async () => {
+        try {
+          console.log('🔄 Starting background image processing for:', item.title);
+          await processImageMatching(item);
+        } catch (error) {
+          console.error('❌ Background image processing failed:', error.message);
+        }
+      });
     }
     
     await item.populate('reportedBy', 'name email');

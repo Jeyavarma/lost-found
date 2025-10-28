@@ -12,14 +12,7 @@ const adminAuth = (req, res, next) => {
   next();
 };
 
-// Test endpoint
-router.get('/test', auth, adminAuth, async (req, res) => {
-  res.json({ 
-    message: 'Admin API is working!', 
-    user: req.user,
-    timestamp: new Date()
-  });
-});
+
 
 // Get admin dashboard stats
 router.get('/stats', auth, adminAuth, async (req, res) => {
@@ -435,46 +428,9 @@ router.post('/claims/:itemId/:action', auth, adminAuth, async (req, res) => {
   }
 });
 
-// Export database
-router.get('/export-database', auth, adminAuth, async (req, res) => {
-  try {
-    const users = await User.find().select('-password');
-    const items = await Item.find().populate('reportedBy', 'name email');
-    
-    const exportData = {
-      timestamp: new Date().toISOString(),
-      users,
-      items,
-      stats: {
-        totalUsers: users.length,
-        totalItems: items.length
-      }
-    };
-    
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename=mcc-backup-${new Date().toISOString().split('T')[0]}.json`);
-    res.json(exportData);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
-// Clear all data (DANGEROUS)
-router.delete('/clear-all-data', auth, adminAuth, async (req, res) => {
-  try {
-    // Only allow in development or with special confirmation
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(403).json({ error: 'Operation not allowed in production' });
-    }
-    
-    await User.deleteMany({ role: { $ne: 'admin' } }); // Keep admin users
-    await Item.deleteMany({});
-    
-    res.json({ message: 'All data cleared successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+
+
 
 // Admin: Create new user
 router.post('/users', auth, adminAuth, async (req, res) => {

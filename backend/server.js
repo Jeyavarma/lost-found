@@ -96,7 +96,7 @@ app.use('/api/claims', apiLimiter, require('./routes/claims'));
 app.use('/api/notifications', apiLimiter, notificationRoutes);
 app.use('/api/feedback', apiLimiter, feedbackRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);
-app.use('/api/seed', require('./routes/seed'));
+
 app.use('/api', healthRoutes);
 app.use('/uploads', express.static('uploads'));
 

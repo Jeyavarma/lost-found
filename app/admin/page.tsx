@@ -17,8 +17,6 @@ import {
   BarChart3,
   Shield,
   UserPlus,
-  Database,
-  Activity,
   CheckCircle,
   Eye,
   Edit,
@@ -680,63 +678,6 @@ export default function AdminDashboard() {
                 <Button onClick={fetchAdminData} variant="outline" className="w-full text-sm" disabled={loading}>
                   <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                   Refresh
-                </Button>
-                <Button onClick={async () => {
-                  try {
-                    const token = getAuthToken()
-                    const response = await fetch(`${BACKEND_URL}/api/admin/test`, {
-                      headers: { 'Authorization': `Bearer ${token}` }
-                    })
-                    const data = await response.json()
-                    alert(`Connection test: ${response.ok ? 'SUCCESS' : 'FAILED'}\n${JSON.stringify(data, null, 2)}`)
-                  } catch (error) {
-                    alert(`Connection test FAILED: ${error}`)
-                  }
-                }} variant="outline" className="w-full text-sm">
-                  <Activity className="w-4 h-4 mr-2" />
-                  Test API
-                </Button>
-                <Button onClick={async () => {
-                  if (!confirm('Populate production database with sample data?')) return
-                  try {
-                    const response = await fetch(`${BACKEND_URL}/api/seed/populate`, {
-                      method: 'POST'
-                    })
-                    const data = await response.json()
-                    alert(`Database populated: ${data.users} users, ${data.items} items`)
-                    fetchAdminData()
-                  } catch (error) {
-                    alert(`Failed to populate database: ${error}`)
-                  }
-                }} variant="outline" className="w-full text-sm">
-                  <Database className="w-4 h-4 mr-2" />
-                  Populate DB
-                </Button>
-                <Button onClick={async () => {
-                  try {
-                    const token = getAuthToken()
-                    const response = await fetch(`${BACKEND_URL}/api/admin/export-database`, {
-                      headers: { 'Authorization': `Bearer ${token}` }
-                    })
-                    
-                    if (response.ok) {
-                      const blob = await response.blob()
-                      const url = window.URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = `mcc-backup-${new Date().toISOString().split('T')[0]}.json`
-                      a.click()
-                      window.URL.revokeObjectURL(url)
-                      setMessage('Database backup downloaded successfully')
-                    } else {
-                      setError('Failed to create backup')
-                    }
-                  } catch (error) {
-                    setError('Failed to create backup')
-                  }
-                }} variant="outline" className="w-full text-sm">
-                  <Database className="w-4 h-4 mr-2" />
-                  Backup
                 </Button>
               </CardContent>
             </Card>

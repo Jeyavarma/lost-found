@@ -15,6 +15,7 @@ import {
   Trash2
 } from "lucide-react"
 import Navigation from "@/components/navigation"
+import AIMatches from "@/components/ai-matches"
 import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } from "@/lib/auth"
 import Link from "next/link"
 import { BACKEND_URL } from "@/lib/config"
@@ -250,14 +251,16 @@ export default function DashboardPage() {
           </div>
 
           <div className="lg:col-span-3 space-y-6">
+            <AIMatches />
+            
             <Card className="mcc-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageCircle className="w-5 h-5" />
-                  Potential Matches
+                  Text-Based Matches
                 </CardTitle>
                 <CardDescription>
-                  Items that might match your lost reports
+                  Items that might match based on description keywords
                 </CardDescription>
               </CardHeader>
               <CardContent>

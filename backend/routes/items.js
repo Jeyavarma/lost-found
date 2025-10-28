@@ -4,6 +4,7 @@ const Item = require('../models/Item');
 const User = require('../models/User');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
+const imageMatching = require('../services/imageMatching');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -32,8 +33,49 @@ router.get('/my-items', auth, async (req, res) => {
   try {
     const items = await Item.find({ reportedBy: req.userId })
       .populate('reportedBy', 'name email')
+      .populate('potentialMatches.itemId', 'title description imageUrl status reportedBy location createdAt')
       .sort({ createdAt: -1 });
     res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get AI-based potential matches for user's items
+router.get('/ai-matches', auth, async (req, res) => {
+  try {
+    const userItems = await Item.find({ reportedBy: req.userId })
+      .populate({
+        path: 'potentialMatches.itemId',
+        populate: {
+          path: 'reportedBy',
+          select: 'name email'
+        }
+      })
+      .sort({ createdAt: -1 });
+    
+    const allMatches = [];
+    userItems.forEach(item => {
+      item.potentialMatches.forEach(match => {
+        if (match.itemId) {
+          allMatches.push({
+            userItem: {
+              _id: item._id,
+              title: item.title,
+              status: item.status,
+              imageUrl: item.imageUrl
+            },
+            matchedItem: match.itemId,
+            similarity: match.similarity,
+            confidence: match.confidence,
+            matchedAt: match.matchedAt,
+            viewed: match.viewed
+          });
+        }
+      });
+    });
+    
+    res.json(allMatches);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -285,6 +327,59 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
     
     const item = new Item(itemData);
     await item.save();
+    
+    // Extract image features and find matches if image exists
+    if (itemData.imageUrl) {
+      try {
+        console.log('🔍 Extracting image features for:', item.title);
+        const features = await imageMatching.extractFeatures(itemData.imageUrl);
+        
+        if (features) {
+          item.imageFeatures = features;
+          
+          // Find potential matches
+          const oppositeStatus = item.status === 'lost' ? 'found' : 'lost';
+          const existingItems = await Item.find({ 
+            status: oppositeStatus,
+            imageFeatures: { $exists: true, $ne: [] },
+            _id: { $ne: item._id }
+          });
+          
+          console.log(`🔍 Comparing with ${existingItems.length} ${oppositeStatus} items`);
+          const matches = await imageMatching.findMatches(item, existingItems);
+          
+          if (matches.length > 0) {
+            console.log(`✅ Found ${matches.length} potential matches`);
+            
+            // Save matches to current item
+            item.potentialMatches = matches.map(match => ({
+              itemId: match.item._id,
+              similarity: match.similarity,
+              confidence: match.confidence
+            }));
+            
+            // Add reverse matches to found items
+            for (const match of matches) {
+              await Item.findByIdAndUpdate(match.item._id, {
+                $push: {
+                  potentialMatches: {
+                    itemId: item._id,
+                    similarity: match.similarity,
+                    confidence: match.confidence
+                  }
+                }
+              });
+            }
+          }
+          
+          await item.save();
+        }
+      } catch (error) {
+        console.error('❌ Image matching error:', error);
+        // Continue without failing the item creation
+      }
+    }
+    
     await item.populate('reportedBy', 'name email');
     res.status(201).json(item);
   } catch (error) {

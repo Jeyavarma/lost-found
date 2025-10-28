@@ -40,7 +40,16 @@ const itemSchema = new mongoose.Schema({
   additionalClaimInfo: String,
   adminNotes: String,
   approved: { type: Boolean, default: true },
-  flagged: { type: Boolean, default: false }
+  flagged: { type: Boolean, default: false },
+  // AI Image Matching
+  imageFeatures: [Number], // MobileNet feature vector
+  potentialMatches: [{
+    itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Item' },
+    similarity: Number,
+    confidence: { type: String, enum: ['High', 'Medium', 'Low'] },
+    matchedAt: { type: Date, default: Date.now },
+    viewed: { type: Boolean, default: false }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Item', itemSchema);

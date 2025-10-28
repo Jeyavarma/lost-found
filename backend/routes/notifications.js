@@ -1,27 +1,43 @@
 const express = require('express');
-const auth = require('../middleware/authMiddleware');
 const router = express.Router();
+const User = require('../models/User');
+const Item = require('../models/Item');
+const auth = require('../middleware/auth');
 
-router.get('/', auth, async (req, res) => {
+// Send notification to users
+router.post('/send', auth, async (req, res) => {
+  try {
+    const { title, message, type, targetUsers } = req.body;
+    
+    // In a real app, you'd save notifications to DB and send emails
+    // For now, just return success
+    res.json({ 
+      message: 'Notification sent successfully',
+      recipients: targetUsers?.length || 'all users'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user notifications
+router.get('/my', auth, async (req, res) => {
   try {
     // Mock notifications for now
     const notifications = [
       {
-        id: 1,
-        message: 'Someone found an item matching your lost phone description',
+        _id: '1',
+        title: 'Item Match Found',
+        message: 'A potential match for your lost item has been found',
+        type: 'match',
         read: false,
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        message: 'Your reported item has been viewed 5 times',
-        read: true,
-        createdAt: new Date(Date.now() - 86400000).toISOString()
+        createdAt: new Date()
       }
     ];
+    
     res.json(notifications);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: error.message });
   }
 });
 

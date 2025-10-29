@@ -3,6 +3,67 @@ const router = express.Router();
 const Item = require('../models/Item');
 const auth = require('../middleware/auth');
 
+// Public AI search endpoint (no auth required)
+router.post('/search', async (req, res) => {
+  try {
+    const { query } = req.body;
+    
+    if (!query || query.trim().length < 2) {
+      return res.status(400).json({ error: 'Query must be at least 2 characters long' });
+    }
+    
+    console.log('🔍 AI Search query:', query);
+    
+    // Get all items for search
+    const allItems = await Item.find({})
+      .populate('reportedBy', 'name email')
+      .sort({ createdAt: -1 });
+    
+    // Simple text-based search with scoring
+    const queryText = query.toLowerCase();
+    const scoredItems = allItems.map(item => {
+      let score = 0;
+      const itemText = `${item.title} ${item.description} ${item.category} ${item.location}`.toLowerCase();
+      
+      // Exact matches get highest score
+      if (itemText.includes(queryText)) {
+        score += 50;
+      }
+      
+      // Word-by-word matching
+      const queryWords = queryText.split(/\s+/).filter(w => w.length > 2);
+      queryWords.forEach(word => {
+        if (itemText.includes(word)) {
+          score += 10;
+        }
+      });
+      
+      return {
+        ...item.toObject(),
+        searchScore: score
+      };
+    });
+    
+    // Filter and sort results
+    const results = scoredItems
+      .filter(item => item.searchScore > 0)
+      .sort((a, b) => b.searchScore - a.searchScore)
+      .slice(0, 20);
+    
+    console.log(`✅ AI Search found ${results.length} results`);
+    
+    res.json({
+      query,
+      results,
+      total: results.length
+    });
+    
+  } catch (error) {
+    console.error('❌ AI Search error:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
 // AI-powered similar item search
 router.post('/similar-items', auth, async (req, res) => {
   try {

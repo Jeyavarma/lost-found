@@ -33,6 +33,7 @@ const csrfProtection = (req, res, next) => {
   if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
     const origin = req.get('Origin');
     const referer = req.get('Referer');
+    const userAgent = req.get('User-Agent');
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3002',
@@ -41,17 +42,16 @@ const csrfProtection = (req, res, next) => {
       'https://lost-found-79xn.onrender.com'
     ];
     
-    if (!origin && !referer) {
-      return res.status(403).json({ error: 'Missing origin header' });
-    }
-    
-    const requestOrigin = origin || (referer && new URL(referer).origin);
-    
-    // Also allow any vercel.app subdomain in production
-    const isVercelDomain = requestOrigin && requestOrigin.match(/https:\/\/.*\.vercel\.app$/);
-    
-    if (!allowedOrigins.includes(requestOrigin) && !isVercelDomain) {
-      return res.status(403).json({ error: 'Invalid origin' });
+    // Allow requests with valid origin/referer or from browsers
+    if (origin || referer || (userAgent && userAgent.includes('Mozilla'))) {
+      const requestOrigin = origin || (referer && new URL(referer).origin);
+      
+      // Also allow any vercel.app subdomain in production
+      const isVercelDomain = requestOrigin && requestOrigin.match(/https:\/\/.*\.vercel\.app$/);
+      
+      if (requestOrigin && !allowedOrigins.includes(requestOrigin) && !isVercelDomain) {
+        return res.status(403).json({ error: 'Invalid origin' });
+      }
     }
   }
   next();

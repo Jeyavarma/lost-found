@@ -133,6 +133,12 @@ export default function ReportFoundPage() {
     // Prevent double submission
     if (isSubmitting) return
     
+    // Validate required fields
+    if (!itemImage) {
+      alert('Please upload an image of the item')
+      return
+    }
+    
     setIsSubmitting(true)
     
     const submitData = new FormData()

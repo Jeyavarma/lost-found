@@ -33,39 +33,99 @@ interface Option {
 
 const shifts: Option[] = [
   { value: 'aided', label: 'Day Shift (Aided)' },
-  { value: 'evening', label: 'Evening Shift' }
+  { value: 'sfs', label: 'Self-Financed Stream' }
 ]
 
-const aidedDepartments: Option[] = [
+// Aided Stream - Undergraduate
+const aidedUGDepartments: Option[] = [
+  { value: "ba-english", label: "B.A. English Language and Literature" },
+  { value: "ba-tamil", label: "B.A. Tamil Literature" },
+  { value: "ba-history", label: "B.A. History" },
+  { value: "ba-political-science", label: "B.A. Political Science" },
+  { value: "ba-economics", label: "B.A. Economics" },
+  { value: "ba-philosophy", label: "B.A. Philosophy" },
+  { value: "bcom", label: "B.Com (Commerce)" },
   { value: "bsc-mathematics", label: "B.Sc. Mathematics" },
+  { value: "bsc-statistics", label: "B.Sc. Statistics" },
   { value: "bsc-physics", label: "B.Sc. Physics" },
   { value: "bsc-chemistry", label: "B.Sc. Chemistry" },
-  { value: "bsc-botany", label: "B.Sc. Botany" },
-  { value: "bsc-zoology", label: "B.Sc. Zoology" },
-  { value: "ba-economics", label: "B.A. Economics" },
-  { value: "ba-history", label: "B.A. History" },
-  { value: "ba-tamil", label: "B.A. Tamil" },
-  { value: "ba-english", label: "B.A. English" },
-  { value: "bcom", label: "B.Com (General)" }
+  { value: "bsc-plant-biology", label: "B.Sc. Plant Biology & Plant Biotechnology" },
+  { value: "bsc-zoology", label: "B.Sc. Zoology" }
 ]
 
-const eveningDepartments: Option[] = [
-  { value: "bca", label: "B.C.A." },
+// Aided Stream - Postgraduate
+const aidedPGDepartments: Option[] = [
+  { value: "ma-english", label: "M.A. English Language & Literature" },
+  { value: "ma-tamil", label: "M.A. Tamil Literature" },
+  { value: "ma-history", label: "M.A. History" },
+  { value: "ma-political-science", label: "M.A. Political Science" },
+  { value: "ma-public-admin", label: "M.A. Public Administration" },
+  { value: "ma-economics", label: "M.A. Economics" },
+  { value: "ma-philosophy", label: "M.A. Philosophy" },
+  { value: "mcom", label: "M.Com (Commerce)" },
+  { value: "msw", label: "M.S.W (Community Development & Medical Psychiatry)" },
+  { value: "msc-mathematics", label: "M.Sc. Mathematics" },
+  { value: "msc-statistics", label: "M.Sc. Statistics" },
+  { value: "msc-physics", label: "M.Sc. Physics" },
+  { value: "msc-chemistry", label: "M.Sc. Chemistry" },
+  { value: "msc-plant-biology", label: "M.Sc. Plant Biology & Plant Biotechnology" },
+  { value: "msc-zoology", label: "M.Sc. Zoology" },
+  { value: "msc-data-science", label: "M.Sc. Data Science" }
+]
+
+// Self-Financed Stream - Undergraduate
+const sfsUGDepartments: Option[] = [
+    { value: "ba-english", label: "B.A. English Language and Literature" },
+     { value: "bsc-physics", label: "B.Sc. Physics" },
+  { value: "ba-journalism", label: "B.A. Journalism" },
+    { value: "bsc-mathematics", label: "B.Sc. Mathematics" },
+  { value: "bsw", label: "B.S.W. (Social Work)" },
+  { value: "bcom-accounting", label: "B.Com. Accounting and Finance" },
+  { value: "bcom-professional", label: "B.Com. Professional Accounting" },
+  { value: "bba", label: "B.B.A. Business Administration" },
+  { value: "bca", label: "B.C.A. Computer Applications" },
   { value: "bsc-cs", label: "B.Sc. Computer Science" },
+  { value: "bsc-microbiology", label: "B.Sc. Microbiology" },
   { value: "bsc-viscom", label: "B.Sc. Visual Communication" },
   { value: "bsc-psychology", label: "B.Sc. Psychology" },
-  { value: "bcom-cs", label: "B.Com. Corporate Secretaryship" },
-  { value: "bcom-accounting", label: "B.Com. Accounting & Finance" },
-  { value: "bba", label: "B.B.A." },
+  { value: "bsc-geography", label: "B.Sc. Geography, Tourism & Travel Management" }
 ]
 
-const years: Option[] = [
+// Research Programs
+const researchDepartments: Option[] = [
+  { value: "phd-english", label: "Ph.D. English" },
+  { value: "phd-tamil", label: "Ph.D. Tamil" },
+  { value: "phd-history", label: "Ph.D. History" },
+  { value: "phd-political-science", label: "Ph.D. Political Science" },
+  { value: "phd-public-admin", label: "Ph.D. Public Administration" },
+  { value: "phd-economics", label: "Ph.D. Economics" },
+  { value: "phd-philosophy", label: "Ph.D. Philosophy" },
+  { value: "phd-commerce", label: "Ph.D. Commerce" },
+  { value: "phd-mathematics", label: "Ph.D. Mathematics" },
+  { value: "phd-statistics", label: "Ph.D. Statistics" },
+  { value: "phd-physics", label: "Ph.D. Physics" },
+  { value: "phd-chemistry", label: "Ph.D. Chemistry" },
+  { value: "phd-botany", label: "Ph.D. Botany" },
+  { value: "phd-zoology", label: "Ph.D. Zoology" }
+]
+
+const ugYears: Option[] = [
+  { value: "1", label: "1st Year" },
+  { value: "2", label: "2nd Year" },
+  { value: "3", label: "3rd Year" }
+]
+
+const pgYears: Option[] = [
+  { value: "1", label: "1st Year" },
+  { value: "2", label: "2nd Year" }
+]
+
+const phdYears: Option[] = [
   { value: "1", label: "1st Year" },
   { value: "2", label: "2nd Year" },
   { value: "3", label: "3rd Year" },
-  { value: "PG 1st Year", label: "PG 1st Year" },
-  { value: "PG 2nd Year", label: "PG 2nd Year" },
-  { value: "phd", label: "PhD Scholar" },
+  { value: "4", label: "4th Year" },
+  { value: "5", label: "5th Year" }
 ]
 
 export default function RegisterPage(): JSX.Element {
@@ -98,9 +158,20 @@ export default function RegisterPage(): JSX.Element {
   const [successMessage, setSuccessMessage] = useState<string>("")
 
   const getDepartments = (): Option[] => {
-    if (registerData.shift === 'aided') return aidedDepartments
-    if (registerData.shift === 'evening') return eveningDepartments
+    if (registerData.shift === 'aided') {
+      return [...aidedUGDepartments, ...aidedPGDepartments, ...researchDepartments]
+    }
+    if (registerData.shift === 'sfs') {
+      return sfsUGDepartments
+    }
     return []
+  }
+
+  const getYears = (): Option[] => {
+    const dept = registerData.department
+    if (dept.startsWith('phd-')) return phdYears
+    if (dept.startsWith('m') || dept.includes('msc-') || dept.includes('ma-') || dept.includes('mcom') || dept.includes('msw')) return pgYears
+    return ugYears
   }
 
   const validateStep = (step: number): boolean => {
@@ -204,6 +275,11 @@ export default function RegisterPage(): JSX.Element {
       
       if (field === 'shift') {
         newData.department = ""
+        newData.year = ""
+      }
+      
+      if (field === 'department') {
+        newData.year = ""
       }
 
       // Sync studentId and rollNumber
@@ -481,12 +557,13 @@ export default function RegisterPage(): JSX.Element {
                   <select 
                     value={registerData.year} 
                     onChange={(e) => handleInputChange("year", e.target.value)}
+                    disabled={!registerData.department}
                     className={`w-full h-12 border rounded-md px-3 text-base focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.year ? "border-red-500" : "border-gray-300"
-                    }`}
+                    } ${!registerData.department ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   >
-                    <option value="">Select your year of study</option>
-                    {years.map((year) => (
+                    <option value="">{!registerData.department ? 'Select department first' : 'Select your year of study'}</option>
+                    {registerData.department && getYears().map((year) => (
                       <option key={year.value} value={year.value}>
                         {year.label}
                       </option>

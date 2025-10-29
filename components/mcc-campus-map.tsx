@@ -13,23 +13,23 @@ interface Location {
 }
 
 const locations: Location[] = [
-  { name: "Anderson Hall", coords: { x: "50%", y: "52%" } },
+  { name: "Anderson Hall", coords: { x: "40%", y: "120%" } },
   { name: "Quadrangle", coords: { x: "40%", y: "130%" } },
-  { name: "Miller Library", coords: { x: "45%", y: "48%" } },
-  { name: "Main Canteen", coords: { x: "60%", y: "70%" } },
+  { name: "Miller Library", coords: { x: "60%", y: "100%" } },
+  { name: "Main Canteen", coords: { x: "42%", y: "113%" } },
   { name: "Bishop Heber Hall", coords: { x: "14%", y: "68%" } },
   { name: "Selaiyur Hall", coords: { x: "5%", y: "98%" } },
-  { name: "St. Thomas's Hall", coords: { x: "65%", y: "62%" } },
-  { name: "Barnes Hall", coords: { x: "30%", y: "30%" } },
-  { name: "Martin Hall", coords: { x: "72%", y: "25%" } },
-  { name: "Margaret Hall", coords: { x: "75%", y: "35%" } },
-  { name: "Zoology Dept", coords: { x: "35%", y: "58%" } },
-  { name: "Botany Dept", coords: { x: "38%", y: "65%" } },
-  { name: "Physics Dept", coords: { x: "68%", y: "45%" } },
-  { name: "Chemistry Dept", coords: { x: "65%", y: "50%" } },
-  { name: "ICF Ground", coords: { x: "20%", y: "50%" } },
-  { name: "Main Gate", coords: { x: "85%", y: "85%" } },
-  { name: "East Gate", coords: { x: "15%", y: "15%" } },
+  { name: "St. Thomas's Hall", coords: { x: "65%", y: "100%" } },
+  { name: "Barnes Hall", coords: { x: "81%", y: "57%" } },
+  { name: "Martin Hall", coords: { x: "81%", y: "57%" } },
+  { name: "Margaret Hall", coords: { x: "81%", y: "57%" } },
+  { name: "Zoology Dept", coords: { x: "30%", y: "80%" } },
+  { name: "Botany Dept", coords: { x: "58%", y: "65%" } },
+  { name: "Physics Dept", coords: { x: "43%", y: "123%" } },
+  { name: "Chemistry Dept", coords: { x: "45%", y: "125%" } },
+  { name: "Main Gate", coords: { x: "40%", y: "120%" } },
+  { name: "East Gate", coords: { x: "20%", y: "58%" } },
+  { name: "Farm Area", coords: { x: "10%", y: "9%" } }
 ];
 
 export default function MccCampusMap() {

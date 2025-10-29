@@ -15,8 +15,8 @@ import {
   Trash2
 } from "lucide-react"
 import Navigation from "@/components/navigation"
-// import AIMatches from "@/components/ai-matches"
-// import AISearchButton from "@/components/ai-search-button"
+import AIMatches from "@/components/ai-matches"
+import AISearchButton from "@/components/ai-search-button"
 import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } from "@/lib/auth"
 import Link from "next/link"
 import { BACKEND_URL } from "@/lib/config"
@@ -65,8 +65,22 @@ export default function DashboardPage() {
   }
 
   const loadPotentialMatches = async () => {
-    // Disabled to prevent server errors
-    setPotentialMatches([])
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/items/potential-matches`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const matches = await response.json()
+        setPotentialMatches(matches)
+      }
+    } catch (err) {
+      console.error('Error loading potential matches:', err)
+      setPotentialMatches([])
+    }
   }
 
   const handleDelete = async () => {
@@ -234,13 +248,13 @@ export default function DashboardPage() {
                     Browse All Items
                   </Button>
                 </Link>
-                {/* <AISearchButton userStatus="lost" /> */}
+                <AISearchButton userStatus="lost" />
               </CardContent>
             </Card>
           </div>
 
           <div className="lg:col-span-3 space-y-6">
-            {/* <AIMatches /> */}
+            <AIMatches />
             
             <Card className="mcc-card">
               <CardHeader>

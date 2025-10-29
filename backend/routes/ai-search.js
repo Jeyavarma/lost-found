@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Item = require('../models/Item');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authMiddleware');
 
 // Public AI search endpoint (no auth required)
 router.post('/search', async (req, res) => {

@@ -139,17 +139,70 @@ export default function ReportFoundPage() {
       return
     }
     
+    if (!formData.title.trim()) {
+      alert('Please enter the item name')
+      return
+    }
+    
+    if (!formData.category) {
+      alert('Please select a category')
+      return
+    }
+    
+    if (formData.category === 'Other' && !formData.categoryOther.trim()) {
+      alert('Please specify the category')
+      return
+    }
+    
+    if (!formData.description.trim()) {
+      alert('Please enter a description')
+      return
+    }
+    
+    if (!formData.location.trim()) {
+      alert('Please enter where the item was found')
+      return
+    }
+    
+    if (!formData.date) {
+      alert('Please select the date when the item was found')
+      return
+    }
+    
+    if (!formData.currentLocation.trim()) {
+      alert('Please enter where the item is currently located')
+      return
+    }
+    
+    if (!formData.contactName.trim()) {
+      alert('Please enter your name')
+      return
+    }
+    
+    if (!formData.contactEmail.trim()) {
+      alert('Please enter your email address')
+      return
+    }
+    
     setIsSubmitting(true)
     
     const submitData = new FormData()
-    submitData.append('status', 'found') // Add status to differentiate lost vs found
+    submitData.append('status', 'found')
+    
+    // Add all form fields
     Object.entries(formData).forEach(([key, value]) => {
-      submitData.append(key, value)
+      if (value) submitData.append(key, value)
     })
     
+    // Add images - this is required
     if (itemImage) {
       submitData.append('itemImage', itemImage)
+    } else {
+      alert('Please upload an image of the item')
+      setIsSubmitting(false)
+      return
     }
+    
     if (locationImage) {
       submitData.append('locationImage', locationImage)
     }
@@ -424,7 +477,7 @@ export default function ReportFoundPage() {
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
                           {itemImagePreview ? (
                             <>
-                              <Image src={itemImagePreview} alt="Item Preview" className="h-32 w-full object-cover rounded-lg mb-2" width={200} height={128} />
+                              <img src={itemImagePreview} alt="Item Preview" className="h-32 w-full object-cover rounded-lg mb-2" />
                               <p className="text-xs text-gray-500">Click to change</p>
                             </>
                           ) : (
@@ -452,7 +505,7 @@ export default function ReportFoundPage() {
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brand-primary transition-colors">
                           {locationImagePreview ? (
                             <>
-                              <Image src={locationImagePreview} alt="Location Preview" className="h-32 w-full object-cover rounded-lg mb-2" width={200} height={128} />
+                              <img src={locationImagePreview} alt="Location Preview" className="h-32 w-full object-cover rounded-lg mb-2" />
                               <p className="text-xs text-gray-500">Click to change</p>
                             </>
                           ) : (

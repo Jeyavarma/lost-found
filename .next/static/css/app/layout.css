@@ -2910,6 +2910,14 @@ body {
 .hover\:bg-white\/30:hover {
   background-color: rgb(255 255 255 / 0.3);
 }
+.hover\:bg-green-100:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(220 252 231 / var(--tw-bg-opacity, 1));
+}
+.hover\:bg-red-100:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 226 226 / var(--tw-bg-opacity, 1));
+}
 .hover\:from-purple-700:hover {
   --tw-gradient-from: #7e22ce var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(126 34 206 / 0) var(--tw-gradient-to-position);

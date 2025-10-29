@@ -229,26 +229,37 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="text-lg">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Link href="/report-lost">
-                  <Button className="w-full bg-red-500 hover:bg-red-600 text-white">
-                    <Search className="w-4 h-4 mr-2" />
-                    Report Lost Item
-                  </Button>
+              <CardContent className="space-y-4">
+                <Link href="/report-lost" className="block">
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors cursor-pointer group">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Report Lost</p>
+                      <p className="text-xs text-gray-500">Lost an item?</p>
+                    </div>
+                    <Search className="w-6 h-6 text-red-600 group-hover:scale-110 transition-transform" />
+                  </div>
                 </Link>
-                <Link href="/report-found">
-                  <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
-                    <Package className="w-4 h-4 mr-2" />
-                    Report Found Item
-                  </Button>
+                <Link href="/report-found" className="block">
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer group">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Report Found</p>
+                      <p className="text-xs text-gray-500">Found an item?</p>
+                    </div>
+                    <Package className="w-6 h-6 text-green-600 group-hover:scale-110 transition-transform" />
+                  </div>
                 </Link>
-                <Link href="/browse">
-                  <Button variant="outline" className="w-full">
-                    <Eye className="w-4 h-4 mr-2" />
-                    Browse All Items
-                  </Button>
+                <Link href="/browse" className="block">
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer group">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Browse Items</p>
+                      <p className="text-xs text-gray-500">View all reports</p>
+                    </div>
+                    <Eye className="w-6 h-6 mcc-text-primary group-hover:scale-110 transition-transform" />
+                  </div>
                 </Link>
-                <AISearchButton userStatus="lost" />
+                <div className="p-3 bg-purple-50 rounded-lg">
+                  <AISearchButton userStatus="lost" />
+                </div>
               </CardContent>
             </Card>
           </div>

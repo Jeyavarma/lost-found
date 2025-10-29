@@ -327,10 +327,15 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
     }
     
     // Ensure all required fields are present
-    if (!otherFields.title || !otherFields.description || !otherFields.category || !otherFields.location) {
-      console.log('❌ Missing required item fields');
-      console.log('Title:', !!otherFields.title, 'Description:', !!otherFields.description, 'Category:', !!otherFields.category, 'Location:', !!otherFields.location);
-      return res.status(400).json({ message: 'Title, description, category, and location are required' });
+    const requiredFields = ['title', 'description', 'category', 'location'];
+    const missingFields = requiredFields.filter(field => !otherFields[field]);
+    
+    if (missingFields.length > 0) {
+      console.log('❌ Missing required item fields:', missingFields);
+      return res.status(400).json({ 
+        message: `Missing required fields: ${missingFields.join(', ')}`,
+        missingFields 
+      });
     }
     
     const itemData = {

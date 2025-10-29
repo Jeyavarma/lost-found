@@ -17,6 +17,7 @@ import {
 import Navigation from "@/components/navigation"
 import AIMatches from "@/components/ai-matches"
 import AISearchButton from "@/components/ai-search-button"
+import ItemDetailModal from "@/components/item-detail-modal"
 import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } from "@/lib/auth"
 import Link from "next/link"
 import { BACKEND_URL } from "@/lib/config"
@@ -42,6 +43,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [deleteModal, setDeleteModal] = useState<{show: boolean, item: Item | null}>({show: false, item: null})
+  const [viewModal, setViewModal] = useState<{show: boolean, item: Item | null}>({show: false, item: null})
 
   const loadUserItems = async () => {
     try {
@@ -330,7 +332,11 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setViewModal({show: true, item})}
+                            >
                               <Eye className="w-4 h-4 mr-1" />
                               View
                             </Button>
@@ -396,7 +402,11 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setViewModal({show: true, item})}
+                            >
                               <Eye className="w-4 h-4 mr-1" />
                               View
                             </Button>
@@ -470,7 +480,11 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setViewModal({show: true, item})}
+                            >
                               <Eye className="w-4 h-4 mr-1" />
                               View
                             </Button>
@@ -493,6 +507,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <ItemDetailModal 
+        item={viewModal.item}
+        isOpen={viewModal.show}
+        onClose={() => setViewModal({show: false, item: null})}
+      />
 
       {deleteModal.show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

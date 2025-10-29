@@ -954,6 +954,9 @@ video {
 .h-svh {
   height: 100svh;
 }
+.h-64 {
+  height: 16rem;
+}
 .max-h-64 {
   max-height: 16rem;
 }
@@ -1160,6 +1163,9 @@ video {
 }
 .max-w-md {
   max-width: 28rem;
+}
+.max-w-full {
+  max-width: 100%;
 }
 .flex-1 {
   flex: 1 1 0%;

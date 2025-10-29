@@ -65,21 +65,8 @@ export default function DashboardPage() {
   }
 
   const loadPotentialMatches = async () => {
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${BACKEND_URL}/api/items/potential-matches`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const matches = await response.json()
-        setPotentialMatches(matches)
-      }
-    } catch (err) {
-      console.error('Error loading potential matches:', err)
-    }
+    // Disabled to prevent server errors
+    setPotentialMatches([])
   }
 
   const handleDelete = async () => {

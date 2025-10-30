@@ -77,6 +77,13 @@ export default function BrowsePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Read search parameter from URL
+    const urlParams = new URLSearchParams(window.location.search)
+    const searchParam = urlParams.get('search')
+    if (searchParam) {
+      setSearchQuery(searchParam)
+    }
+    
     const fetchItems = async () => {
       try {
         const response = await fetch('https://lost-found-79xn.onrender.com/api/items')

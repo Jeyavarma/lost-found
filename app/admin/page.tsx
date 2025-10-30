@@ -166,20 +166,8 @@ export default function AdminDashboard() {
       console.log('🔗 Backend URL:', BACKEND_URL)
       console.log('🔑 Token:', token ? 'Present' : 'Missing')
       
-      // Test basic connectivity first
-      console.log('🧪 Testing backend connectivity...')
-      const testResponse = await fetch(`${BACKEND_URL}/api/admin/test`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      
-      console.log('🧪 Test response:', testResponse.status)
-      
-      if (!testResponse.ok) {
-        const testError = await testResponse.text()
-        console.error('❌ Backend connection failed:', testError)
-        setError(`Backend connection failed: ${testResponse.status} - ${testError}`)
-        return
-      }
+      // Skip test endpoint - go directly to stats
+      console.log('📊 Fetching admin data directly...')
       
       // Fetch live data from backend
       console.log('📊 Fetching admin stats...')

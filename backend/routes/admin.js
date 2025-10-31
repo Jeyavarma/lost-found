@@ -12,6 +12,19 @@ const adminAuth = (req, res, next) => {
   next();
 };
 
+// Test endpoint for connectivity
+router.get('/test', auth, adminAuth, async (req, res) => {
+  try {
+    res.json({ 
+      message: 'Admin API connection successful',
+      timestamp: new Date(),
+      user: req.user.email
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 // Get admin dashboard stats

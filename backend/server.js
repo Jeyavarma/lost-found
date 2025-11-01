@@ -101,6 +101,7 @@ app.use('/api/analytics', apiLimiter, require('./routes/analytics'));
 app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
 app.use('/api/messaging', apiLimiter, require('./routes/messaging'));
 app.use('/api/system-flow', apiLimiter, require('./routes/system-flow'));
+app.use('/api/visual-ai', apiLimiter, require('./routes/visual-ai'));
 
 app.use('/api', healthRoutes);
 app.use('/uploads', express.static('uploads'));

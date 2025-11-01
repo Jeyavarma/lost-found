@@ -48,7 +48,14 @@ const itemSchema = new mongoose.Schema({
   moderatedAt: Date,
   moderationNotes: String,
   // AI Image Matching
-  imageFeatures: [Number], // MobileNet feature vector
+  imageFeatures: [Number], // MobileNet feature vector (1024 dimensions)
+  detectedObjects: [{
+    class: String,
+    confidence: Number,
+    bbox: [Number]
+  }],
+  aiCategory: String, // AI-suggested category
+  visualSimilarity: Number, // Confidence score for visual matches
   potentialMatches: [{
     itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Item' },
     similarity: Number,

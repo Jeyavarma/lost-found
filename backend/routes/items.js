@@ -358,6 +358,18 @@ router.post('/', uploadFields, optionalAuth, trackActivity('report_lost'), async
       await transaction.save();
     }
     
+    // Handle AI features if provided
+    if (req.body.imageFeatures) {
+      item.imageFeatures = req.body.imageFeatures;
+    }
+    if (req.body.detectedObjects) {
+      item.detectedObjects = req.body.detectedObjects;
+    }
+    if (req.body.aiCategory) {
+      item.aiCategory = req.body.aiCategory;
+    }
+    await item.save();
+    
     // Images stored for display only - matching uses text analysis
     console.log('ℹ️ Item saved with text-based matching enabled');
     

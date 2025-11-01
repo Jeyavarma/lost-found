@@ -5,12 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Users, Plus, Edit, Trash2, Search, Filter, Download, Key } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { 
+  Users, 
+  Search,
+  Shield,
+  ShieldOff,
+  Eye,
+  Edit,
+  Trash2,
+  MessageSquare,
+  Activity,
+  AlertTriangle,
+  CheckCircle
+} from 'lucide-react'
 import Navigation from '@/components/navigation'
 import { isAuthenticated, getUserData, getAuthToken } from '@/lib/auth'
 import { BACKEND_URL } from '@/lib/config'
@@ -19,41 +31,42 @@ interface User {
   _id: string
   name: string
   email: string
-  role: 'student' | 'staff' | 'admin'
-  phone?: string
-  studentId?: string
-  shift?: string
+  role: string
   department?: string
-  year?: string
-  rollNumber?: string
+  studentId?: string
+  phone?: string
+  isActive: boolean
+  suspendedUntil?: string
+  suspensionReason?: string
+  lastLogin: string
   createdAt: string
 }
 
-export default function AdminUsersPage() {
+export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([])
-  const [showCreateModal, setShowCreateModal] = useState(false)
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'student',
-    phone: '',
-    studentId: '',
-    shift: '',
-    department: '',
-    year: '',
-    rollNumber: ''
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [showSuspendDialog, setShowSuspendDialog] = useState(false)
+  const [showMessageDialog, setShowMessageDialog] = useState(false)
+  const [showActivityDialog, setShowActivityDialog] = useState(false)
+  const [userActivities, setUserActivities] = useState<any[]>([])
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  
+  const [suspensionData, setSuspensionData] = useState({
+    reason: '',
+    duration: 7 // days
   })
-  const [showResetPassword, setShowResetPassword] = useState(false)
-  const [resetPasswordData, setResetPasswordData] = useState({ email: '', newPassword: '' })
-  const [showEditUser, setShowEditUser] = useState(false)
-  const [editingUserId, setEditingUserId] = useState<string | null>(null)
+  
+  const [messageData, setMessageData] = useState({
+    subject: '',
+    message: '',
+    type: 'general'
+  })
 
   useEffect(() => {
     const checkAuth = () => {
@@ -75,22 +88,8 @@ export default function AdminUsersPage() {
   }, [])
 
   useEffect(() => {
-    let filtered = users
-    
-    if (searchTerm) {
-      filtered = filtered.filter(user => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.studentId?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-    
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(user => user.role === roleFilter)
-    }
-    
-    setFilteredUsers(filtered)
-  }, [users, searchTerm, roleFilter])
+    filterUsers()
+  }, [users, searchQuery, roleFilter, statusFilter])
 
   const fetchUsers = async () => {
     try {
@@ -100,50 +99,127 @@ export default function AdminUsersPage() {
       })
       
       if (response.ok) {
-        const data = await response.json()
-        setUsers(data)
+        const usersData = await response.json()
+        setUsers(usersData)
       }
     } catch (error) {
-      console.error('Error fetching users:', error)
+      console.error('Users fetch error:', error)
+      setError('Failed to fetch users')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const filterUsers = () => {
+    let filtered = users
+
+    if (searchQuery) {
+      filtered = filtered.filter(user =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.studentId?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter)
+    }
+
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'active') {
+        filtered = filtered.filter(user => user.isActive)
+      } else if (statusFilter === 'suspended') {
+        filtered = filtered.filter(user => !user.isActive)
+      }
+    }
+
+    setFilteredUsers(filtered)
+  }
+
+  const handleSuspendUser = async () => {
+    if (!selectedUser) return
+
     try {
       const token = getAuthToken()
-      const response = await fetch(`${BACKEND_URL}/api/admin/users`, {
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/${selectedUser._id}/suspend`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          suspend: !selectedUser.isActive,
+          reason: suspensionData.reason,
+          duration: suspensionData.duration
+        })
       })
       
       if (response.ok) {
-        const data = await response.json()
-        alert(data.message)
+        setMessage(`User ${selectedUser.isActive ? 'suspended' : 'unsuspended'} successfully`)
+        setShowSuspendDialog(false)
+        setSuspensionData({ reason: '', duration: 7 })
         fetchUsers()
-        setShowCreateModal(false)
-        resetForm()
       } else {
         const errorData = await response.json()
-        alert(errorData.error || 'Failed to create user')
+        setError(errorData.error || 'Failed to update user status')
       }
     } catch (error) {
-      console.error('Error creating user:', error)
-      alert('Failed to create user')
+      setError('Failed to update user status')
     }
   }
 
+  const handleSendMessage = async () => {
+    if (!selectedUser) return
 
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/messaging/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          toUserId: selectedUser._id,
+          subject: messageData.subject,
+          message: messageData.message,
+          type: messageData.type
+        })
+      })
+      
+      if (response.ok) {
+        setMessage('Message sent successfully')
+        setShowMessageDialog(false)
+        setMessageData({ subject: '', message: '', type: 'general' })
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Failed to send message')
+      }
+    } catch (error) {
+      setError('Failed to send message')
+    }
+  }
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return
-    
+  const fetchUserActivity = async (userId: string) => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/${userId}/activity`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        const activities = await response.json()
+        setUserActivities(activities)
+        setShowActivityDialog(true)
+      }
+    } catch (error) {
+      setError('Failed to fetch user activity')
+    }
+  }
+
+  const deleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return
+
     try {
       const token = getAuthToken()
       const response = await fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
@@ -152,133 +228,13 @@ export default function AdminUsersPage() {
       })
       
       if (response.ok) {
-        const data = await response.json()
-        alert(data.message)
+        setMessage('User deleted successfully')
         fetchUsers()
       } else {
-        const errorData = await response.json()
-        alert(errorData.error || 'Failed to delete user')
+        setError('Failed to delete user')
       }
     } catch (error) {
-      console.error('Error deleting user:', error)
-      alert('Failed to delete user')
-    }
-  }
-
-  const handleBulkDelete = async () => {
-    if (selectedUsers.length === 0 || !confirm(`Delete ${selectedUsers.length} users?`)) return
-    
-    try {
-      const token = getAuthToken()
-      const promises = selectedUsers.map(userId => 
-        fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      )
-      
-      await Promise.all(promises)
-      alert(`${selectedUsers.length} users deleted successfully`)
-      fetchUsers()
-      setSelectedUsers([])
-    } catch (error) {
-      console.error('Error bulk deleting users:', error)
-      alert('Failed to delete users')
-    }
-  }
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${BACKEND_URL}/api/admin/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(resetPasswordData)
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        alert(data.message)
-        setShowResetPassword(false)
-        setResetPasswordData({ email: '', newPassword: '' })
-      } else {
-        const errorData = await response.json()
-        alert(errorData.error || 'Failed to reset password')
-      }
-    } catch (error) {
-      console.error('Error resetting password:', error)
-      alert('Error resetting password')
-    }
-  }
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      email: '',
-      password: '',
-      role: 'student',
-      phone: '',
-      studentId: '',
-      shift: '',
-      department: '',
-      year: '',
-      rollNumber: ''
-    })
-  }
-
-  const startEdit = (user: User) => {
-    setEditingUserId(user._id)
-    setShowEditUser(true)
-    setFormData({
-      name: user.name,
-      email: user.email,
-      password: '',
-      role: user.role,
-      phone: user.phone || '',
-      studentId: user.studentId || '',
-      shift: user.shift || '',
-      department: user.department || '',
-      year: user.year || '',
-      rollNumber: user.rollNumber || ''
-    })
-  }
-
-  const handleEditUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingUserId) return
-    
-    try {
-      const token = getAuthToken()
-      const { password, ...updateData } = formData
-      const finalData = password ? { ...updateData, password } : updateData
-      
-      const response = await fetch(`${BACKEND_URL}/api/admin/users/${editingUserId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(finalData)
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        alert(data.message)
-        fetchUsers()
-        setShowEditUser(false)
-        setEditingUserId(null)
-        resetForm()
-      } else {
-        const errorData = await response.json()
-        alert(errorData.error || 'Failed to update user')
-      }
-    } catch (error) {
-      console.error('Error updating user:', error)
-      alert('Error updating user')
+      setError('Failed to delete user')
     }
   }
 
@@ -300,122 +256,46 @@ export default function AdminUsersPage() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mcc-text-primary font-serif mb-2">User Management</h1>
-          <p className="text-gray-600">Manage all system users</p>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mcc-text-primary font-serif mb-2">
+            User Management
+          </h1>
+          <p className="text-gray-600">
+            Manage user accounts, permissions, and activities
+          </p>
         </div>
 
-        <Card className="mcc-card">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Users ({filteredUsers.length})
-              </CardTitle>
-              <div className="flex gap-2">
-                {selectedUsers.length > 0 && (
-                  <Button onClick={handleBulkDelete} variant="outline" size="sm" className="text-red-600">
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete ({selectedUsers.length})
-                  </Button>
-                )}
-                <Dialog open={showResetPassword} onOpenChange={setShowResetPassword}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Key className="w-4 h-4 mr-1" />
-                      Reset Password
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Reset User Password</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleResetPassword} className="space-y-4">
-                      <div>
-                        <Label>User Email</Label>
-                        <Input 
-                          type="email" 
-                          value={resetPasswordData.email} 
-                          onChange={(e) => setResetPasswordData({...resetPasswordData, email: e.target.value})} 
-                          required 
-                        />
-                      </div>
-                      <div>
-                        <Label>New Password</Label>
-                        <Input 
-                          type="password" 
-                          value={resetPasswordData.newPassword} 
-                          onChange={(e) => setResetPasswordData({...resetPasswordData, newPassword: e.target.value})} 
-                          required 
-                        />
-                      </div>
-                      <Button type="submit" className="w-full">Reset Password</Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-                <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-green-500 hover:bg-green-600 text-white">
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add User
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Create New User</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateUser} className="space-y-4">
-                      <div>
-                        <Label>Name</Label>
-                        <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
-                      </div>
-                      <div>
-                        <Label>Email</Label>
-                        <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required />
-                      </div>
-                      <div>
-                        <Label>Password</Label>
-                        <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required />
-                      </div>
-                      <div>
-                        <Label>Role</Label>
-                        <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="student">Student</SelectItem>
-                            <SelectItem value="staff">Staff</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Phone</Label>
-                        <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-                      </div>
-                      <div>
-                        <Label>Student ID</Label>
-                        <Input value={formData.studentId} onChange={(e) => setFormData({...formData, studentId: e.target.value})} />
-                      </div>
-                      <Button type="submit" className="w-full">Create User</Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 mb-6">
+        {message && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <CheckCircle className="w-4 h-4" />
+            <AlertDescription className="text-green-800">{message}</AlertDescription>
+          </Alert>
+        )}
+
+        {error && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <AlertTriangle className="w-4 h-4" />
+            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Filters */}
+        <Card className="mcc-card mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
-                <Input
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search users by name, email, or student ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
+              
               <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
@@ -427,44 +307,107 @@ export default function AdminUsersPage() {
                   <SelectItem value="admin">Admins</SelectItem>
                 </SelectContent>
               </Select>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </CardContent>
+        </Card>
 
+        {/* Users List */}
+        <Card className="mcc-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Users ({filteredUsers.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
               {filteredUsers.map((user) => (
-                <div key={user._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Checkbox
-                        checked={selectedUsers.includes(user._id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedUsers([...selectedUsers, user._id])
-                          } else {
-                            setSelectedUsers(selectedUsers.filter(id => id !== user._id))
-                          }
-                        }}
-                      />
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold">{user.name}</h3>
-                          <Badge className={
-                            user.role === 'admin' ? 'bg-red-500 text-white' :
-                            user.role === 'staff' ? 'bg-blue-500 text-white' :
-                            'bg-green-500 text-white'
-                          }>
-                            {user.role}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        {user.studentId && <p className="text-xs text-gray-500">ID: {user.studentId}</p>}
-                        {user.department && <p className="text-xs text-gray-500">Dept: {user.department}</p>}
+                <div key={user._id} className="border rounded-lg p-4 bg-white">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-lg">{user.name}</h3>
+                        <Badge className={`${
+                          user.role === 'admin' ? 'bg-red-500' :
+                          user.role === 'staff' ? 'bg-blue-500' : 'bg-green-500'
+                        } text-white`}>
+                          {user.role}
+                        </Badge>
+                        <Badge className={`${
+                          user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {user.isActive ? 'Active' : 'Suspended'}
+                        </Badge>
                       </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
+                        <div>📧 {user.email}</div>
+                        {user.studentId && <div>🆔 {user.studentId}</div>}
+                        {user.department && <div>🏢 {user.department}</div>}
+                        <div>📅 Joined: {new Date(user.createdAt).toLocaleDateString()}</div>
+                        <div>🕒 Last Login: {new Date(user.lastLogin).toLocaleDateString()}</div>
+                        {user.phone && <div>📞 {user.phone}</div>}
+                      </div>
+                      
+                      {!user.isActive && user.suspensionReason && (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+                          <strong>Suspended:</strong> {user.suspensionReason}
+                          {user.suspendedUntil && (
+                            <span> (until {new Date(user.suspendedUntil).toLocaleDateString()})</span>
+                          )}
+                        </div>
+                      )}
                     </div>
+                    
                     <div className="flex gap-2">
-                      <Button onClick={() => startEdit(user)} size="sm" className="bg-blue-500 hover:bg-blue-600 text-white">
-                        <Edit className="w-4 h-4" />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => fetchUserActivity(user._id)}
+                      >
+                        <Activity className="w-4 h-4" />
                       </Button>
-                      <Button onClick={() => handleDeleteUser(user._id)} size="sm" variant="outline" className="text-red-600">
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedUser(user)
+                          setShowMessageDialog(true)
+                        }}
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={user.isActive ? 'text-red-600' : 'text-green-600'}
+                        onClick={() => {
+                          setSelectedUser(user)
+                          setShowSuspendDialog(true)
+                        }}
+                      >
+                        {user.isActive ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600"
+                        onClick={() => deleteUser(user._id)}
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -475,123 +418,138 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
 
-        {/* Edit User Modal */}
-        <Dialog open={showEditUser} onOpenChange={() => { setShowEditUser(false); setEditingUserId(null); }}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Suspend/Unsuspend Dialog */}
+        <Dialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit User Details</DialogTitle>
+              <DialogTitle>
+                {selectedUser?.isActive ? 'Suspend User' : 'Unsuspend User'}
+              </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleEditUser} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Full Name *</Label>
-                  <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
-                </div>
-                <div>
-                  <Label>Email Address *</Label>
-                  <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Role *</Label>
-                  <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="staff">Staff</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Phone Number</Label>
-                  <Input value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} placeholder="Enter phone number" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Student ID</Label>
-                  <Input value={formData.studentId} onChange={(e) => setFormData({...formData, studentId: e.target.value})} placeholder="Enter student ID" />
-                </div>
-                <div>
-                  <Label>Roll Number</Label>
-                  <Input value={formData.rollNumber} onChange={(e) => setFormData({...formData, rollNumber: e.target.value})} placeholder="Enter roll number" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label>Department</Label>
-                  <Select value={formData.department} onValueChange={(value) => setFormData({...formData, department: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Computer Science">Computer Science</SelectItem>
-                      <SelectItem value="Information Technology">Information Technology</SelectItem>
-                      <SelectItem value="Electronics">Electronics</SelectItem>
-                      <SelectItem value="Mechanical">Mechanical</SelectItem>
-                      <SelectItem value="Civil">Civil</SelectItem>
-                      <SelectItem value="Electrical">Electrical</SelectItem>
-                      <SelectItem value="Chemical">Chemical</SelectItem>
-                      <SelectItem value="Biotechnology">Biotechnology</SelectItem>
-                      <SelectItem value="Mathematics">Mathematics</SelectItem>
-                      <SelectItem value="Physics">Physics</SelectItem>
-                      <SelectItem value="Chemistry">Chemistry</SelectItem>
-                      <SelectItem value="English">English</SelectItem>
-                      <SelectItem value="Tamil">Tamil</SelectItem>
-                      <SelectItem value="Commerce">Commerce</SelectItem>
-                      <SelectItem value="Economics">Economics</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Year</Label>
-                  <Select value={formData.year} onValueChange={(value) => setFormData({...formData, year: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="I">I Year</SelectItem>
-                      <SelectItem value="II">II Year</SelectItem>
-                      <SelectItem value="III">III Year</SelectItem>
-                      <SelectItem value="IV">IV Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Shift</Label>
-                  <Select value={formData.shift} onValueChange={(value) => setFormData({...formData, shift: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select shift" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Morning">Morning</SelectItem>
-                      <SelectItem value="Afternoon">Afternoon</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div>
-                <Label>New Password (leave empty to keep current)</Label>
-                <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Enter new password or leave empty" />
-              </div>
+            <div className="space-y-4">
+              {selectedUser?.isActive && (
+                <>
+                  <div>
+                    <Label>Reason for Suspension</Label>
+                    <Textarea
+                      value={suspensionData.reason}
+                      onChange={(e) => setSuspensionData({...suspensionData, reason: e.target.value})}
+                      placeholder="Enter reason for suspension..."
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Duration (days)</Label>
+                    <Select 
+                      value={suspensionData.duration.toString()} 
+                      onValueChange={(value) => setSuspensionData({...suspensionData, duration: parseInt(value)})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 Day</SelectItem>
+                        <SelectItem value="3">3 Days</SelectItem>
+                        <SelectItem value="7">1 Week</SelectItem>
+                        <SelectItem value="30">1 Month</SelectItem>
+                        <SelectItem value="0">Permanent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
               
               <div className="flex gap-2 pt-4">
-                <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
-                  Update User
+                <Button onClick={handleSuspendUser} className="bg-red-500 hover:bg-red-600 text-white">
+                  {selectedUser?.isActive ? 'Suspend User' : 'Unsuspend User'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => { setShowEditUser(false); setEditingUserId(null); }}>
+                <Button variant="outline" onClick={() => setShowSuspendDialog(false)}>
                   Cancel
                 </Button>
               </div>
-            </form>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Message Dialog */}
+        <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Send Message to {selectedUser?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Subject</Label>
+                <Input
+                  value={messageData.subject}
+                  onChange={(e) => setMessageData({...messageData, subject: e.target.value})}
+                  placeholder="Message subject..."
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label>Message Type</Label>
+                <Select value={messageData.type} onValueChange={(value) => setMessageData({...messageData, type: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="info">Information</SelectItem>
+                    <SelectItem value="warning">Warning</SelectItem>
+                    <SelectItem value="verification">Verification</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Message</Label>
+                <Textarea
+                  value={messageData.message}
+                  onChange={(e) => setMessageData({...messageData, message: e.target.value})}
+                  placeholder="Enter your message..."
+                  rows={4}
+                  required
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleSendMessage} className="bg-blue-500 hover:bg-blue-600 text-white">
+                  Send Message
+                </Button>
+                <Button variant="outline" onClick={() => setShowMessageDialog(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Activity Dialog */}
+        <Dialog open={showActivityDialog} onOpenChange={setShowActivityDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>User Activity Log</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {userActivities.map((activity, index) => (
+                <div key={index} className="border-b pb-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium capitalize">{activity.action.replace('_', ' ')}</span>
+                    <span className="text-sm text-gray-500">
+                      {new Date(activity.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  {activity.details && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      {JSON.stringify(activity.details, null, 2)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

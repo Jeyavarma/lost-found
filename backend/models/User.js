@@ -12,7 +12,15 @@ const userSchema = new mongoose.Schema({
   department: String,
   year: String,
   rollNumber: String,
-  lastLogin: { type: Date, default: Date.now }
+  lastLogin: { type: Date, default: Date.now },
+  isActive: { type: Boolean, default: true },
+  suspendedUntil: Date,
+  suspensionReason: String,
+  suspendedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  loginAttempts: { type: Number, default: 0 },
+  lastFailedLogin: Date,
+  accountLocked: { type: Boolean, default: false },
+  lockedUntil: Date
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {

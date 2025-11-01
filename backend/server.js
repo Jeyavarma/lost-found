@@ -97,6 +97,10 @@ app.use('/api/ai', apiLimiter, require('./routes/ai-search'));
 app.use('/api/notifications', apiLimiter, notificationRoutes);
 app.use('/api/feedback', apiLimiter, feedbackRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);
+app.use('/api/analytics', apiLimiter, require('./routes/analytics'));
+app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
+app.use('/api/messaging', apiLimiter, require('./routes/messaging'));
+app.use('/api/system-flow', apiLimiter, require('./routes/system-flow'));
 
 app.use('/api', healthRoutes);
 app.use('/uploads', express.static('uploads'));

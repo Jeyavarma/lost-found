@@ -41,6 +41,12 @@ const itemSchema = new mongoose.Schema({
   adminNotes: String,
   approved: { type: Boolean, default: true },
   flagged: { type: Boolean, default: false },
+  flagReason: String,
+  flaggedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  flaggedAt: Date,
+  moderatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  moderatedAt: Date,
+  moderationNotes: String,
   // AI Image Matching
   imageFeatures: [Number], // MobileNet feature vector
   potentialMatches: [{

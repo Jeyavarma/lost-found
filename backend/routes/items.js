@@ -2,14 +2,17 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const Item = require('../models/Item');
 const User = require('../models/User');
+const ItemTransaction = require('../models/ItemTransaction');
+const UserActivity = require('../models/UserActivity');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
+const { trackActivity } = require('../middleware/activityTracker');
 const router = express.Router();
 
 // Text-based matching only - stable and effective
 console.log('✅ Using text-based matching for item suggestions');
 
-router.get('/', async (req, res) => {
+router.get('/', trackActivity('search'), async (req, res) => {
   try {
     const items = await Item.find().populate('reportedBy', 'name email').sort({ createdAt: -1 });
     res.json(items);
@@ -255,7 +258,7 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-router.post('/', uploadFields, optionalAuth, async (req, res) => {
+router.post('/', uploadFields, optionalAuth, trackActivity('report_lost'), async (req, res) => {
   try {
     console.log('📝 POST /api/items - Request received');
     console.log('📋 Request body keys:', Object.keys(req.body));
@@ -340,12 +343,27 @@ router.post('/', uploadFields, optionalAuth, async (req, res) => {
     
     console.log('✅ Item saved successfully with ID:', item._id);
     
+    // Create transaction record
+    if (req.userId) {
+      const transaction = new ItemTransaction({
+        itemId: item._id,
+        lostReportedBy: req.userId,
+        status: status,
+        timeline: [{
+          action: status === 'lost' ? 'reported_lost' : 'reported_found',
+          userId: req.userId,
+          notes: `Item ${status} reported`
+        }]
+      });
+      await transaction.save();
+    }
+    
     // Images stored for display only - matching uses text analysis
     console.log('ℹ️ Item saved with text-based matching enabled');
     
     await item.populate('reportedBy', 'name email');
     console.log('✅ Item submission completed successfully');
-    res.status(201).json(item);
+    res.status(201).json({ item });
   } catch (error) {
     console.error('❌ Item submission error:', error);
     console.error('Error stack:', error.stack);
@@ -434,7 +452,7 @@ router.get('/events/:eventName', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', trackActivity('view_item'), async (req, res) => {
   try {
     const item = await Item.findById(req.params.id)
       .populate('reportedBy', 'name email');
@@ -480,7 +498,7 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 // Claim an item
-router.post('/:id/claim', auth, async (req, res) => {
+router.post('/:id/claim', auth, trackActivity('claim_item'), async (req, res) => {
   try {
     const { ownershipProof, additionalInfo } = req.body;
     
@@ -505,6 +523,19 @@ router.post('/:id/claim', auth, async (req, res) => {
     item.verificationStatus = 'pending';
     
     await item.save();
+    
+    // Update transaction record
+    let transaction = await ItemTransaction.findOne({ itemId: req.params.id });
+    if (transaction) {
+      transaction.claimedBy = req.userId;
+      transaction.status = 'claimed';
+      transaction.timeline.push({
+        action: 'claimed',
+        userId: req.userId,
+        notes: 'Item claimed by user'
+      });
+      await transaction.save();
+    }
     
     res.json({ message: 'Claim submitted successfully. Awaiting admin verification.', item });
   } catch (error) {

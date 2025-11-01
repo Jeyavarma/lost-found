@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Item = require('../models/Item');
+const UserActivity = require('../models/UserActivity');
+const LoginAttempt = require('../models/LoginAttempt');
+const ItemTransaction = require('../models/ItemTransaction');
 const auth = require('../middleware/authMiddleware');
 
 // Admin middleware
@@ -530,7 +533,166 @@ router.post('/reset-password', auth, adminAuth, async (req, res) => {
     user.password = newPassword || 'MCC@2024';
     await user.save();
     
+    // Log activity
+    await UserActivity.create({
+      userId: req.user._id,
+      action: 'password_reset',
+      details: {
+        targetUserId: user._id,
+        metadata: { email }
+      }
+    });
+    
     res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Suspend/unsuspend user
+router.post('/users/:id/suspend', auth, adminAuth, async (req, res) => {
+  try {
+    const { suspend, reason, duration } = req.body;
+    const userId = req.params.id;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (suspend) {
+      const suspendUntil = duration ? new Date(Date.now() + duration * 24 * 60 * 60 * 1000) : null;
+      user.isActive = false;
+      user.suspendedUntil = suspendUntil;
+      user.suspensionReason = reason;
+      user.suspendedBy = req.user._id;
+    } else {
+      user.isActive = true;
+      user.suspendedUntil = null;
+      user.suspensionReason = null;
+      user.suspendedBy = null;
+    }
+    
+    await user.save();
+    
+    // Log activity
+    await UserActivity.create({
+      userId: req.user._id,
+      action: suspend ? 'suspend_user' : 'unsuspend_user',
+      details: {
+        targetUserId: userId,
+        metadata: { reason, duration }
+      }
+    });
+    
+    res.json({ message: `User ${suspend ? 'suspended' : 'unsuspended'} successfully` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user activity logs
+router.get('/users/:id/activity', auth, adminAuth, async (req, res) => {
+  try {
+    const activities = await UserActivity.find({ userId: req.params.id })
+      .populate('details.itemId', 'title')
+      .populate('details.targetUserId', 'name email')
+      .sort({ timestamp: -1 })
+      .limit(50);
+    
+    res.json(activities);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get login attempts
+router.get('/login-attempts', auth, adminAuth, async (req, res) => {
+  try {
+    const { email, failed } = req.query;
+    const filter = {};
+    
+    if (email) filter.email = { $regex: email, $options: 'i' };
+    if (failed === 'true') filter.success = false;
+    
+    const attempts = await LoginAttempt.find(filter)
+      .populate('userId', 'name email')
+      .sort({ timestamp: -1 })
+      .limit(100);
+    
+    res.json(attempts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get item transaction history
+router.get('/transactions', auth, adminAuth, async (req, res) => {
+  try {
+    const transactions = await ItemTransaction.find()
+      .populate('itemId', 'title category')
+      .populate('lostReportedBy', 'name email')
+      .populate('foundReportedBy', 'name email')
+      .populate('claimedBy', 'name email')
+      .populate('handedOverTo', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    res.json(transactions);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Complete item handover
+router.post('/items/:id/handover', auth, adminAuth, async (req, res) => {
+  try {
+    const { handedOverTo, notes } = req.body;
+    const itemId = req.params.id;
+    
+    const item = await Item.findById(itemId);
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    
+    // Update item status
+    item.status = 'returned';
+    await item.save();
+    
+    // Update or create transaction record
+    let transaction = await ItemTransaction.findOne({ itemId });
+    if (!transaction) {
+      transaction = new ItemTransaction({
+        itemId,
+        lostReportedBy: item.reportedBy,
+        status: 'returned'
+      });
+    }
+    
+    transaction.handedOverTo = handedOverTo;
+    transaction.status = 'returned';
+    transaction.isResolved = true;
+    transaction.resolutionTime = (new Date() - item.createdAt) / (1000 * 60 * 60); // hours
+    transaction.timeline.push({
+      action: 'handed_over',
+      userId: req.user._id,
+      notes
+    });
+    
+    await transaction.save();
+    
+    // Log activity
+    await UserActivity.create({
+      userId: req.user._id,
+      action: 'item_handover',
+      details: {
+        itemId,
+        targetUserId: handedOverTo,
+        metadata: { notes }
+      }
+    });
+    
+    res.json({ message: 'Item handover completed successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,228 +1,418 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BACKEND_URL } from '@/lib/config';
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { 
+  Database,
+  Server,
+  Monitor,
+  Globe,
+  ArrowRight,
+  RefreshCw,
+  CheckCircle,
+  Activity,
+  Cloud,
+  Zap
+} from 'lucide-react'
+import Navigation from '@/components/navigation'
+import { isAuthenticated, getUserData, getAuthToken } from '@/lib/auth'
+import { BACKEND_URL } from '@/lib/config'
 
-interface SystemConfig {
-  categories: string[];
-  locations: string[];
-  departments: string[];
-  hostels: string[];
-  autoMatchEnabled: boolean;
-  emailNotifications: boolean;
-  maxImageSize: number;
-  sessionTimeout: number;
+interface SystemFlow {
+  frontend: {
+    deployment: string
+    url: string
+    status: string
+    activeUsers: number
+    lastDeploy: string
+  }
+  backend: {
+    deployment: string
+    url: string
+    status: string
+    uptime: number
+    memoryUsage: number
+    cpuUsage: number
+  }
+  database: {
+    provider: string
+    status: string
+    totalUsers: number
+    totalItems: number
+  }
+  connections: {
+    frontendToBackend: {
+      protocol: string
+      cors: string
+      authentication: string
+      status: string
+    }
+    backendToDatabase: {
+      protocol: string
+      connection: string
+      status: string
+    }
+  }
+  liveData: {
+    recentActivities: any[]
+    recentTransactions: any[]
+    recentLogins: any[]
+  }
 }
 
 export default function SystemPage() {
-  const [config, setConfig] = useState<SystemConfig>({
-    categories: [],
-    locations: [],
-    departments: [],
-    hostels: [],
-    autoMatchEnabled: true,
-    emailNotifications: true,
-    maxImageSize: 5,
-    sessionTimeout: 24
-  });
-  const [newCategory, setNewCategory] = useState('');
-  const [newLocation, setNewLocation] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [systemData, setSystemData] = useState<SystemFlow | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
 
   useEffect(() => {
-    fetchSystemConfig();
-  }, []);
+    const checkAuth = () => {
+      if (!isAuthenticated()) {
+        window.location.href = '/login'
+        return
+      }
+      
+      const userData = getUserData()
+      if (userData?.role !== 'admin') {
+        window.location.href = '/dashboard'
+        return
+      }
+      
+      fetchSystemFlow()
+    }
+    
+    checkAuth()
+  }, [])
 
-  const fetchSystemConfig = async () => {
+  const fetchSystemFlow = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${BACKEND_URL}/api/admin/system-config`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setConfig(data.config || config);
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/system-flow/live-metrics`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setSystemData(data)
+        setLastUpdate(new Date())
+      }
     } catch (error) {
-      console.error('Failed to fetch system config:', error);
+      console.error('System flow fetch error:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const updateConfig = async (updates: Partial<SystemConfig>) => {
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`${BACKEND_URL}/api/admin/system-config`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(updates)
-      });
-      setConfig({ ...config, ...updates });
-    } catch (error) {
-      console.error('Failed to update config:', error);
-    }
-  };
+  const formatUptime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    return `${hours}h ${minutes}m`
+  }
 
-  const addCategory = () => {
-    if (newCategory.trim()) {
-      const updatedCategories = [...config.categories, newCategory.trim()];
-      updateConfig({ categories: updatedCategories });
-      setNewCategory('');
-    }
-  };
-
-  const removeCategory = (category: string) => {
-    const updatedCategories = config.categories.filter(c => c !== category);
-    updateConfig({ categories: updatedCategories });
-  };
-
-  const addLocation = () => {
-    if (newLocation.trim()) {
-      const updatedLocations = [...config.locations, newLocation.trim()];
-      updateConfig({ locations: updatedLocations });
-      setNewLocation('');
-    }
-  };
-
-  const removeLocation = (location: string) => {
-    const updatedLocations = config.locations.filter(l => l !== location);
-    updateConfig({ locations: updatedLocations });
-  };
-
-  if (loading) return <div className="p-6">Loading system configuration...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading system architecture...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">System Configuration</h1>
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mcc-text-primary font-serif mb-2">
+              Live System Architecture
+            </h1>
+            <p className="text-gray-600">
+              Real-time connection: Vercel Frontend ↔ Render Backend ↔ MongoDB Atlas
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-500">
+              Updated: {lastUpdate.toLocaleTimeString()}
+            </div>
+            <Button onClick={fetchSystemFlow} size="sm" variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+        </div>
 
-      <Tabs defaultValue="categories" className="w-full">
-        <TabsList>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="locations">Locations</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="categories" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Manage Categories</CardTitle>
+        {/* Architecture Flow */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-8">
+          {/* Frontend - Vercel */}
+          <Card className="mcc-card border-blue-200">
+            <CardHeader className="bg-blue-50 text-center">
+              <Monitor className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-blue-700 text-lg">Frontend</CardTitle>
+              <Badge className="bg-blue-600 text-white">Vercel</Badge>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new category..."
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addCategory()}
-                />
-                <Button onClick={addCategory}>Add</Button>
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="text-center">
+                  <CheckCircle className="w-4 h-4 text-green-500 mx-auto mb-1" />
+                  <div className="text-xs font-medium">Live</div>
+                  <a 
+                    href="https://lost-found-mcc.vercel.app" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline break-all"
+                  >
+                    lost-found-mcc.vercel.app
+                  </a>
+                </div>
+                
+                <div className="bg-white p-2 rounded border text-xs">
+                  <div>Users: <strong>{systemData?.frontend.activeUsers || 0}</strong></div>
+                  <div>Status: <strong className="text-green-600">active</strong></div>
+                </div>
+                
+                <div className="text-center text-xs">
+                  <div className="text-gray-500">Next.js 15</div>
+                  <div>React + TypeScript</div>
+                  <div>Tailwind CSS</div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {config.categories.map((category) => (
-                  <div key={category} className="flex items-center justify-between p-2 bg-gray-100 rounded">
-                    <span>{category}</span>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => removeCategory(category)}
-                    >
-                      ×
-                    </Button>
+            </CardContent>
+          </Card>
+
+          {/* Connection Arrow */}
+          <div className="flex items-center justify-center">
+            <div className="text-center">
+              <ArrowRight className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <div className="text-xs text-gray-600">
+                <div>HTTPS</div>
+                <div>JWT Auth</div>
+                <div className="text-green-600 font-medium">Connected</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Backend - Render */}
+          <Card className="mcc-card border-green-200">
+            <CardHeader className="bg-green-50 text-center">
+              <Server className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <CardTitle className="text-green-700 text-lg">Backend</CardTitle>
+              <Badge className="bg-green-600 text-white">Render</Badge>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="text-center">
+                  <CheckCircle className="w-4 h-4 text-green-500 mx-auto mb-1" />
+                  <div className="text-xs font-medium">Running</div>
+                  <a 
+                    href={BACKEND_URL} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-green-600 hover:underline break-all"
+                  >
+                    {BACKEND_URL.replace('https://', '')}
+                  </a>
+                </div>
+                
+                <div className="bg-white p-2 rounded border text-xs">
+                  <div>Uptime: <strong>{formatUptime(systemData?.backend.uptime || 0)}</strong></div>
+                  <div>Memory: <strong>{systemData?.backend.memoryUsage || 0}%</strong></div>
+                  <div>CPU: <strong>{systemData?.backend.cpuUsage || 0}%</strong></div>
+                </div>
+                
+                <div className="text-center text-xs">
+                  <div className="text-gray-500">Express.js</div>
+                  <div>Node.js Runtime</div>
+                  <div>JWT + CORS</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Connection Arrow */}
+          <div className="flex items-center justify-center">
+            <div className="text-center">
+              <ArrowRight className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <div className="text-xs text-gray-600">
+                <div>MongoDB</div>
+                <div>Mongoose</div>
+                <div className="text-green-600 font-medium">Connected</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Database - MongoDB Atlas */}
+          <Card className="mcc-card border-purple-200">
+            <CardHeader className="bg-purple-50 text-center">
+              <Database className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <CardTitle className="text-purple-700 text-lg">Database</CardTitle>
+              <Badge className="bg-purple-600 text-white">MongoDB Atlas</Badge>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="text-center">
+                  <CheckCircle className="w-4 h-4 text-green-500 mx-auto mb-1" />
+                  <div className="text-xs font-medium">Connected</div>
+                  <div className="text-xs text-purple-600">Cloud Database</div>
+                </div>
+                
+                <div className="bg-white p-2 rounded border text-xs">
+                  <div>Users: <strong>{systemData?.database.totalUsers || 0}</strong></div>
+                  <div>Items: <strong>{systemData?.database.totalItems || 0}</strong></div>
+                  <div>Status: <strong className="text-green-600">connected</strong></div>
+                </div>
+                
+                <div className="text-center text-xs">
+                  <div className="text-gray-500">Collections</div>
+                  <div>users, items</div>
+                  <div>activities, transactions</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Live Data Streams */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="mcc-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5" />
+                Live Activities
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {!systemData?.liveData?.recentActivities?.length ? (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    Loading activities...
                   </div>
-                ))}
+                ) : (
+                  systemData.liveData.recentActivities.map((activity, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                      <div>
+                        <div className="font-medium capitalize">
+                          {activity.action?.replace('_', ' ') || 'Activity'}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {activity.user || 'User'}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(activity.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="locations" className="space-y-4">
-          <Card>
+          <Card className="mcc-card">
             <CardHeader>
-              <CardTitle>Manage Locations</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                Transactions
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new location..."
-                  value={newLocation}
-                  onChange={(e) => setNewLocation(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addLocation()}
-                />
-                <Button onClick={addLocation}>Add</Button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {config.locations.map((location) => (
-                  <div key={location} className="flex items-center justify-between p-2 bg-gray-100 rounded">
-                    <span>{location}</span>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => removeLocation(location)}
-                    >
-                      ×
-                    </Button>
+            <CardContent>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {!systemData?.liveData?.recentTransactions?.length ? (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    Loading transactions...
                   </div>
-                ))}
+                ) : (
+                  systemData.liveData.recentTransactions.map((transaction, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                      <div>
+                        <div className="font-medium">{transaction.item || 'Item'}</div>
+                        <div className="text-xs text-gray-600 capitalize">
+                          {transaction.status || 'status'}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(transaction.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
+          <Card className="mcc-card">
             <CardHeader>
-              <CardTitle>System Settings</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                Recent Logins
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Max Image Size (MB)</Label>
-                  <Input
-                    type="number"
-                    value={config.maxImageSize}
-                    onChange={(e) => updateConfig({ maxImageSize: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Session Timeout (hours)</Label>
-                  <Input
-                    type="number"
-                    value={config.sessionTimeout}
-                    onChange={(e) => updateConfig({ sessionTimeout: parseInt(e.target.value) })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="autoMatch"
-                    checked={config.autoMatchEnabled}
-                    onChange={(e) => updateConfig({ autoMatchEnabled: e.target.checked })}
-                  />
-                  <Label htmlFor="autoMatch">Enable Auto-Matching</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="emailNotifications"
-                    checked={config.emailNotifications}
-                    onChange={(e) => updateConfig({ emailNotifications: e.target.checked })}
-                  />
-                  <Label htmlFor="emailNotifications">Enable Email Notifications</Label>
-                </div>
+            <CardContent>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {!systemData?.liveData?.recentLogins?.length ? (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    Loading logins...
+                  </div>
+                ) : (
+                  systemData.liveData.recentLogins.map((login, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                      <div>
+                        <div className="font-medium">{login.user || 'User'}</div>
+                        <div className="text-xs text-gray-600">
+                          {login.ipAddress || 'IP'}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(login.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        {/* Connection Details */}
+        <Card className="mcc-card mt-6">
+          <CardHeader>
+            <CardTitle>Live Connection Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-semibold text-blue-700 mb-2">Frontend → Backend</h4>
+                <div className="space-y-1 text-sm">
+                  <div>Protocol: <strong>HTTPS</strong></div>
+                  <div>CORS: <strong>Enabled</strong></div>
+                  <div>Auth: <strong>JWT Bearer</strong></div>
+                  <div>Status: <strong className="text-green-600">Active</strong></div>
+                  <div>Endpoint: <strong>{BACKEND_URL}</strong></div>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h4 className="font-semibold text-green-700 mb-2">Backend → Database</h4>
+                <div className="space-y-1 text-sm">
+                  <div>Protocol: <strong>MongoDB</strong></div>
+                  <div>Connection: <strong>Atlas Cloud</strong></div>
+                  <div>Driver: <strong>Mongoose</strong></div>
+                  <div>Status: <strong className="text-green-600">Connected</strong></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
-  );
+  )
 }

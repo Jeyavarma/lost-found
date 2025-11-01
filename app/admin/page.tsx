@@ -30,7 +30,8 @@ import {
   MessageSquare,
   FileCheck,
   XCircle,
-  Search
+  Search,
+  Server
 } from 'lucide-react'
 import Link from 'next/link'
 import Navigation from '@/components/navigation'
@@ -652,6 +653,12 @@ export default function AdminDashboard() {
                   <Button className="w-full text-sm" variant="outline">
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
+                  </Button>
+                </Link>
+                <Link href="/admin/system">
+                  <Button className="w-full text-sm" variant="outline">
+                    <Server className="w-4 h-4 mr-2" />
+                    System Flow
                   </Button>
                 </Link>
               </CardContent>

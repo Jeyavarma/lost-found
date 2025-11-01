@@ -3,24 +3,90 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
+const LoginAttempt = require('../models/LoginAttempt');
+const UserActivity = require('../models/UserActivity');
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const ipAddress = req.ip || req.connection.remoteAddress;
+    const userAgent = req.get('User-Agent');
     
     // Input validation
     if (!email || !password) {
+      await LoginAttempt.create({
+        email: email || 'unknown',
+        ipAddress,
+        userAgent,
+        success: false,
+        failureReason: 'Missing credentials'
+      });
       return res.status(400).json({ message: 'Email and password are required' });
     }
     
     const user = await User.findOne({ email });
+    
+    // Check if user is suspended
+    if (user && !user.isActive) {
+      const suspendedUntil = user.suspendedUntil;
+      if (!suspendedUntil || new Date() < suspendedUntil) {
+        await LoginAttempt.create({
+          email,
+          ipAddress,
+          userAgent,
+          success: false,
+          failureReason: 'Account suspended',
+          userId: user._id
+        });
+        return res.status(403).json({ 
+          message: 'Account suspended', 
+          reason: user.suspensionReason,
+          suspendedUntil: suspendedUntil
+        });
+      } else {
+        // Auto-unsuspend if suspension period expired
+        user.isActive = true;
+        user.suspendedUntil = null;
+        user.suspensionReason = null;
+        await user.save();
+      }
+    }
+    
     if (!user || !(await user.comparePassword(password))) {
+      await LoginAttempt.create({
+        email,
+        ipAddress,
+        userAgent,
+        success: false,
+        failureReason: 'Invalid credentials',
+        userId: user?._id
+      });
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Successful login
+    await LoginAttempt.create({
+      email,
+      ipAddress,
+      userAgent,
+      success: true,
+      userId: user._id
+    });
+    
+    // Log user activity
+    await UserActivity.create({
+      userId: user._id,
+      action: 'login',
+      details: {
+        ipAddress,
+        userAgent
+      }
+    });
+
     // Update last login
     user.lastLogin = new Date();
+    user.loginAttempts = 0; // Reset failed attempts
     await user.save();
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });

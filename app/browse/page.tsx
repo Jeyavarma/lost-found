@@ -78,11 +78,16 @@ export default function BrowsePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Read search parameter from URL
+    // Read search and category parameters from URL
     const urlParams = new URLSearchParams(window.location.search)
     const searchParam = urlParams.get('search')
+    const categoryParam = urlParams.get('category')
+    
     if (searchParam) {
       setSearchQuery(searchParam)
+    }
+    if (categoryParam) {
+      setCategoryFilter(categoryParam)
     }
     
     const fetchItems = async () => {

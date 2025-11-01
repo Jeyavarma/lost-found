@@ -166,8 +166,7 @@ export default function AdminDashboard() {
       console.log('🔗 Backend URL:', BACKEND_URL)
       console.log('🔑 Token:', token ? 'Present' : 'Missing')
       
-      // Skip test endpoint - go directly to stats
-      console.log('📊 Fetching admin data directly...')
+      console.log('📊 Fetching admin data...')
       
       // Fetch live data from backend
       console.log('📊 Fetching admin stats...')

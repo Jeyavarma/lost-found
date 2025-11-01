@@ -182,7 +182,7 @@ export default function HomePage() {
                   variant="outline"
                   size="sm"
                   className="bg-white/20 border-white/40 text-brand-text-light hover:bg-white/30 rounded-full font-medium backdrop-blur-sm text-xs sm:text-sm"
-                  onClick={() => window.location.href = `/browse?search=${encodeURIComponent(tag.toLowerCase())}`}
+                  onClick={() => window.location.href = `/browse?category=${encodeURIComponent(tag)}`}
                 >
                   {tag}
                 </Button>

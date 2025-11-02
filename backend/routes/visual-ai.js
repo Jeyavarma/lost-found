@@ -26,6 +26,28 @@ router.post('/store-features', authMiddleware, async (req, res) => {
   }
 })
 
+// Process image from Cloudinary URL (placeholder for future server-side processing)
+router.post('/process-image', async (req, res) => {
+  try {
+    const { imageUrl } = req.body
+    
+    if (!imageUrl) {
+      return res.status(400).json({ error: 'Image URL required' })
+    }
+    
+    // Currently processing happens on frontend with TensorFlow.js
+    // This endpoint exists for future server-side processing if needed
+    res.json({ 
+      message: 'Image processing initiated',
+      imageUrl,
+      note: 'Processing happens client-side with TensorFlow.js'
+    })
+  } catch (error) {
+    console.error('Process image error:', error)
+    res.status(500).json({ error: 'Failed to process image' })
+  }
+})
+
 // Find visually similar items
 router.post('/find-similar', authMiddleware, async (req, res) => {
   try {

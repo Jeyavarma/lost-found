@@ -3,6 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const http = require('http');
+const socketIo = require('socket.io');
 
 const authRoutes = require('./routes/auth');
 const itemRoutes = require('./routes/items');
@@ -13,6 +15,21 @@ const adminRoutes = require('./routes/admin');
 const { authLimiter, apiLimiter, securityHeaders, csrfProtection } = require('./middleware/security');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' 
+      ? [
+          'https://lost-found-mcc.vercel.app',
+          'https://mcc-lost-found.vercel.app', 
+          'https://lost-found-79xn.onrender.com',
+          /\.vercel\.app$/
+        ]
+      : ['http://localhost:3000', 'http://localhost:3002'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 
 // Trust proxy for rate limiting on Render
 app.set('trust proxy', 1);
@@ -102,6 +119,11 @@ app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
 app.use('/api/messaging', apiLimiter, require('./routes/messaging'));
 app.use('/api/system-flow', apiLimiter, require('./routes/system-flow'));
 app.use('/api/visual-ai', apiLimiter, require('./routes/visual-ai'));
+app.use('/api/chat', apiLimiter, require('./routes/chat'));
+
+// Socket.io chat handler
+const { handleConnection } = require('./socket/chatHandler');
+handleConnection(io);
 
 app.use('/api', healthRoutes);
 app.use('/uploads', express.static('uploads'));
@@ -112,6 +134,7 @@ app.get('/create-admin', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Socket.io chat enabled`);
 });

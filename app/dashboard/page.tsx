@@ -18,7 +18,10 @@ import Navigation from "@/components/navigation"
 import AIMatches from "@/components/ai-matches"
 import AISearchButton from "@/components/ai-search-button"
 import ItemDetailModal from "@/components/item-detail-modal"
+import ChatList from "@/components/chat/ChatList"
+import ChatWindow from "@/components/chat/ChatWindow"
 import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } from "@/lib/auth"
+import { socketManager } from "@/lib/socket"
 import Link from "next/link"
 import { BACKEND_URL } from "@/lib/config"
 
@@ -44,6 +47,9 @@ export default function DashboardPage() {
   const [error, setError] = useState("")
   const [deleteModal, setDeleteModal] = useState<{show: boolean, item: Item | null}>({show: false, item: null})
   const [viewModal, setViewModal] = useState<{show: boolean, item: Item | null}>({show: false, item: null})
+  const [selectedChatRoom, setSelectedChatRoom] = useState<any>(null)
+  const [showChat, setShowChat] = useState(false)
+  const [activeTab, setActiveTab] = useState('overview')
 
   const loadUserItems = async () => {
     try {
@@ -140,6 +146,10 @@ export default function DashboardPage() {
       
       await loadUserItems()
       await loadPotentialMatches()
+      
+      // Initialize socket connection for chat
+      socketManager.connect()
+      
       setLoading(false)
     }
 
@@ -162,6 +172,7 @@ export default function DashboardPage() {
     return () => {
       window.removeEventListener('itemSubmitted', handleItemSubmitted)
       window.removeEventListener('storage', handleStorageChange)
+      socketManager.disconnect()
     }
   }, [])
 
@@ -194,9 +205,37 @@ export default function DashboardPage() {
           <p className="text-gray-600">
             Manage your lost and found reports from your dashboard
           </p>
+          
+          {/* Tab Navigation */}
+          <div className="mt-6 border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'overview'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('messages')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'messages'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <MessageCircle className="w-4 h-4 inline mr-2" />
+                Messages
+              </button>
+            </nav>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1 space-y-6">
             <Card className="mcc-card">
               <CardHeader>
@@ -506,6 +545,42 @@ export default function DashboardPage() {
             </Card>
           </div>
         </div>
+        )}
+        
+        {activeTab === 'messages' && (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-1">
+              <ChatList 
+                onSelectRoom={(room) => {
+                  setSelectedChatRoom(room)
+                  setShowChat(true)
+                }} 
+                currentUserId={user?.userId}
+              />
+            </div>
+            
+            <div className="lg:col-span-2">
+              {showChat && selectedChatRoom ? (
+                <ChatWindow 
+                  room={selectedChatRoom}
+                  onClose={() => {
+                    setShowChat(false)
+                    setSelectedChatRoom(null)
+                  }}
+                  currentUserId={user?.userId}
+                />
+              ) : (
+                <Card className="h-full flex items-center justify-center">
+                  <CardContent className="text-center">
+                    <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
+                    <p className="text-gray-500">Choose a conversation from the list to start messaging</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <ItemDetailModal 

@@ -18,7 +18,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
-import { processImage, calculateSimilarity, suggestCategory, initializeModels } from '@/lib/visual-ai'
+import { processImage, processImageFromUrl, calculateSimilarity, suggestCategoryFromObjects, initializeModels } from '@/lib/visual-ai'
 import { BACKEND_URL } from '@/lib/config'
 import { getAuthToken } from '@/lib/auth'
 
@@ -83,7 +83,7 @@ export default function VisualAISearch() {
         const result = await processImage(selectedImage)
         imageFeatures = result.features
         objects = result.objects
-        aiCategory = suggestCategory(objects)
+        aiCategory = suggestCategoryFromObjects(objects)
         
         setDetectedObjects(objects)
         setSuggestedCategory(aiCategory)

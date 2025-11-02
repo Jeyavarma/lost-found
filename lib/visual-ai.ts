@@ -124,8 +124,33 @@ export const processImage = async (file: File) => {
   })
 }
 
+// Process image from Cloudinary URL
+export const processImageFromUrl = async (imageUrl: string) => {
+  return new Promise<{
+    features: number[]
+    objects: any[]
+  }>((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    
+    img.onload = async () => {
+      try {
+        const features = await extractImageFeatures(img)
+        const objects = await detectObjects(img)
+        
+        resolve({ features, objects })
+      } catch (error) {
+        reject(error)
+      }
+    }
+    
+    img.onerror = () => reject(new Error('Failed to load image from URL'))
+    img.src = imageUrl
+  })
+}
+
 // Suggest category based on detected objects
-export const suggestCategory = (objects: any[]): string => {
+export const suggestCategoryFromObjects = (objects: any[]): string => {
   if (objects.length === 0) return 'Other'
   
   const categoryMap: { [key: string]: string } = {
@@ -152,4 +177,18 @@ export const suggestCategory = (objects: any[]): string => {
   )
   
   return categoryMap[topObject.class] || 'Other'
+}
+
+// Find visually similar items from database
+export const findSimilarItems = async (targetFeatures: number[], items: any[], threshold = 0.7) => {
+  const similarities = items
+    .filter(item => item.imageFeatures && item.imageFeatures.length > 0)
+    .map(item => ({
+      ...item,
+      similarity: calculateSimilarity(targetFeatures, item.imageFeatures)
+    }))
+    .filter(item => item.similarity >= threshold)
+    .sort((a, b) => b.similarity - a.similarity)
+  
+  return similarities
 }

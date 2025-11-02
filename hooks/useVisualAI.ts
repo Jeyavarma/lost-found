@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { processImage, initializeModels } from '@/lib/visual-ai'
+import { processImage, processImageFromUrl, initializeModels } from '@/lib/visual-ai'
 
 export const useVisualAI = () => {
   const [processing, setProcessing] = useState(false)
@@ -32,6 +32,20 @@ export const useVisualAI = () => {
     }
   }
 
+  const processCloudinaryImage = async (imageUrl: string) => {
+    setProcessing(true)
+    try {
+      await loadModels()
+      const result = await processImageFromUrl(imageUrl)
+      return result
+    } catch (error) {
+      console.error('Cloudinary image processing error:', error)
+      throw error
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   const enhanceItemData = async (itemData: any, imageFile?: File) => {
     if (!imageFile) return itemData
 
@@ -56,6 +70,7 @@ export const useVisualAI = () => {
     modelsLoaded,
     loadModels,
     processImageFile,
+    processCloudinaryImage,
     enhanceItemData
   }
 }

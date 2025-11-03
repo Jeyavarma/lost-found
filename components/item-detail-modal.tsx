@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MapPin, Calendar, User, Package, Phone, Mail } from "lucide-react"
+import { MapPin, Calendar, User, Package, Phone, Mail, MessageCircle } from "lucide-react"
 
 interface Item {
   _id: string
@@ -30,9 +30,10 @@ interface ItemDetailModalProps {
   item: Item | null
   isOpen: boolean
   onClose: () => void
+  onStartChat?: (item: Item) => void
 }
 
-export default function ItemDetailModal({ item, isOpen, onClose }: ItemDetailModalProps) {
+export default function ItemDetailModal({ item, isOpen, onClose, onStartChat }: ItemDetailModalProps) {
   if (!item) return null
 
   const getStatusColor = (status: string) => {
@@ -144,10 +145,19 @@ export default function ItemDetailModal({ item, isOpen, onClose }: ItemDetailMod
             >
               Close
             </Button>
+            {onStartChat && (
+              <Button 
+                onClick={() => onStartChat(item)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Chat
+              </Button>
+            )}
             {item.reportedBy?.email && (
               <Button 
                 onClick={() => window.open(`mailto:${item.reportedBy?.email}?subject=Regarding ${item.title}&body=Hi ${item.reportedBy?.name}, I saw your ${item.status} item report for "${item.title}". `)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Mail className="w-4 h-4 mr-2" />
                 Contact Reporter

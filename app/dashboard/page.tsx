@@ -18,7 +18,6 @@ import Navigation from "@/components/navigation"
 import AIMatches from "@/components/ai-matches"
 import AISearchButton from "@/components/ai-search-button"
 import ItemDetailModal from "@/components/item-detail-modal"
-import ChatList from "@/components/chat/ChatList"
 import ChatWindow from "@/components/chat/ChatWindow"
 import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } from "@/lib/auth"
 import { socketManager } from "@/lib/socket"
@@ -529,7 +528,42 @@ export default function DashboardPage() {
         item={viewModal.item}
         isOpen={viewModal.show}
         onClose={() => setViewModal({show: false, item: null})}
+        onStartChat={(item) => {
+          // Create or find chat room for this item
+          setSelectedChatRoom({ item, participants: [user?.id, item.reportedBy?._id] })
+          setShowChat(true)
+          setViewModal({show: false, item: null})
+        }}
       />
+      
+      {/* Chat Window */}
+      {showChat && selectedChatRoom && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full h-[600px] flex flex-col">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-semibold">Chat about: {selectedChatRoom.item?.title}</h3>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setShowChat(false)
+                  setSelectedChatRoom(null)
+                }}
+              >
+                Close
+              </Button>
+            </div>
+            <ChatWindow 
+              room={selectedChatRoom}
+              onClose={() => {
+                setShowChat(false)
+                setSelectedChatRoom(null)
+              }}
+              currentUserId={user?.id}
+            />
+          </div>
+        </div>
+      )}
 
       {deleteModal.show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

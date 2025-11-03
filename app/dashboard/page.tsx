@@ -206,36 +206,10 @@ export default function DashboardPage() {
             Manage your lost and found reports from your dashboard
           </p>
           
-          {/* Tab Navigation */}
-          <div className="mt-6 border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'overview'
-                    ? 'border-red-500 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('messages')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'messages'
-                    ? 'border-red-500 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <MessageCircle className="w-4 h-4 inline mr-2" />
-                Messages
-              </button>
-            </nav>
-          </div>
+
         </div>
 
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1 space-y-6">
             <Card className="mcc-card">
               <CardHeader>
@@ -271,35 +245,39 @@ export default function DashboardPage() {
                 <CardTitle className="text-lg">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Link href="/report-lost" className="block">
-                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors cursor-pointer group">
+                <Link href="/report-lost">
+                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors cursor-pointer">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Report Lost</p>
                       <p className="text-xs text-gray-500">Lost an item?</p>
                     </div>
-                    <Search className="w-6 h-6 text-red-600 group-hover:scale-110 transition-transform" />
+                    <Search className="w-6 h-6 text-red-600" />
                   </div>
                 </Link>
-                <Link href="/report-found" className="block">
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer group">
+                <Link href="/report-found">
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Report Found</p>
                       <p className="text-xs text-gray-500">Found an item?</p>
                     </div>
-                    <Package className="w-6 h-6 text-green-600 group-hover:scale-110 transition-transform" />
+                    <Package className="w-6 h-6 text-green-600" />
                   </div>
                 </Link>
-                <Link href="/browse" className="block">
-                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer group">
+                <Link href="/browse">
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Browse Items</p>
                       <p className="text-xs text-gray-500">View all reports</p>
                     </div>
-                    <Eye className="w-6 h-6 mcc-text-primary group-hover:scale-110 transition-transform" />
+                    <Eye className="w-6 h-6 mcc-text-primary" />
                   </div>
                 </Link>
-                <div className="p-3 bg-purple-50 rounded-lg">
-                  <AISearchButton userStatus="lost" />
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">AI Search</p>
+                    <p className="text-xs text-gray-500">Smart matching</p>
+                  </div>
+                  <Search className="w-6 h-6 text-purple-600" />
                 </div>
               </CardContent>
             </Card>
@@ -545,42 +523,6 @@ export default function DashboardPage() {
             </Card>
           </div>
         </div>
-        )}
-        
-        {activeTab === 'messages' && (
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-              <ChatList 
-                onSelectRoom={(room) => {
-                  setSelectedChatRoom(room)
-                  setShowChat(true)
-                }} 
-                currentUserId={user?.userId}
-              />
-            </div>
-            
-            <div className="lg:col-span-2">
-              {showChat && selectedChatRoom ? (
-                <ChatWindow 
-                  room={selectedChatRoom}
-                  onClose={() => {
-                    setShowChat(false)
-                    setSelectedChatRoom(null)
-                  }}
-                  currentUserId={user?.userId}
-                />
-              ) : (
-                <Card className="h-full flex items-center justify-center">
-                  <CardContent className="text-center">
-                    <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-                    <p className="text-gray-500">Choose a conversation from the list to start messaging</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       <ItemDetailModal 

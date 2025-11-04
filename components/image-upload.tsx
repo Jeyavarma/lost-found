@@ -53,7 +53,7 @@ export default function ImageUpload({
       formData.append('upload_preset', 'mcc-lost-found') // You need to set this in Cloudinary
       
       const response = await fetch(
-        'https://api.cloudinary.com/v1_1/your-cloud-name/image/upload', // Replace with your cloud name
+        'https://api.cloudinary.com/v1_1/difjxpgh1/image/upload',
         {
           method: 'POST',
           body: formData

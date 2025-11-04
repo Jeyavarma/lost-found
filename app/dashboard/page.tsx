@@ -248,7 +248,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors cursor-pointer">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Report Lost</p>
-                      <p className="text-xs text-gray-500">Lost an item?</p>
+                      <p className="text-xl font-bold text-red-600">+</p>
                     </div>
                     <Search className="w-6 h-6 text-red-600" />
                   </div>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Report Found</p>
-                      <p className="text-xs text-gray-500">Found an item?</p>
+                      <p className="text-xl font-bold text-green-600">+</p>
                     </div>
                     <Package className="w-6 h-6 text-green-600" />
                   </div>
@@ -266,18 +266,20 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Browse Items</p>
-                      <p className="text-xs text-gray-500">View all reports</p>
+                      <p className="text-xl font-bold mcc-text-primary">→</p>
                     </div>
                     <Eye className="w-6 h-6 mcc-text-primary" />
                   </div>
                 </Link>
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">AI Search</p>
-                    <p className="text-xs text-gray-500">Smart matching</p>
+                <Link href="/browse?ai=true">
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">AI Search</p>
+                      <p className="text-xl font-bold text-purple-600">✨</p>
+                    </div>
+                    <Search className="w-6 h-6 text-purple-600" />
                   </div>
-                  <Search className="w-6 h-6 text-purple-600" />
-                </div>
+                </Link>
               </CardContent>
             </Card>
           </div>

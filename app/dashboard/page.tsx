@@ -50,6 +50,10 @@ export default function DashboardPage() {
   // Debug logging
   useEffect(() => {
     console.log('ViewModal state changed:', viewModal)
+    if (viewModal.show && !viewModal.item) {
+      console.error('Modal opened without item data')
+      setViewModal({show: false, item: null})
+    }
   }, [viewModal])
   const [selectedChatRoom, setSelectedChatRoom] = useState<any>(null)
   const [showChat, setShowChat] = useState(false)
@@ -58,21 +62,30 @@ export default function DashboardPage() {
   const loadUserItems = async () => {
     try {
       const token = getAuthToken()
+      if (!token) {
+        setError('Authentication required')
+        return
+      }
+      
       const response = await fetch(`${BACKEND_URL}/api/items/my-items`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       })
 
       if (response.ok) {
         const items = await response.json()
-        setMyItems(items)
+        setMyItems(Array.isArray(items) ? items : [])
         setError('')
       } else {
-        setError('Failed to load your items')
+        const errorData = await response.text()
+        setError(`Failed to load items: ${response.status}`)
+        console.error('API Error:', errorData)
       }
     } catch (err) {
-      setError('Network error loading items')
+      console.error('Network error:', err)
+      setError('Network error - check if backend is running')
     }
   }
 
@@ -212,6 +225,22 @@ export default function DashboardPage() {
           
 
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+            <button 
+              onClick={() => {
+                setError('')
+                loadUserItems()
+                loadPotentialMatches()
+              }}
+              className="mt-2 text-red-600 underline text-sm hover:text-red-800"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1 space-y-6">
@@ -354,11 +383,15 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => setViewModal({show: true, item})}
+                              onClick={() => {
+                                console.log('View clicked for:', item.title)
+                                setViewModal({show: true, item})
+                              }}
+                              className="min-w-[80px]"
                             >
                               <Eye className="w-4 h-4 mr-1" />
                               View
@@ -536,10 +569,29 @@ export default function DashboardPage() {
         isOpen={viewModal.show}
         onClose={() => setViewModal({show: false, item: null})}
         onStartChat={(item) => {
-          // Create or find chat room for this item
-          setSelectedChatRoom({ item, participants: [user?.id, item.reportedBy?._id] })
-          setShowChat(true)
-          setViewModal({show: false, item: null})
+          console.log('Starting chat for item:', item.title)
+          try {
+            // Initialize socket connection if not already connected
+            if (!socketManager.isConnected()) {
+              console.log('Connecting to chat server...')
+              socketManager.connect()
+            }
+            
+            // Create or find chat room for this item
+            const chatRoom = { 
+              item, 
+              participants: [user?.id, item.reportedBy?._id],
+              roomId: `item_${item._id}`,
+              title: `Chat about: ${item.title}`
+            }
+            
+            setSelectedChatRoom(chatRoom)
+            setShowChat(true)
+            setViewModal({show: false, item: null})
+          } catch (error) {
+            console.error('Failed to start chat:', error)
+            alert('Chat system is currently unavailable. Please try email contact.')
+          }
         }}
       />
       

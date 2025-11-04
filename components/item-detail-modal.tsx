@@ -145,25 +145,27 @@ export default function ItemDetailModal({ item, isOpen, onClose, onStartChat }: 
             >
               Close
             </Button>
-            {onStartChat && (
-              <Button 
-                onClick={() => onStartChat(item)}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Chat
-              </Button>
-            )}
             {item.reportedBy?.email && (
-              <Button 
-                asChild
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <a href={`mailto:${item.reportedBy?.email}?subject=Regarding ${item.title}&body=Hi ${item.reportedBy?.name}, I saw your ${item.status} item report for "${item.title}". `}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Contact Reporter
-                </a>
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  asChild
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <a href={`mailto:${item.reportedBy?.email}?subject=Regarding ${item.title}&body=Hi ${item.reportedBy?.name}, I saw your ${item.status} item report for "${item.title}". `}>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Email
+                  </a>
+                </Button>
+                {onStartChat && (
+                  <Button 
+                    onClick={() => onStartChat(item)}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Chat
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </div>

@@ -156,11 +156,13 @@ export default function ItemDetailModal({ item, isOpen, onClose, onStartChat }: 
             )}
             {item.reportedBy?.email && (
               <Button 
-                onClick={() => window.open(`mailto:${item.reportedBy?.email}?subject=Regarding ${item.title}&body=Hi ${item.reportedBy?.name}, I saw your ${item.status} item report for "${item.title}". `)}
+                asChild
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Mail className="w-4 h-4 mr-2" />
-                Contact Reporter
+                <a href={`mailto:${item.reportedBy?.email}?subject=Regarding ${item.title}&body=Hi ${item.reportedBy?.name}, I saw your ${item.status} item report for "${item.title}". `}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Contact Reporter
+                </a>
               </Button>
             )}
           </div>

@@ -23,6 +23,9 @@ import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } fro
 import { socketManager } from "@/lib/socket"
 import Link from "next/link"
 import { BACKEND_URL } from "@/lib/config"
+import { api } from "@/lib/api"
+import { LoadingSpinner, LoadingCard } from "@/components/loading-states"
+import ErrorBoundary from "@/components/error-boundary"
 
 interface Item {
   _id: string
@@ -61,47 +64,19 @@ export default function DashboardPage() {
 
   const loadUserItems = async () => {
     try {
-      const token = getAuthToken()
-      if (!token) {
-        setError('Authentication required')
-        return
-      }
-      
-      const response = await fetch(`${BACKEND_URL}/api/items/my-items`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const items = await response.json()
-        setMyItems(Array.isArray(items) ? items : [])
-        setError('')
-      } else {
-        const errorData = await response.text()
-        setError(`Failed to load items: ${response.status}`)
-        console.error('API Error:', errorData)
-      }
-    } catch (err) {
-      console.error('Network error:', err)
-      setError('Network error - check if backend is running')
+      const items = await api.get('/api/items/my-items')
+      setMyItems(Array.isArray(items) ? items : [])
+      setError('')
+    } catch (err: any) {
+      console.error('Failed to load user items:', err)
+      setError(err.message || 'Failed to load your items')
     }
   }
 
   const loadPotentialMatches = async () => {
     try {
-      const token = getAuthToken()
-      const response = await fetch(`${BACKEND_URL}/api/items/potential-matches`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const matches = await response.json()
-        setPotentialMatches(matches)
-      }
+      const matches = await api.get('/api/items/potential-matches')
+      setPotentialMatches(Array.isArray(matches) ? matches : [])
     } catch (err) {
       console.error('Error loading potential matches:', err)
       setPotentialMatches([])
@@ -211,8 +186,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
@@ -648,6 +624,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }

@@ -46,6 +46,11 @@ export default function DashboardPage() {
   const [error, setError] = useState("")
   const [deleteModal, setDeleteModal] = useState<{show: boolean, item: Item | null}>({show: false, item: null})
   const [viewModal, setViewModal] = useState<{show: boolean, item: Item | null}>({show: false, item: null})
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('ViewModal state changed:', viewModal)
+  }, [viewModal])
   const [selectedChatRoom, setSelectedChatRoom] = useState<any>(null)
   const [showChat, setShowChat] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')

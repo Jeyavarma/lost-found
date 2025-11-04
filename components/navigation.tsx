@@ -23,6 +23,7 @@ import {
   X
 } from "lucide-react"
 import { isAuthenticated, getUserData, logout, type User as AuthUser } from "@/lib/auth"
+import NotificationBell from "@/components/notification-bell"
 
 export default function Navigation() {
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -86,6 +87,8 @@ export default function Navigation() {
                 Feedback
               </Button>
             </Link>
+            
+            {authenticated && <NotificationBell />}
             
             {authenticated ? (
               <DropdownMenu>

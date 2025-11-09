@@ -595,7 +595,7 @@ export default function DashboardPage() {
                 setShowChat(false)
                 setSelectedChatRoom(null)
               }}
-              currentUserId={user?.id}
+              currentUserId={user?.id || ''}
             />
           </div>
         </div>

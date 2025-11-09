@@ -23,6 +23,8 @@ import {
   GraduationCap,
 } from "lucide-react"
 import { BACKEND_URL } from "@/lib/config"
+import { isAuthenticated, getUserData, getAuthToken } from "@/lib/auth"
+import ItemDetailModal from "@/components/item-detail-modal"
 
 
 
@@ -76,8 +78,19 @@ export default function BrowsePage() {
   const [showFilters, setShowFilters] = useState(false)
   const [allItems, setAllItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState('')
 
   useEffect(() => {
+    // Check authentication
+    const auth = isAuthenticated()
+    setAuthenticated(auth)
+    if (auth) {
+      const userData = getUserData()
+      setCurrentUserId(userData?.id || '')
+    }
+    
     // Read search and category parameters from URL
     const urlParams = new URLSearchParams(window.location.search)
     const searchParam = urlParams.get('search')
@@ -145,6 +158,35 @@ export default function BrowsePage() {
       }
       return newSet
     })
+  }
+
+  const handleStartChat = async (item: any) => {
+    if (!authenticated) {
+      alert('Please login to start a chat')
+      return
+    }
+    
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/chat/rooms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          itemId: item._id,
+          otherUserId: item.reportedBy?._id
+        })
+      })
+      
+      if (response.ok) {
+        setSelectedItem(null)
+        // Chat room created, user can access it via floating chat
+      }
+    } catch (error) {
+      console.error('Failed to start chat:', error)
+    }
   }
 
   const getUrgencyColor = (urgency: string) => {
@@ -435,12 +477,14 @@ export default function BrowsePage() {
                           </Button>
 
                         </div>
-                        <a href={`mailto:${item.reportedBy?.email || item.email || 'lostfound@mcc.edu.in'}`}>
-                          <Button size="sm" className="mcc-accent hover:bg-red-700 text-white">
-                            <MessageCircle className="w-4 h-4 mr-1" />
-                            Contact
-                          </Button>
-                        </a>
+                        <Button 
+                          size="sm" 
+                          className="mcc-accent hover:bg-red-700 text-white"
+                          onClick={() => setSelectedItem(item)}
+                        >
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          Contact
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -504,12 +548,14 @@ export default function BrowsePage() {
                                 {likedItems.has(item._id) ? 1 : 0}
                               </div>
                             </div>
-                            <a href={`mailto:${item.reportedBy?.email || item.email || 'lostfound@mcc.edu.in'}`}>
-                              <Button size="sm" className="mcc-accent hover:bg-red-700 text-white text-xs sm:text-sm">
-                                <MessageCircle className="w-4 h-4 mr-1" />
-                                Contact
-                              </Button>
-                            </a>
+                            <Button 
+                              size="sm" 
+                              className="mcc-accent hover:bg-red-700 text-white text-xs sm:text-sm"
+                              onClick={() => setSelectedItem(item)}
+                            >
+                              <MessageCircle className="w-4 h-4 mr-1" />
+                              Contact
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -545,6 +591,13 @@ export default function BrowsePage() {
           </div>
         </div>
       </div>
+      
+      <ItemDetailModal
+        item={selectedItem}
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        onStartChat={handleStartChat}
+      />
     </div>
   )
 }

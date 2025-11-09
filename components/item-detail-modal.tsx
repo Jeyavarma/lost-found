@@ -162,7 +162,7 @@ export default function ItemDetailModal({ item, isOpen, onClose, onStartChat }: 
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     <MessageCircle className="w-4 h-4 mr-2" />
-                    Chat
+                    Start Chat
                   </Button>
                 )}
               </div>

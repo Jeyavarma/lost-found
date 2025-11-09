@@ -64,7 +64,7 @@ export class PushNotificationService {
         badge: options.badge || '/badge-72x72.png',
         tag: options.tag,
         data: options.data,
-        actions: options.actions,
+        // actions: options.actions, // Not supported in all browsers
         requireInteraction: true,
         silent: false
       })

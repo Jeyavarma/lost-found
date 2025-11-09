@@ -116,3 +116,14 @@ export const notificationHelpers = {
     })
   }
 }
+
+// Chat notification manager for compatibility
+export const notificationManager = {
+  initialize: () => {
+    // Initialize notifications if needed
+  },
+  
+  showChatNotification: (senderName: string, content: string, roomId: string, itemTitle: string) => {
+    notificationHelpers.newMessage(senderName, itemTitle, roomId)
+  }
+}

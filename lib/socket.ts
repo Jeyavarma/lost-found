@@ -23,7 +23,7 @@ class SocketManager {
     }
 
     try {
-      const socketOptions = {
+      const socketOptions: any = {
         auth: { token },
         transports: ['websocket', 'polling'],
         timeout: 20000,

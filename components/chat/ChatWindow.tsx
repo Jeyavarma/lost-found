@@ -67,11 +67,12 @@ interface ChatRoom {
 
 interface ChatWindowProps {
   room: ChatRoom
-  onClose: () => void
+  onClose?: () => void
+  onBack?: () => void
   currentUserId: string
 }
 
-export default function ChatWindow({ room, onClose, currentUserId }: ChatWindowProps) {
+export default function ChatWindow({ room, onClose, onBack, currentUserId }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [pendingMessages, setPendingMessages] = useState<QueuedMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -272,7 +273,7 @@ export default function ChatWindow({ room, onClose, currentUserId }: ChatWindowP
 
       if (response.ok) {
         alert('User blocked successfully')
-        onClose()
+        onClose?.()
       }
     } catch (error) {
       console.error('Block user error:', error)
@@ -297,7 +298,7 @@ export default function ChatWindow({ room, onClose, currentUserId }: ChatWindowP
       <CardHeader className="pb-3 border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onBack || onClose}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             
@@ -324,9 +325,11 @@ export default function ChatWindow({ room, onClose, currentUserId }: ChatWindowP
               <UserX className="w-4 h-4" />
             </Button>
             
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
+            {onClose && (
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>

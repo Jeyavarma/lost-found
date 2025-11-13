@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MapPin, Calendar, User, Package, Phone, Mail, MessageCircle } from "lucide-react"
+import UserStatus from "@/components/user-status"
 
 interface Item {
   _id: string
@@ -113,6 +114,7 @@ export default function ItemDetailModal({ item, isOpen, onClose, onStartChat }: 
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
                   <span className="font-medium">{item.reportedBy.name}</span>
+                  <UserStatus userId={item.reportedBy._id} size="sm" />
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-blue-600" />

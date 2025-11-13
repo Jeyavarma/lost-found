@@ -20,7 +20,10 @@ const userSchema = new mongoose.Schema({
   loginAttempts: { type: Number, default: 0 },
   lastFailedLogin: Date,
   accountLocked: { type: Boolean, default: false },
-  lockedUntil: Date
+  lockedUntil: Date,
+  isOnline: { type: Boolean, default: false },
+  lastSeen: { type: Date, default: Date.now },
+  deviceType: { type: String, enum: ['mobile', 'desktop'], default: 'desktop' }
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {

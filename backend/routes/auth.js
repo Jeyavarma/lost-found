@@ -84,8 +84,11 @@ router.post('/login', async (req, res) => {
       }
     });
 
-    // Update last login
+    // Update last login and online status
     user.lastLogin = new Date();
+    user.lastSeen = new Date();
+    user.isOnline = true;
+    user.deviceType = userAgent?.includes('Mobile') ? 'mobile' : 'desktop';
     user.loginAttempts = 0; // Reset failed attempts
     await user.save();
 

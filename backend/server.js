@@ -120,6 +120,7 @@ app.use('/api/messaging', apiLimiter, require('./routes/messaging'));
 app.use('/api/system-flow', apiLimiter, require('./routes/system-flow'));
 app.use('/api/visual-ai', apiLimiter, require('./routes/visual-ai'));
 app.use('/api/chat', apiLimiter, require('./routes/chat'));
+app.use('/api/presence', apiLimiter, require('./routes/presence'));
 
 // Socket.io chat handler
 const { handleConnection } = require('./socket/chatHandler');

@@ -5,9 +5,10 @@ const User = require('../models/User');
 const OTP = require('../models/OTP');
 const LoginAttempt = require('../models/LoginAttempt');
 const UserActivity = require('../models/UserActivity');
+const { studentLoginLimiter, staffAdminLoginLimiter } = require('../middleware/rateLimiter');
 const router = express.Router();
 
-router.post('/login', async (req, res) => {
+router.post('/login', studentLoginLimiter, staffAdminLoginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;

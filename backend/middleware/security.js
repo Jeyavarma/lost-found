@@ -1,18 +1,17 @@
 const rateLimit = require('express-rate-limit');
 
-// Rate limiting for auth routes with role-based limits
+// Rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: (req) => {
-    // More restrictive for student role
-    if (req.body && req.body.role === 'student') {
-      return 3; // 3 attempts for students
-    }
-    return 5; // 5 attempts for staff/admin
-  },
+  max: 3, // 3 attempts for all users (most restrictive for students)
   message: { error: 'Too many authentication attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use IP + email for more specific rate limiting
+    const email = req.body?.email || 'unknown';
+    return `${req.ip}-${email}`;
+  }
 });
 
 // Rate limiting for general API routes

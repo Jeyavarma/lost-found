@@ -89,8 +89,10 @@ export default function LoginPage() {
         localStorage.setItem("token", data.token);
         
         router.push("/dashboard");
+      } else if (response.status === 429) {
+        setError(data.error || "Too many login attempts. Please wait 15 minutes before trying again.");
       } else {
-        setError(data.message || "Invalid credentials. Please check your email and password.");
+        setError(data.message || data.error || "Invalid credentials. Please check your email and password.");
       }
     } catch (err) {
       setError("Failed to connect to the server. Please try again later.");

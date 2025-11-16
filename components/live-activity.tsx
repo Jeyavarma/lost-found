@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Zap, Eye } from "lucide-react"
 import { BACKEND_URL } from "@/lib/config"
+import ItemDetailModal from "@/components/item-detail-modal"
+import { getUserData, isAuthenticated } from "@/lib/auth"
 
 interface ActivityItem {
   _id: string
@@ -26,6 +28,15 @@ export default function LiveActivity() {
   const [loading, setLoading] = useState(true)
   const [showAllModal, setShowAllModal] = useState(false)
   const [loadingAll, setLoadingAll] = useState(false)
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null)
+  const [itemDetailModalOpen, setItemDetailModalOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isAuthenticated()) {
+      setUser(getUserData())
+    }
+  }, [])
 
   const fetchActivities = async () => {
     try {
@@ -176,9 +187,15 @@ export default function LiveActivity() {
                 </div>
               </div>
               <div className="flex flex-row sm:flex-col items-start sm:items-end justify-between sm:justify-start text-xs text-gray-500 shrink-0">
-                <a href={`mailto:${activity.reportedBy?.email}`} className="text-xs sm:text-sm text-blue-600 hover:underline mb-0 sm:mb-1 font-medium truncate max-w-[150px] sm:max-w-none">
-                  {activity.reportedBy?.email}
-                </a>
+                <button 
+                  onClick={() => {
+                    setSelectedActivity(activity)
+                    setItemDetailModalOpen(true)
+                  }}
+                  className="text-xs sm:text-sm text-blue-600 hover:underline mb-0 sm:mb-1 font-medium truncate max-w-[150px] sm:max-w-none"
+                >
+                  Contact
+                </button>
                 <span className="text-xs">{getFormattedDate(activity.createdAt)}</span>
               </div>
             </div>
@@ -239,9 +256,15 @@ export default function LiveActivity() {
                     </div>
                   </div>
                   <div className="flex flex-row sm:flex-col items-start sm:items-end justify-between sm:justify-start text-xs text-gray-500 shrink-0">
-                    <a href={`mailto:${activity.reportedBy?.email}`} className="text-xs sm:text-sm text-blue-600 hover:underline mb-0 sm:mb-1 font-medium truncate max-w-[150px] sm:max-w-none">
-                      {activity.reportedBy?.email}
-                    </a>
+                    <button 
+                      onClick={() => {
+                        setSelectedActivity(activity)
+                        setItemDetailModalOpen(true)
+                      }}
+                      className="text-xs sm:text-sm text-blue-600 hover:underline mb-0 sm:mb-1 font-medium truncate max-w-[150px] sm:max-w-none"
+                    >
+                      Contact
+                    </button>
                     <span className="text-xs">{getFormattedDate(activity.createdAt)}</span>
                   </div>
                 </div>
@@ -255,6 +278,32 @@ export default function LiveActivity() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Item Detail Modal */}
+      <ItemDetailModal
+        item={selectedActivity ? {
+          _id: selectedActivity._id,
+          title: selectedActivity.title,
+          description: selectedActivity.description,
+          category: 'Other',
+          status: selectedActivity.status,
+          location: 'MCC Campus',
+          createdAt: selectedActivity.createdAt,
+          reportedBy: {
+            _id: 'activity-reporter',
+            name: selectedActivity.reportedBy?.name || 'Anonymous',
+            email: selectedActivity.reportedBy?.email || 'lostfound@mcc.edu.in'
+          }
+        } : null}
+        isOpen={itemDetailModalOpen}
+        onClose={() => {
+          setItemDetailModalOpen(false)
+          setSelectedActivity(null)
+        }}
+        onStartChat={user ? (item) => {
+          console.log('Start chat with:', item)
+        } : undefined}
+      />
     </Card>
   )
 }

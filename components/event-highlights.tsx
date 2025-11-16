@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar, MapPin, Users, Eye, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react"
 import { BACKEND_URL } from "@/lib/config"
+import ItemDetailModal from "@/components/item-detail-modal"
+import { getUserData, isAuthenticated } from "@/lib/auth"
 
 const eventTemplates = [
   { name: 'Deepwoods', icon: '🌲', description: 'Annual cultural fest with music, dance, and art performances where instruments and props go missing.', eventDate: 'Feb 15-17, 2024' },
@@ -26,6 +28,14 @@ export default function EventHighlights() {
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [eventsData, setEventsData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [itemDetailModalOpen, setItemDetailModalOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isAuthenticated()) {
+      setUser(getUserData())
+    }
+  }, [])
 
   useEffect(() => {
     fetchEventData()
@@ -258,12 +268,11 @@ export default function EventHighlights() {
                   <p className="text-sm text-gray-600">{item.description}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setSelectedItem(item)
+                    setItemDetailModalOpen(true)
+                  }}>
                     <Eye className="w-4 h-4 mr-1" />
-                    View
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => window.open(`mailto:lostfound@mcc.edu.in?subject=Regarding ${item.name}&body=Hi, I am contacting you regarding the ${item.status} item: ${item.name}. Location: ${item.location}. Date: ${item.date}.`)}>
-                    <MessageCircle className="w-4 h-4 mr-1" />
                     Contact
                   </Button>
                 </div>
@@ -331,13 +340,43 @@ export default function EventHighlights() {
               </div>
             </div>
             
-            <Button className="w-full bg-[#1c1b3b] text-white hover:bg-[#811c1f]" onClick={() => window.open(`mailto:lostfound@mcc.edu.in?subject=Regarding ${selectedItem?.name}&body=Hi, I am contacting you regarding the ${selectedItem?.status} item: ${selectedItem?.name}. Location: ${selectedItem?.location}. Date: ${selectedItem?.date}.`)}>
+            <Button className="w-full bg-[#1c1b3b] text-white hover:bg-[#811c1f]" onClick={() => {
+              setItemDetailModalOpen(true)
+            }}>
               <MessageCircle className="w-4 h-4 mr-2" />
               Contact Reporter
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Item Detail Modal */}
+      <ItemDetailModal
+        item={selectedItem ? {
+          _id: selectedItem.id,
+          title: selectedItem.name,
+          description: selectedItem.description,
+          category: selectedItem.category || 'Other',
+          status: selectedItem.status,
+          location: selectedItem.location,
+          createdAt: selectedItem.date,
+          itemImageUrl: selectedItem.imageUrl,
+          reportedBy: {
+            _id: 'event-item',
+            name: 'Event Reporter',
+            email: 'lostfound@mcc.edu.in'
+          },
+          contactInfo: selectedItem.contactInfo
+        } : null}
+        isOpen={itemDetailModalOpen}
+        onClose={() => {
+          setItemDetailModalOpen(false)
+          setSelectedItem(null)
+        }}
+        onStartChat={user ? (item) => {
+          console.log('Start chat with:', item)
+        } : undefined}
+      />
     </div>
   )
 }

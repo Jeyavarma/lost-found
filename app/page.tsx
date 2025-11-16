@@ -40,6 +40,8 @@ import LiveActivity from "@/components/live-activity"
 import EventHighlights from "@/components/event-highlights"
 import Navigation from "@/components/navigation"
 import { BACKEND_URL } from "@/lib/config"
+import ItemDetailModal from "@/components/item-detail-modal"
+import { isAuthenticated, getUserData, getAuthToken } from "@/lib/auth"
 
 
 
@@ -59,10 +61,20 @@ export default function HomePage() {
   // Add new state variables after the existing ones
   const [showMessaging, setShowMessaging] = useState(false)
   const [showTamilMode, setShowTamilMode] = useState(false)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState('')
 
 
   // Fetch all items and recent items from backend
   useEffect(() => {
+    // Check authentication
+    const auth = isAuthenticated()
+    setAuthenticated(auth)
+    if (auth) {
+      const userData = getUserData()
+      setCurrentUserId(userData?.id || '')
+    }
+    
     const fetchItems = async () => {
       try {
         console.log('🔄 Fetching all items from backend...')
@@ -113,6 +125,35 @@ export default function HomePage() {
       }
       return newSet
     })
+  }
+
+  const handleStartChat = async (item: any) => {
+    if (!authenticated) {
+      alert('Please login to start a chat')
+      return
+    }
+    
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/chat/rooms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          itemId: item._id,
+          otherUserId: item.reportedBy?._id
+        })
+      })
+      
+      if (response.ok) {
+        setSelectedItem(null)
+        // Chat room created, user can access it via floating chat
+      }
+    } catch (error) {
+      console.error('Failed to start chat:', error)
+    }
   }
 
   const getUrgencyColor = (urgency: string) => {
@@ -358,12 +399,14 @@ export default function HomePage() {
                         <span className="font-medium">{likedItems.has(item._id) ? 1 : 0}</span>
                       </Button>
                     </div>
-                    <a href={`mailto:${item.reportedBy?.email || item.contactEmail}`}>
-                      <Button size="sm" className="mcc-accent hover:bg-red-700 text-white shadow-md font-medium">
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        Contact
-                      </Button>
-                    </a>
+                    <Button 
+                      size="sm" 
+                      className="mcc-accent hover:bg-red-700 text-white shadow-md font-medium"
+                      onClick={() => setSelectedItem(item)}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-1" />
+                      Contact
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -436,6 +479,13 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+      
+      <ItemDetailModal
+        item={selectedItem}
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        onStartChat={handleStartChat}
+      />
     </div>
   )
 }

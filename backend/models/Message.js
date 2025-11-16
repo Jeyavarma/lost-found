@@ -27,8 +27,14 @@ const messageSchema = new mongoose.Schema({
   },
   deliveryStatus: {
     type: String,
-    enum: ['sent', 'delivered', 'read'],
+    enum: ['sent', 'delivered', 'read', 'failed'],
     default: 'sent'
+  },
+  deliveredAt: Date,
+  failedAt: Date,
+  retryCount: {
+    type: Number,
+    default: 0
   },
   readBy: [{
     userId: {
@@ -62,11 +68,17 @@ const messageSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  expiresAt: {
+    type: Date,
+    default: () => new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
   }
 });
 
 messageSchema.index({ roomId: 1, createdAt: -1 });
 messageSchema.index({ senderId: 1 });
 messageSchema.index({ clientMessageId: 1 });
+// TTL index - messages expire after 90 days
+messageSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7776000 });
 
 module.exports = mongoose.model('Message', messageSchema);

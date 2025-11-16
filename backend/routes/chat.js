@@ -93,6 +93,7 @@ router.get('/room/:roomId/messages', authMiddleware, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { page = 1, limit = 50 } = req.query;
+    const maxLimit = Math.min(parseInt(limit), 100); // Max 100 messages per request
 
     // Verify user is participant
     const room = await ChatRoom.findById(roomId);
@@ -108,13 +109,32 @@ router.get('/room/:roomId/messages', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Get total message count for this room
+    const totalMessages = await Message.countDocuments({ roomId });
+    
+    // Limit total messages per room to 1000
+    if (totalMessages > 1000) {
+      // Delete oldest messages beyond limit
+      const oldMessages = await Message.find({ roomId })
+        .sort({ createdAt: 1 })
+        .limit(totalMessages - 1000)
+        .select('_id');
+      
+      const oldMessageIds = oldMessages.map(msg => msg._id);
+      await Message.deleteMany({ _id: { $in: oldMessageIds } });
+    }
+
     const messages = await Message.find({ roomId })
       .populate('senderId', 'name email role')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .limit(maxLimit)
+      .skip((page - 1) * maxLimit);
 
-    res.json(messages.reverse());
+    res.json({
+      messages: messages.reverse(),
+      totalMessages: Math.min(totalMessages, 1000),
+      hasMore: (page * maxLimit) < Math.min(totalMessages, 1000)
+    });
   } catch (error) {
     console.error('Get messages error:', error);
     res.status(500).json({ error: 'Failed to fetch messages' });

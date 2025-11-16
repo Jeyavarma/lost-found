@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { isAuthenticated, getUserData } from '@/lib/auth'
 import ChatList from '@/components/chat/ChatList'
 import ChatWindow from '@/components/chat/ChatWindow'
+import ConnectionStatus from '@/components/connection-status'
 
 interface ChatRoom {
   _id: string
@@ -81,9 +82,12 @@ export default function FloatingChat() {
           <Card className="h-full shadow-xl border-2">
             <CardHeader className="p-3 bg-blue-600 text-white rounded-t-lg">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">
-                  {selectedRoom ? selectedRoom.itemId.title : 'Messages'}
-                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-sm font-medium">
+                    {selectedRoom ? selectedRoom.itemId.title : 'Messages'}
+                  </CardTitle>
+                  <ConnectionStatus />
+                </div>
                 <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"

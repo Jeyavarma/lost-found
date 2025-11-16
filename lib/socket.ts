@@ -148,28 +148,76 @@ class SocketManager {
     this.processingQueue = true;
     const pendingMessages = messageQueue.getAllPending();
     
+    console.log(`Processing ${pendingMessages.length} queued messages`);
+    
     for (const message of pendingMessages) {
-      await this.sendQueuedMessage(message);
-      // Small delay to avoid overwhelming the server
-      await new Promise(resolve => setTimeout(resolve, 100));
+      try {
+        await this.sendQueuedMessage(message);
+        // Small delay to avoid overwhelming the server
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (error) {
+        console.error('Failed to send queued message:', error);
+        messageQueue.markAsFailed(message.id);
+      }
     }
     
     this.processingQueue = false;
+    console.log('Finished processing queued messages');
   }
 
   // Send individual queued message
-  private sendQueuedMessage(message: QueuedMessage) {
-    if (!this.socket || !this.isConnected()) {
-      return;
-    }
+  private sendQueuedMessage(message: QueuedMessage): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket || !this.isConnected()) {
+        reject(new Error('Socket not connected'));
+        return;
+      }
 
-    messageQueue.updateStatus(message.id, 'sending');
-    
-    this.socket.emit('send_message', {
-      messageId: message.id,
-      roomId: message.roomId,
-      content: message.content,
-      type: message.type
+      // Skip if message is too old (older than 24 hours)
+      const messageAge = Date.now() - message.timestamp;
+      if (messageAge > 24 * 60 * 60 * 1000) {
+        console.log('Skipping old message:', message.id);
+        messageQueue.markAsFailed(message.id);
+        resolve();
+        return;
+      }
+
+      messageQueue.updateStatus(message.id, 'sending');
+      
+      // Set timeout for message sending
+      const timeout = setTimeout(() => {
+        messageQueue.markAsFailed(message.id);
+        reject(new Error('Message send timeout'));
+      }, 10000); // 10 second timeout
+      
+      // Listen for delivery confirmation
+      const onDelivered = (data: { messageId: string }) => {
+        if (data.messageId === message.id) {
+          clearTimeout(timeout);
+          this.socket?.off('message_delivered', onDelivered);
+          this.socket?.off('message_failed', onFailed);
+          resolve();
+        }
+      };
+      
+      const onFailed = (data: { messageId: string }) => {
+        if (data.messageId === message.id) {
+          clearTimeout(timeout);
+          this.socket?.off('message_delivered', onDelivered);
+          this.socket?.off('message_failed', onFailed);
+          reject(new Error('Message send failed'));
+        }
+      };
+      
+      this.socket.on('message_delivered', onDelivered);
+      this.socket.on('message_failed', onFailed);
+      
+      this.socket.emit('send_message', {
+        messageId: message.id,
+        roomId: message.roomId,
+        content: message.content,
+        type: message.type
+      });
     });
   }
 

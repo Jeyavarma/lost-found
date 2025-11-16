@@ -126,6 +126,10 @@ app.use('/api/presence', apiLimiter, require('./routes/presence'));
 const { handleConnection } = require('./socket/chatHandler');
 handleConnection(io);
 
+// Start message cleanup job
+const { startCleanupJob } = require('./jobs/messageCleanup');
+startCleanupJob();
+
 app.use('/api', healthRoutes);
 app.use('/uploads', express.static('uploads'));
 
@@ -138,4 +142,5 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Socket.io chat enabled`);
+  console.log(`Message cleanup job started`);
 });

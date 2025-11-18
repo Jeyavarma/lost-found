@@ -25,6 +25,7 @@ import {
 import { BACKEND_URL } from "@/lib/config"
 import { isAuthenticated, getUserData, getAuthToken } from "@/lib/auth"
 import ItemDetailModal from "@/components/item-detail-modal"
+import FloatingChat from "@/components/floating-chat"
 
 
 
@@ -598,6 +599,8 @@ export default function BrowsePage() {
         onClose={() => setSelectedItem(null)}
         onStartChat={handleStartChat}
       />
+      
+      <FloatingChat />
     </div>
   )
 }

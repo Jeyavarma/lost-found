@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 3, // 3 attempts for all users (most restrictive for students)
+  max: 10, // 10 attempts per IP+email combination
   message: { error: 'Too many authentication attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -11,6 +11,10 @@ const authLimiter = rateLimit({
     // Use IP + email for more specific rate limiting
     const email = req.body?.email || 'unknown';
     return `${req.ip}-${email}`;
+  },
+  skip: (req) => {
+    // Skip rate limiting for password reset requests
+    return req.path.includes('/forgot-password') || req.path.includes('/reset-password');
   }
 });
 

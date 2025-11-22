@@ -94,7 +94,7 @@ export default function ForgotPasswordPage() {
       }
     } catch (error) {
       console.error('❌ Network error:', error)
-      setError(`Network error: ${error}`)
+      setError('Network error. Please check your connection and try again.')
     } finally {
       setIsSubmitting(false)
     }

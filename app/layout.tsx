@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import FloatingChat from '@/components/floating-chat'
+import ImprovedFloatingChat from '@/components/improved-floating-chat'
 import PresenceProvider from '@/components/presence-provider'
 import './globals.css'
 
@@ -30,7 +30,7 @@ html {
       <body>
         <PresenceProvider>
           {children}
-          <FloatingChat />
+          <ImprovedFloatingChat />
         </PresenceProvider>
       </body>
     </html>

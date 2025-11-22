@@ -1,19 +1,37 @@
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const validator = require('validator');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const LoginAttempt = require('../models/LoginAttempt');
 const UserActivity = require('../models/UserActivity');
+const emailService = require('../services/emailService');
 const router = express.Router();
+
+// Input sanitization helper
+const sanitizeInput = (input) => {
+  if (typeof input !== 'string') return input;
+  return validator.escape(input.trim());
+};
+
+// Email validation helper
+const isValidEmail = (email) => {
+  return validator.isEmail(email) && email.length <= 254;
+};
+
+// Password validation helper
+const isValidPassword = (password) => {
+  return password && password.length >= 6 && password.length <= 128;
+};
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
     const userAgent = req.get('User-Agent');
     
-    // Input validation
+    // Input validation and sanitization
     if (!email || !password) {
       await LoginAttempt.create({
         email: email || 'unknown',
@@ -25,7 +43,43 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
     
+    // Sanitize and validate email
+    email = email.toLowerCase().trim();
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+    
+    // Validate password
+    if (!isValidPassword(password)) {
+      return res.status(400).json({ message: 'Invalid password format' });
+    }
+    
     const user = await User.findOne({ email });
+    
+    // Check if account is locked
+    if (user && user.accountLocked && user.lockedUntil && new Date() < user.lockedUntil) {
+      await LoginAttempt.create({
+        email,
+        ipAddress,
+        userAgent,
+        success: false,
+        failureReason: 'Account locked',
+        userId: user._id
+      });
+      const remainingTime = Math.ceil((user.lockedUntil - new Date()) / 60000);
+      return res.status(423).json({ 
+        message: `Account locked. Try again in ${remainingTime} minutes.`,
+        lockedUntil: user.lockedUntil
+      });
+    }
+    
+    // Auto-unlock if lock period expired
+    if (user && user.accountLocked && user.lockedUntil && new Date() >= user.lockedUntil) {
+      user.accountLocked = false;
+      user.lockedUntil = null;
+      user.loginAttempts = 0;
+      await user.save();
+    }
     
     // Check if user is suspended
     if (user && !user.isActive) {
@@ -54,6 +108,20 @@ router.post('/login', async (req, res) => {
     }
     
     if (!user || !(await user.comparePassword(password))) {
+      // Track failed login attempts
+      if (user) {
+        user.loginAttempts = (user.loginAttempts || 0) + 1;
+        user.lastFailedLogin = new Date();
+        
+        // Lock account after 5 failed attempts
+        if (user.loginAttempts >= 5) {
+          user.accountLocked = true;
+          user.lockedUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        }
+        
+        await user.save();
+      }
+      
       await LoginAttempt.create({
         email,
         ipAddress,
@@ -108,11 +176,36 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone, studentId, shift, department, year, rollNumber, role } = req.body;
+    let { name, email, password, phone, studentId, shift, department, year, rollNumber, role } = req.body;
     
-    // Input validation
+    // Input validation and sanitization
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email and password are required' });
+    }
+    
+    // Sanitize inputs
+    name = sanitizeInput(name);
+    email = email.toLowerCase().trim();
+    phone = phone ? sanitizeInput(phone) : undefined;
+    studentId = studentId ? sanitizeInput(studentId) : undefined;
+    shift = shift ? sanitizeInput(shift) : undefined;
+    department = department ? sanitizeInput(department) : undefined;
+    year = year ? sanitizeInput(year) : undefined;
+    rollNumber = rollNumber ? sanitizeInput(rollNumber) : undefined;
+    
+    // Validate email
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+    
+    // Validate password
+    if (!isValidPassword(password)) {
+      return res.status(400).json({ message: 'Password must be 6-128 characters long' });
+    }
+    
+    // Validate name length
+    if (name.length < 2 || name.length > 100) {
+      return res.status(400).json({ message: 'Name must be 2-100 characters long' });
     }
     
     const existingUser = await User.findOne({ email });
@@ -137,6 +230,11 @@ router.post('/register', async (req, res) => {
     });
     await user.save();
 
+    // Send welcome email (non-blocking)
+    emailService.sendWelcomeEmail(email, name).catch(err => 
+      console.error('Failed to send welcome email:', err)
+    );
+
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
     res.status(201).json({
@@ -153,30 +251,46 @@ router.post('/register', async (req, res) => {
 
 router.post('/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body;
+    let { email } = req.body;
     
-    // Input validation with safer regex
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!email || !emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Valid email is required' });
+    // Input validation and sanitization
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
     }
     
-    // Sanitize email
-    const sanitizedEmail = String(email).toLowerCase().trim();
-    const user = await User.findOne({ email: sanitizedEmail });
+    email = email.toLowerCase().trim();
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      // Don't reveal if user exists or not for security
+      return res.json({ message: 'If the email exists, an OTP has been sent' });
     }
 
+    // Generate secure OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    await OTP.deleteMany({ email: sanitizedEmail });
-    await new OTP({ email: sanitizedEmail, otp }).save();
+    // Clean up old OTPs for this email
+    await OTP.deleteMany({ email });
+    await new OTP({ email, otp }).save();
     
-    res.json({ 
-      message: 'OTP sent to your email',
-      otp: otp
-    });
+    // Send OTP via email service
+    const emailResult = await emailService.sendOTPEmail(email, otp);
+    
+    if (process.env.NODE_ENV === 'development') {
+      res.json({ 
+        message: 'OTP sent to your email',
+        otp: otp, // Only for development
+        emailSent: emailResult.success
+      });
+    } else {
+      res.json({ 
+        message: 'OTP sent to your email',
+        emailSent: emailResult.success
+      });
+    }
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Failed to generate OTP' });
@@ -185,27 +299,45 @@ router.post('/forgot-password', async (req, res) => {
 
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, otp, password } = req.body;
+    let { email, otp, password } = req.body;
     
     // Input validation
     if (!email || !otp || !password) {
       return res.status(400).json({ error: 'Email, OTP and password are required' });
     }
     
-    // Sanitize inputs
-    const sanitizedEmail = String(email).toLowerCase().trim();
-    const sanitizedOtp = String(otp).replace(/[^0-9]/g, '');
+    // Sanitize and validate inputs
+    email = email.toLowerCase().trim();
+    otp = String(otp).replace(/[^0-9]/g, '');
     
-    const otpDoc = await OTP.findOne({ email: sanitizedEmail, otp: sanitizedOtp });
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    if (!isValidPassword(password)) {
+      return res.status(400).json({ error: 'Password must be 6-128 characters long' });
+    }
+    
+    if (otp.length !== 6) {
+      return res.status(400).json({ error: 'OTP must be 6 digits' });
+    }
+    
+    const otpDoc = await OTP.findOne({ email, otp });
     if (!otpDoc) {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
     
-    const user = await User.findOne({ email: sanitizedEmail });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
     user.password = password;
     await user.save();
     
+    // Clean up OTP after successful reset
     await OTP.deleteOne({ _id: otpDoc._id });
+    
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
     console.error('Reset password error:', error);

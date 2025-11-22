@@ -5,6 +5,16 @@ const Message = require('../models/Message');
 const Item = require('../models/Item');
 const BlockedUser = require('../models/BlockedUser');
 const authMiddleware = require('../middleware/authMiddleware');
+const {
+  chatMessageLimiter,
+  chatRoomLimiter,
+  checkBlocked,
+  validateMessage,
+  checkRoomPermissions,
+  preventSelfChat,
+  logChatActivity,
+  checkAccountStanding
+} = require('../middleware/chatSecurity');
 
 // Get user's chat rooms
 router.get('/rooms', authMiddleware, async (req, res) => {
@@ -25,7 +35,13 @@ router.get('/rooms', authMiddleware, async (req, res) => {
 });
 
 // Get or create chat room for an item
-router.post('/room/:itemId', authMiddleware, async (req, res) => {
+router.post('/room/:itemId', 
+  authMiddleware, 
+  checkAccountStanding,
+  chatRoomLimiter,
+  preventSelfChat,
+  logChatActivity('room_created'),
+  async (req, res) => {
   try {
     const { itemId } = req.params;
     const userId = req.user.id;
@@ -89,7 +105,11 @@ router.post('/room/:itemId', authMiddleware, async (req, res) => {
 });
 
 // Get messages for a chat room
-router.get('/room/:roomId/messages', authMiddleware, async (req, res) => {
+router.get('/room/:roomId/messages', 
+  authMiddleware, 
+  checkAccountStanding,
+  checkRoomPermissions,
+  async (req, res) => {
   try {
     const { roomId } = req.params;
     const { page = 1, limit = 50 } = req.query;
@@ -211,7 +231,11 @@ router.get('/room/:roomId/search', authMiddleware, async (req, res) => {
 });
 
 // Block user
-router.post('/block/:userId', authMiddleware, async (req, res) => {
+router.post('/block/:userId', 
+  authMiddleware, 
+  checkAccountStanding,
+  logChatActivity('user_blocked'),
+  async (req, res) => {
   try {
     const { userId } = req.params;
     const { reason } = req.body;

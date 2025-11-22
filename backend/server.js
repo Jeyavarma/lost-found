@@ -48,19 +48,38 @@ app.use(helmet({
 app.use(securityHeaders);
 app.use(csrfProtection);
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://lost-found-mcc.vercel.app',
-        'https://mcc-lost-found.vercel.app', 
-        'https://lost-found-79xn.onrender.com',
-        /\.vercel\.app$/,
-        'http://localhost:3000',
-        'http://localhost:3002'
-      ]
-    : true,
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://lost-found-mcc.vercel.app',
+      'https://mcc-lost-found.vercel.app', 
+      'https://lost-found-79xn.onrender.com',
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://localhost:3001'
+    ];
+    
+    // Allow requests with no origin (mobile apps, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow any vercel.app subdomain
+    if (origin.match(/https:\/\/.*\.vercel\.app$/)) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // In development, allow all origins
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept']
 }));
 app.use(express.json({ limit: '10mb' }));
 
@@ -119,16 +138,33 @@ app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
 app.use('/api/messaging', apiLimiter, require('./routes/messaging'));
 app.use('/api/system-flow', apiLimiter, require('./routes/system-flow'));
 app.use('/api/visual-ai', apiLimiter, require('./routes/visual-ai'));
-app.use('/api/chat', apiLimiter, require('./routes/chat'));
-app.use('/api/presence', apiLimiter, require('./routes/presence'));
+// Use simplified chat routes to prevent 404 errors
+try {
+  app.use('/api/chat', apiLimiter, require('./routes/chat'));
+} catch (error) {
+  console.error('Failed to load chat routes, using simplified version:', error.message);
+  app.use('/api/chat', apiLimiter, require('./routes/chat-simple'));
+}
+// Use simplified presence routes to prevent 404 errors
+try {
+  app.use('/api/presence', apiLimiter, require('./routes/presence'));
+} catch (error) {
+  console.error('Failed to load presence routes, using simplified version:', error.message);
+  app.use('/api/presence', apiLimiter, require('./routes/presence-simple'));
+}
 
 // Socket.io chat handler
 const { handleConnection } = require('./socket/chatHandler');
 handleConnection(io);
 
-// Start message cleanup job
-const { startCleanupJob } = require('./jobs/messageCleanup');
-startCleanupJob();
+// Start message cleanup job (with error handling)
+try {
+  const { startCleanupJob } = require('./jobs/messageCleanup');
+  startCleanupJob();
+} catch (error) {
+  console.error('Failed to start cleanup job:', error.message);
+  console.log('Server will continue without cleanup job');
+}
 
 app.use('/api', healthRoutes);
 app.use('/uploads', express.static('uploads'));
@@ -137,6 +173,11 @@ app.use('/uploads', express.static('uploads'));
 app.get('/create-admin', (req, res) => {
   res.sendFile(__dirname + '/create-admin.html');
 });
+
+// Error handling middleware (must be last)
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

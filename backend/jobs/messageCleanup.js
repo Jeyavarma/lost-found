@@ -1,5 +1,16 @@
-const Message = require('../models/Message');
-const ChatRoom = require('../models/ChatRoom');
+let Message, ChatRoom;
+
+try {
+  Message = require('../models/Message');
+  ChatRoom = require('../models/ChatRoom');
+} catch (error) {
+  console.error('Chat models not found, cleanup job disabled:', error.message);
+  module.exports = { 
+    cleanupMessages: () => console.log('Cleanup disabled - models not found'),
+    startCleanupJob: () => console.log('Cleanup job disabled - models not found')
+  };
+  return;
+}
 
 // Clean up old messages and inactive rooms
 const cleanupMessages = async () => {
@@ -52,8 +63,15 @@ const cleanupMessages = async () => {
 
 // Run cleanup every 24 hours
 const startCleanupJob = () => {
-  // Run immediately on startup
-  cleanupMessages();
+  if (!Message || !ChatRoom) {
+    console.log('Cleanup job disabled - models not available');
+    return;
+  }
+  
+  // Run immediately on startup (with delay to allow DB connection)
+  setTimeout(() => {
+    cleanupMessages();
+  }, 5000);
   
   // Then run every 24 hours
   setInterval(cleanupMessages, 24 * 60 * 60 * 1000);

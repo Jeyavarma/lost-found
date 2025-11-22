@@ -69,7 +69,7 @@ export default function ImprovedFloatingChat() {
     }
   }, [])
 
-  // Listen to connection state changes
+  // Listen to connection state changes and chat events
   useEffect(() => {
     const handleConnectionStateChange = (state: ConnectionState) => {
       setConnectionState(state)
@@ -84,6 +84,14 @@ export default function ImprovedFloatingChat() {
       }
     }
 
+    const handleOpenChat = (event: CustomEvent) => {
+      const { roomId, room } = event.detail
+      setIsOpen(true)
+      if (room) {
+        setSelectedRoom(room)
+      }
+    }
+
     enhancedSocketManager.on('connection_state_changed', handleConnectionStateChange)
     enhancedSocketManager.on('connection_restored', () => {
       setError(null)
@@ -92,11 +100,13 @@ export default function ImprovedFloatingChat() {
     })
 
     enhancedSocketManager.on('new_message', handleNewMessage)
+    window.addEventListener('openChat', handleOpenChat as EventListener)
 
     return () => {
       enhancedSocketManager.off('connection_state_changed', handleConnectionStateChange)
       enhancedSocketManager.off('connection_restored')
       enhancedSocketManager.off('new_message', handleNewMessage)
+      window.removeEventListener('openChat', handleOpenChat as EventListener)
     }
   }, [currentUserId])
 

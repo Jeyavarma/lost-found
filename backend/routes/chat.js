@@ -35,13 +35,7 @@ router.get('/rooms', authMiddleware, async (req, res) => {
 });
 
 // Get or create chat room for an item
-router.post('/room/:itemId', 
-  authMiddleware, 
-  checkAccountStanding,
-  chatRoomLimiter,
-  preventSelfChat,
-  logChatActivity('room_created'),
-  async (req, res) => {
+router.post('/room/:itemId', authMiddleware, async (req, res) => {
   try {
     const { itemId } = req.params;
     const userId = req.user.id;
@@ -50,6 +44,11 @@ router.post('/room/:itemId',
     const item = await Item.findById(itemId).populate('reportedBy', 'name email');
     if (!item) {
       return res.status(404).json({ error: 'Item not found' });
+    }
+
+    // Prevent self-chat
+    if (item.reportedBy._id.toString() === userId) {
+      return res.status(400).json({ error: 'Cannot start chat with yourself' });
     }
 
     // Check if room already exists

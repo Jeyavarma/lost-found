@@ -16,9 +16,16 @@ export default function ContactButton({ itemId, itemTitle, onChatCreated }: Cont
   const [loading, setLoading] = useState(false)
 
   const handleContact = async () => {
+    const token = getAuthToken()
+    if (!token) {
+      alert('Please login to start a conversation')
+      window.location.href = '/login'
+      return
+    }
+
     setLoading(true)
     try {
-      const token = getAuthToken()
+      console.log('Starting chat for item:', itemId)
       const response = await fetch(`${BACKEND_URL}/api/chat/room/${itemId}`, {
         method: 'POST',
         headers: {
@@ -27,18 +34,28 @@ export default function ContactButton({ itemId, itemTitle, onChatCreated }: Cont
         }
       })
 
+      console.log('Response status:', response.status)
+      
       if (response.ok) {
         const room = await response.json()
+        console.log('Chat room created:', room)
         onChatCreated?.(room._id)
         
-        // Redirect to dashboard messages tab
-        window.location.href = '/dashboard?tab=messages'
+        // Dispatch event to open floating chat
+        window.dispatchEvent(new CustomEvent('openChat', { 
+          detail: { roomId: room._id, room } 
+        }))
+        
+        // Show success message
+        alert('Chat started! Check the chat window.')
       } else {
-        alert('Failed to start conversation')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Chat creation failed:', errorData)
+        alert(errorData.error || 'Failed to start conversation')
       }
     } catch (error) {
       console.error('Contact error:', error)
-      alert('Error starting conversation')
+      alert('Network error. Please check your connection and try again.')
     } finally {
       setLoading(false)
     }

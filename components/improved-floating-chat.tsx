@@ -34,7 +34,7 @@ interface ChatRoom {
   lastMessage?: {
     content: string
     timestamp: string
-    senderId: string
+    senderId?: string
   }
   unreadCount?: number
   updatedAt: string

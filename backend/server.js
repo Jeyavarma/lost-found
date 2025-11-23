@@ -138,20 +138,8 @@ app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
 app.use('/api/messaging', apiLimiter, require('./routes/messaging'));
 app.use('/api/system-flow', apiLimiter, require('./routes/system-flow'));
 app.use('/api/visual-ai', apiLimiter, require('./routes/visual-ai'));
-// Use simplified chat routes to prevent 404 errors
-try {
-  app.use('/api/chat', apiLimiter, require('./routes/chat'));
-} catch (error) {
-  console.error('Failed to load chat routes, using simplified version:', error.message);
-  app.use('/api/chat', apiLimiter, require('./routes/chat-simple'));
-}
-// Use simplified presence routes to prevent 404 errors
-try {
-  app.use('/api/presence', apiLimiter, require('./routes/presence'));
-} catch (error) {
-  console.error('Failed to load presence routes, using simplified version:', error.message);
-  app.use('/api/presence', apiLimiter, require('./routes/presence-simple'));
-}
+app.use('/api/chat', apiLimiter, require('./routes/chat'));
+app.use('/api/presence', apiLimiter, require('./routes/presence'));
 
 // Socket.io chat handler
 const { handleConnection } = require('./socket/chatHandler');

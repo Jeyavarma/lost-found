@@ -1,14 +1,14 @@
 const express = require('express');
 const User = require('../models/User');
-const auth = require('../middleware/auth');
+const authMiddleware = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // Update user presence (heartbeat)
-router.post('/heartbeat', auth, async (req, res) => {
+router.post('/heartbeat', authMiddleware, async (req, res) => {
   try {
     const { deviceType } = req.body;
     
-    await User.findByIdAndUpdate(req.user.userId, {
+    await User.findByIdAndUpdate(req.user.id, {
       lastSeen: new Date(),
       isOnline: true,
       deviceType: deviceType || 'desktop'
@@ -21,9 +21,9 @@ router.post('/heartbeat', auth, async (req, res) => {
 });
 
 // Set user offline
-router.post('/offline', auth, async (req, res) => {
+router.post('/offline', authMiddleware, async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.user.userId, {
+    await User.findByIdAndUpdate(req.user.id, {
       isOnline: false,
       lastSeen: new Date()
     });

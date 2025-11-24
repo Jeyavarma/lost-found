@@ -136,24 +136,27 @@ export default function HomePage() {
     
     try {
       const token = getAuthToken()
-      const response = await fetch(`${BACKEND_URL}/api/chat/rooms`, {
+      const response = await fetch(`${BACKEND_URL}/api/chat/room/${item._id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          itemId: item._id,
-          otherUserId: item.reportedBy?._id
-        })
+        }
       })
       
       if (response.ok) {
+        const room = await response.json()
         setSelectedItem(null)
-        // Chat room created, user can access it via floating chat
+        alert('Chat room created! You can access it via the chat button.')
+        // Refresh chat list if floating chat is open
+        window.dispatchEvent(new CustomEvent('chatRoomCreated', { detail: room }))
+      } else {
+        const error = await response.json()
+        alert(`Failed to create chat: ${error.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Failed to start chat:', error)
+      alert('Failed to start chat. Please try again.')
     }
   }
 

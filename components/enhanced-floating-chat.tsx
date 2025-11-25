@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageCircle, X, Minimize2, Maximize2, AlertCircle, Wifi, WifiOff, Bell, BellOff } from 'lucide-react'
+import { MessageCircle, X, Minimize2, Maximize2, AlertCircle, Wifi, WifiOff, Bell, BellOff, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { isAuthenticated, getUserData, getAuthToken } from '@/lib/auth'
 import ChatList from '@/components/chat/ChatList'
 import ChatWindow from '@/components/chat/ChatWindow'
+import UserSearchModal from '@/components/user-search-modal'
 import { socketManager } from '@/lib/socket'
 import { BACKEND_URL } from '@/lib/config'
 
@@ -61,6 +62,7 @@ export default function EnhancedFloatingChat() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isGuest, setIsGuest] = useState(false)
+  const [showUserSearch, setShowUserSearch] = useState(false)
   const retryTimeoutRef = useRef<NodeJS.Timeout>()
   const healthCheckRef = useRef<NodeJS.Timeout>()
 
@@ -232,6 +234,32 @@ export default function EnhancedFloatingChat() {
     setSelectedRoom(null)
   }, [])
 
+  // Handle new chat with user
+  const handleStartNewChat = useCallback(async (user: any) => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${BACKEND_URL}/api/chat/direct`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ otherUserId: user._id })
+      })
+      
+      if (response.ok) {
+        const room = await response.json()
+        setSelectedRoom(room)
+        loadChatRooms() // Refresh chat list
+      } else {
+        setError('Failed to start chat')
+      }
+    } catch (err) {
+      setError('Failed to start chat')
+      console.error('Start chat error:', err)
+    }
+  }, [])
+
   // Handle chat start for guests
   const handleGuestChat = useCallback(() => {
     setError('Please login to start chatting')
@@ -311,8 +339,21 @@ export default function EnhancedFloatingChat() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <CardTitle className="text-sm font-medium truncate">
-                    {selectedRoom ? selectedRoom.itemId.title : 'Messages'}
+                    {selectedRoom ? (selectedRoom.itemId?.title || 'Direct Chat') : 'Messages'}
                   </CardTitle>
+                  
+                  {/* New Chat Button */}
+                  {!selectedRoom && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowUserSearch(true)}
+                      className="text-white hover:bg-blue-700 p-1 h-5 w-5"
+                      aria-label="Start new chat"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  )}
                   
                   {/* Connection Status */}
                   <div className="flex items-center gap-1">
@@ -430,6 +471,14 @@ export default function EnhancedFloatingChat() {
           </Card>
         </div>
       )}
+      
+      {/* User Search Modal */}
+      <UserSearchModal
+        isOpen={showUserSearch}
+        onClose={() => setShowUserSearch(false)}
+        onSelectUser={handleStartNewChat}
+        currentUserId={currentUserId}
+      />
     </TooltipProvider>
   )
 }

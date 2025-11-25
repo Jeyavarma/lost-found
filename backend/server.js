@@ -133,6 +133,7 @@ app.use('/api/ai', apiLimiter, require('./routes/ai-search'));
 app.use('/api/notifications', apiLimiter, notificationRoutes);
 app.use('/api/feedback', apiLimiter, feedbackRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);
+app.use('/api/users', apiLimiter, require('./routes/users'));
 app.use('/api/analytics', apiLimiter, require('./routes/analytics'));
 app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
 app.use('/api/messaging', apiLimiter, require('./routes/messaging'));

@@ -28,4 +28,24 @@ router.post('/room/:itemId', authMiddleware, async (req, res) => {
   }
 });
 
+// Direct chat between users
+router.post('/direct', authMiddleware, async (req, res) => {
+  try {
+    const { otherUserId } = req.body;
+    res.json({
+      _id: 'mock-direct-room',
+      itemId: null,
+      participants: [
+        { userId: req.user.id, role: 'participant' },
+        { userId: otherUserId, role: 'participant' }
+      ],
+      type: 'direct',
+      status: 'active'
+    });
+  } catch (error) {
+    console.error('Create direct chat error:', error);
+    res.status(500).json({ error: 'Failed to create direct chat' });
+  }
+});
+
 module.exports = router;

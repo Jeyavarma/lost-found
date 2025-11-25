@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { User, Mail, Phone, MapPin, Save, Eye, EyeOff } from 'lucide-react'
 import { api } from '@/lib/api'
-import { validateRegister } from '@/lib/validation'
+import { Validator } from '@/lib/validation'
 import { LoadingSpinner } from '@/components/loading-states'
 
 interface UserProfileProps {

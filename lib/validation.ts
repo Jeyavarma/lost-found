@@ -1,126 +1,155 @@
-import { z } from 'zod'
-
-// Item validation schemas
-export const itemSchema = z.object({
-  title: z.string()
-    .min(3, 'Title must be at least 3 characters')
-    .max(100, 'Title must be less than 100 characters'),
-  
-  description: z.string()
-    .min(10, 'Description must be at least 10 characters')
-    .max(500, 'Description must be less than 500 characters'),
-  
-  category: z.string()
-    .min(1, 'Please select a category'),
-  
-  location: z.string()
-    .min(1, 'Please specify a location'),
-  
-  date: z.string()
-    .min(1, 'Please select a date'),
-  
-  contactInfo: z.string()
-    .optional(),
-  
-  imageUrl: z.string()
-    .url('Invalid image URL')
-    .optional()
-})
-
-export const lostItemSchema = itemSchema.extend({
-  status: z.literal('lost')
-})
-
-export const foundItemSchema = itemSchema.extend({
-  status: z.literal('found')
-})
-
-// User validation schemas
-export const loginSchema = z.object({
-  email: z.string()
-    .email('Invalid email address'),
-  
-  password: z.string()
-    .min(6, 'Password must be at least 6 characters')
-})
-
-export const registerSchema = z.object({
-  name: z.string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must be less than 50 characters'),
-  
-  email: z.string()
-    .email('Invalid email address'),
-  
-  password: z.string()
-    .min(6, 'Password must be at least 6 characters')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
-  
-  confirmPassword: z.string(),
-  
-  department: z.string()
-    .min(1, 'Please select your department'),
-  
-  role: z.enum(['student', 'staff'])
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"]
-})
-
-// Feedback validation
-export const feedbackSchema = z.object({
-  type: z.enum(['bug', 'feature', 'general']),
-  
-  subject: z.string()
-    .min(5, 'Subject must be at least 5 characters')
-    .max(100, 'Subject must be less than 100 characters'),
-  
-  message: z.string()
-    .min(10, 'Message must be at least 10 characters')
-    .max(1000, 'Message must be less than 1000 characters'),
-  
-  email: z.string()
-    .email('Invalid email address')
-    .optional()
-})
-
-// Validation helper functions
-export function validateItem(data: unknown, type: 'lost' | 'found') {
-  const schema = type === 'lost' ? lostItemSchema : foundItemSchema
-  return schema.safeParse(data)
+// Input validation schemas and functions
+export const ValidationRules = {
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  phone: /^[\+]?[1-9][\d]{0,15}$/,
+  name: /^[a-zA-Z\s]{2,50}$/,
+  password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/
 }
 
-export function validateLogin(data: unknown) {
-  return loginSchema.safeParse(data)
+export interface ValidationResult {
+  valid: boolean
+  errors: string[]
 }
 
-export function validateRegister(data: unknown) {
-  return registerSchema.safeParse(data)
+export class Validator {
+  // Validate email
+  static validateEmail(email: string): ValidationResult {
+    const errors: string[] = []
+    
+    if (!email) {
+      errors.push('Email is required')
+    } else if (!ValidationRules.email.test(email)) {
+      errors.push('Please enter a valid email address')
+    }
+    
+    return { valid: errors.length === 0, errors }
+  }
+
+  // Validate password
+  static validatePassword(password: string): ValidationResult {
+    const errors: string[] = []
+    
+    if (!password) {
+      errors.push('Password is required')
+    } else if (password.length < 8) {
+      errors.push('Password must be at least 8 characters long')
+    } else if (!ValidationRules.password.test(password)) {
+      errors.push('Password must contain uppercase, lowercase, and number')
+    }
+    
+    return { valid: errors.length === 0, errors }
+  }
+
+  // Validate name
+  static validateName(name: string): ValidationResult {
+    const errors: string[] = []
+    
+    if (!name) {
+      errors.push('Name is required')
+    } else if (name.length < 2) {
+      errors.push('Name must be at least 2 characters long')
+    } else if (name.length > 50) {
+      errors.push('Name must be less than 50 characters')
+    } else if (!ValidationRules.name.test(name)) {
+      errors.push('Name can only contain letters and spaces')
+    }
+    
+    return { valid: errors.length === 0, errors }
+  }
+
+  // Validate item title
+  static validateItemTitle(title: string): ValidationResult {
+    const errors: string[] = []
+    
+    if (!title) {
+      errors.push('Title is required')
+    } else if (title.length < 3) {
+      errors.push('Title must be at least 3 characters long')
+    } else if (title.length > 100) {
+      errors.push('Title must be less than 100 characters')
+    }
+    
+    return { valid: errors.length === 0, errors }
+  }
+
+  // Validate item description
+  static validateDescription(description: string): ValidationResult {
+    const errors: string[] = []
+    
+    if (!description) {
+      errors.push('Description is required')
+    } else if (description.length < 10) {
+      errors.push('Description must be at least 10 characters long')
+    } else if (description.length > 1000) {
+      errors.push('Description must be less than 1000 characters')
+    }
+    
+    return { valid: errors.length === 0, errors }
+  }
+
+  // Validate location
+  static validateLocation(location: string): ValidationResult {
+    const errors: string[] = []
+    
+    if (!location) {
+      errors.push('Location is required')
+    } else if (location.length < 2) {
+      errors.push('Location must be at least 2 characters long')
+    }
+    
+    return { valid: errors.length === 0, errors }
+  }
+
+  // Sanitize input (prevent XSS)
+  static sanitizeInput(input: string): string {
+    return input
+      .replace(/[<>\"'&]/g, (match) => {
+        const map: { [key: string]: string } = {
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#x27;',
+          '&': '&amp;'
+        }
+        return map[match]
+      })
+      .trim()
+  }
+
+  // Validate complete form
+  static validateItemForm(data: any): ValidationResult {
+    const errors: string[] = []
+    
+    const titleValidation = this.validateItemTitle(data.title)
+    if (!titleValidation.valid) errors.push(...titleValidation.errors)
+    
+    const descValidation = this.validateDescription(data.description)
+    if (!descValidation.valid) errors.push(...descValidation.errors)
+    
+    const locationValidation = this.validateLocation(data.location)
+    if (!locationValidation.valid) errors.push(...locationValidation.errors)
+    
+    if (!data.category) {
+      errors.push('Category is required')
+    }
+    
+    return { valid: errors.length === 0, errors }
+  }
 }
 
-export function validateFeedback(data: unknown) {
-  return feedbackSchema.safeParse(data)
-}
-
-// Input sanitization
-export function sanitizeInput(input: string): string {
-  return input
-    .trim()
-    .replace(/[<>\"'&]/g, '') // Remove potentially dangerous characters
-    .substring(0, 1000) // Limit length
-}
-
-export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
-  const sanitized = {} as T
-  
-  for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === 'string') {
-      sanitized[key as keyof T] = sanitizeInput(value) as T[keyof T]
-    } else {
-      sanitized[key as keyof T] = value
+// Real-time validation hook
+export function useValidation() {
+  const validateField = (field: string, value: string) => {
+    switch (field) {
+      case 'email': return Validator.validateEmail(value)
+      case 'password': return Validator.validatePassword(value)
+      case 'name': return Validator.validateName(value)
+      case 'title': return Validator.validateItemTitle(value)
+      case 'description': return Validator.validateDescription(value)
+      case 'location': return Validator.validateLocation(value)
+      default: return { valid: true, errors: [] }
     }
   }
-  
-  return sanitized
+
+  return { validateField, Validator }
 }

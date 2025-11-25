@@ -13,7 +13,7 @@
       "static/chunks/1255-1622f43a1c0ebec5.js",
       "static/chunks/main-app-624c4ec54ccd03fb.js",
       "static/css/6ad9841b43ad2bc9.css",
-      "static/css/4137c8a6b6011f29.css",
+      "static/css/cfdf5ec8e2af62e0.css",
       "static/chunks/5707-556ef344268f45dc.js",
       "static/chunks/7856-01f910ec1a92da37.js",
       "static/chunks/1332-cd777a32e1773e79.js",
@@ -195,6 +195,19 @@
       "static/chunks/297-7295b248ad97a1e5.js",
       "static/chunks/app/admin/staff/page-20626d531cf02b69.js"
     ],
+    "/admin/test/page": [
+      "static/chunks/webpack-a6cb0984d8d01b0c.js",
+      "static/chunks/4bd1b696-f785427dddbba9fb.js",
+      "static/chunks/1255-1622f43a1c0ebec5.js",
+      "static/chunks/main-app-624c4ec54ccd03fb.js",
+      "static/chunks/5707-556ef344268f45dc.js",
+      "static/chunks/297-7295b248ad97a1e5.js",
+      "static/chunks/7856-01f910ec1a92da37.js",
+      "static/chunks/5004-e6947ae7f2c9a3c1.js",
+      "static/chunks/3739-c82ad601e5221c73.js",
+      "static/chunks/6552-cb6bd4c550da114c.js",
+      "static/chunks/app/admin/test/page-b3e5b06538a83d26.js"
+    ],
     "/browse/loading": [
       "static/chunks/webpack-a6cb0984d8d01b0c.js",
       "static/chunks/4bd1b696-f785427dddbba9fb.js",
@@ -219,19 +232,6 @@
       "static/chunks/893-f4c226398ad55d0e.js",
       "static/chunks/3582-3c2693cc28285cb6.js",
       "static/chunks/app/browse/page-8dc4c432fb309d8d.js"
-    ],
-    "/admin/test/page": [
-      "static/chunks/webpack-a6cb0984d8d01b0c.js",
-      "static/chunks/4bd1b696-f785427dddbba9fb.js",
-      "static/chunks/1255-1622f43a1c0ebec5.js",
-      "static/chunks/main-app-624c4ec54ccd03fb.js",
-      "static/chunks/5707-556ef344268f45dc.js",
-      "static/chunks/297-7295b248ad97a1e5.js",
-      "static/chunks/7856-01f910ec1a92da37.js",
-      "static/chunks/5004-e6947ae7f2c9a3c1.js",
-      "static/chunks/3739-c82ad601e5221c73.js",
-      "static/chunks/6552-cb6bd4c550da114c.js",
-      "static/chunks/app/admin/test/page-b3e5b06538a83d26.js"
     ],
     "/dashboard/page": [
       "static/chunks/webpack-a6cb0984d8d01b0c.js",

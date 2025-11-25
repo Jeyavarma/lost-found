@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const http = require('http');
 const socketIo = require('socket.io');
+const config = require('./config/environment');
 
 const authRoutes = require('./routes/auth');
 const itemRoutes = require('./routes/items');
@@ -83,9 +84,14 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(config.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err)
+    if (config.NODE_ENV === 'production') {
+      process.exit(1)
+    }
+  });
 
 // Special route for first admin creation (no middleware)
 app.post('/api/auth/create-first-admin', express.json(), async (req, res) => {

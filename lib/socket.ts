@@ -50,8 +50,12 @@ class SocketManager {
 
       // Handle pong responses
       this.socket.on('pong', (timestamp) => {
-        const latency = Date.now() - timestamp;
-        console.log(`Chat server latency: ${latency}ms`);
+        if (typeof timestamp === 'number' && timestamp > 0) {
+          const latency = Date.now() - timestamp;
+          if (latency < 10000) { // Only log reasonable latencies
+            console.log(`Chat server latency: ${latency}ms`);
+          }
+        }
       });
 
       // Listen for message delivery confirmations
@@ -148,7 +152,9 @@ class SocketManager {
     this.processingQueue = true;
     const pendingMessages = messageQueue.getAllPending();
     
-    console.log(`Processing ${pendingMessages.length} queued messages`);
+    if (pendingMessages.length > 0) {
+      console.log(`Processing ${pendingMessages.length} queued messages`);
+    }
     
     for (const message of pendingMessages) {
       try {
@@ -162,7 +168,9 @@ class SocketManager {
     }
     
     this.processingQueue = false;
-    console.log('Finished processing queued messages');
+    if (pendingMessages.length > 0) {
+      console.log('Finished processing queued messages');
+    }
   }
 
   // Send individual queued message

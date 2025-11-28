@@ -42,6 +42,7 @@ import Navigation from "@/components/navigation"
 import { BACKEND_URL } from "@/lib/config"
 import ItemDetailModal from "@/components/item-detail-modal"
 import EnhancedFloatingChat from "@/components/enhanced-floating-chat"
+import ImageWithFallback from "@/components/image-with-fallback"
 import { isAuthenticated, getUserData, getAuthToken } from "@/lib/auth"
 
 
@@ -334,17 +335,12 @@ export default function HomePage() {
                 className="mcc-card hover:shadow-2xl transition-all duration-500 group cursor-pointer overflow-hidden border-2 border-gray-200"
               >
                 <div className="relative">
-                  {(item.itemImageUrl || item.imageUrl) ? (
-                    <img
-                      src={item.itemImageUrl || item.imageUrl}
-                      alt={item.title}
-                      className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-52 bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400">No Image</span>
-                    </div>
-                  )}
+                  <ImageWithFallback
+                    src={item.itemImageUrl || item.imageUrl}
+                    alt={item.title}
+                    className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-500"
+                    fallbackText="No Image"
+                  />
                   <div className="absolute top-3 right-3 flex gap-2">
                     <Badge
                       variant={item.status === "lost" ? "destructive" : "default"}

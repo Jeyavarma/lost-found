@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MapPin, Calendar, User, Package, Phone, Mail, MessageCircle } from "lucide-react"
@@ -55,6 +55,9 @@ export default function ItemDetailModal({ item, isOpen, onClose, onStartChat }: 
             <Package className="w-5 h-5" />
             Item Details
           </DialogTitle>
+          <DialogDescription>
+            View item information and contact the reporter
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">

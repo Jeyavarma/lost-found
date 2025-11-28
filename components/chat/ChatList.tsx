@@ -64,7 +64,10 @@ export default function ChatList({ onSelectRoom, currentUserId }: ChatListProps)
 
       if (response.ok) {
         const data = await response.json()
-        setRooms(data)
+        // Ensure data is an array
+        setRooms(Array.isArray(data) ? data : [])
+      } else {
+        setRooms([])
       }
     } catch (error) {
       console.error('Failed to load chat rooms:', error)
@@ -135,7 +138,7 @@ export default function ChatList({ onSelectRoom, currentUserId }: ChatListProps)
         ) : (
           <ScrollArea className="h-96">
             <div className="space-y-1 p-2">
-              {rooms.map((room) => {
+              {rooms.filter(room => room && room._id).map((room) => {
                 const otherParticipant = getOtherParticipant(room)
                 
                 return (
@@ -147,16 +150,19 @@ export default function ChatList({ onSelectRoom, currentUserId }: ChatListProps)
                   >
                     <div className="flex items-center gap-3 w-full">
                       {/* Item Image or Avatar */}
-                      {room.itemId.imageUrl ? (
+                      {room.itemId?.imageUrl ? (
                         <img 
                           src={room.itemId.imageUrl} 
-                          alt={room.itemId.title}
+                          alt={room.itemId?.title || 'Item'}
                           className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                          }}
                         />
                       ) : (
                         <Avatar className="w-12 h-12 flex-shrink-0">
                           <AvatarFallback>
-                            {room.itemId.title.charAt(0)}
+                            {room.itemId?.title?.charAt(0) || 'C'}
                           </AvatarFallback>
                         </Avatar>
                       )}
@@ -165,7 +171,7 @@ export default function ChatList({ onSelectRoom, currentUserId }: ChatListProps)
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between mb-1">
                           <h4 className="font-medium text-sm truncate">
-                            {room.itemId.title}
+                            {room.itemId?.title || 'Direct Chat'}
                           </h4>
                           {room.lastMessage && (
                             <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
@@ -175,11 +181,13 @@ export default function ChatList({ onSelectRoom, currentUserId }: ChatListProps)
                         </div>
                         
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="text-xs">
-                            {room.itemId.category}
-                          </Badge>
+                          {room.itemId?.category && (
+                            <Badge variant="outline" className="text-xs">
+                              {room.itemId.category}
+                            </Badge>
+                          )}
                           <span className="text-xs text-gray-500">
-                            with {otherParticipant?.userId.name}
+                            with {otherParticipant?.userId?.name || 'User'}
                           </span>
                         </div>
 

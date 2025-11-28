@@ -162,7 +162,17 @@ try {
 }
 
 app.use('/api', healthRoutes);
-app.use('/uploads', express.static('uploads'));
+// Serve uploaded images with proper error handling
+app.use('/uploads', express.static('uploads', {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+}));
+
+// Handle missing images
+app.get('/uploads/*', (req, res) => {
+  res.status(404).json({ error: 'Image not found' });
+});
 
 // Serve admin creation page
 app.get('/create-admin', (req, res) => {

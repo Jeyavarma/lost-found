@@ -83,7 +83,19 @@ const handleConnection = (io) => {
           serverMessageId: message._id
         });
 
+        // Emit to all room participants
         io.to(roomId).emit('new_message', message);
+        
+        // Update room's last message in storage
+        const room = chatRooms.get(roomId);
+        if (room) {
+          room.lastMessage = {
+            content: content.trim(),
+            senderId: socket.userId,
+            timestamp: new Date().toISOString()
+          };
+          room.updatedAt = new Date().toISOString();
+        }
 
         console.log(`Message sent in room ${roomId} by user ${socket.userId}`);
 

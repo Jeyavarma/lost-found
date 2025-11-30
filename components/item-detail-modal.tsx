@@ -161,15 +161,41 @@ export default function ItemDetailModal({ item, isOpen, onClose, onStartChat }: 
                     Email
                   </a>
                 </Button>
-                {onStartChat && (
-                  <Button 
-                    onClick={() => onStartChat(item)}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Start Chat
-                  </Button>
-                )}
+                <Button 
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      if (!token) {
+                        alert('Please login to start chat');
+                        return;
+                      }
+                      
+                      const response = await fetch(`https://lost-found-79xn.onrender.com/api/chat/room/${item._id}`, {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        }
+                      });
+                      
+                      if (response.ok) {
+                        const room = await response.json();
+                        // Trigger chat opening with this room
+                        window.dispatchEvent(new CustomEvent('openChat', { detail: { room } }));
+                        onClose();
+                      } else {
+                        alert('Failed to start chat. Please try again.');
+                      }
+                    } catch (error) {
+                      console.error('Start chat error:', error);
+                      alert('Failed to start chat. Please try again.');
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Chat about this item
+                </Button>
               </div>
             )}
           </div>

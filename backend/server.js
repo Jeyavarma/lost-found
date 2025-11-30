@@ -202,25 +202,59 @@ app.get('/api/chat/rooms', authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/api/chat/rooms', authMiddleware, async (req, res) => {
+// Create item-based chat room
+app.post('/api/chat/room/:itemId', authMiddleware, async (req, res) => {
   try {
-    const { itemId } = req.body;
-    const roomId = `item_${itemId}_${Date.now()}`;
+    const { itemId } = req.params;
+    
+    // Check if room already exists for this item and user
+    const existingRoom = Array.from(tempChatRooms.values())
+      .find(room => room.itemId?._id === itemId && 
+                   room.participants.some(p => p.userId._id === req.user.id));
+    
+    if (existingRoom) {
+      return res.json(existingRoom);
+    }
+    
+    // Get item details
+    const Item = require('./models/Item');
+    const item = await Item.findById(itemId).populate('reportedBy', 'name email role');
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
     
     const user = await User.findById(req.user.id).select('name email role');
+    const roomId = `item_${itemId}_${Date.now()}`;
     
     const room = {
       _id: roomId,
-      itemId: { _id: itemId, title: 'Item Chat', status: 'active' },
-      participants: [{
-        userId: {
-          _id: req.user.id,
-          name: user?.name || 'User',
-          email: user?.email || '',
-          role: user?.role || 'student'
+      itemId: {
+        _id: itemId,
+        title: item.title,
+        category: item.category,
+        imageUrl: item.itemImageUrl || item.imageUrl,
+        status: item.status
+      },
+      participants: [
+        {
+          userId: {
+            _id: req.user.id,
+            name: user?.name || 'User',
+            email: user?.email || '',
+            role: user?.role || 'student'
+          },
+          role: 'participant'
         },
-        role: 'participant'
-      }],
+        {
+          userId: {
+            _id: item.reportedBy._id.toString(),
+            name: item.reportedBy.name,
+            email: item.reportedBy.email,
+            role: item.reportedBy.role
+          },
+          role: 'owner'
+        }
+      ],
       type: 'item',
       status: 'active',
       createdAt: new Date().toISOString(),
@@ -231,7 +265,8 @@ app.post('/api/chat/rooms', authMiddleware, async (req, res) => {
     tempMessages.set(roomId, []);
     res.json(room);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create room' });
+    console.error('Create item chat error:', error);
+    res.status(500).json({ error: 'Failed to create item chat' });
   }
 });
 

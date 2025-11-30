@@ -79,6 +79,18 @@ export default function EnhancedFloatingChat() {
       setIsGuest(true)
     }
 
+    // Listen for item-based chat events
+    const handleOpenChat = (event: any) => {
+      const { room } = event.detail;
+      if (room) {
+        setSelectedRoom(room);
+        setIsOpen(true);
+        loadChatRooms(); // Refresh chat list
+      }
+    };
+    
+    window.addEventListener('openChat', handleOpenChat);
+
     // Check auth status periodically
     const authCheckInterval = setInterval(() => {
       const currentAuth = isAuthenticated()
@@ -99,6 +111,7 @@ export default function EnhancedFloatingChat() {
     }, 30000) // Check every 30 seconds
 
     return () => {
+      window.removeEventListener('openChat', handleOpenChat);
       clearInterval(authCheckInterval)
       if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
       if (healthCheckRef.current) clearTimeout(healthCheckRef.current)

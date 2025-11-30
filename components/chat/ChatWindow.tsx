@@ -195,10 +195,24 @@ export default function ChatWindow({ room, onClose, onBack, currentUserId }: Cha
 
       if (response.ok) {
         const data = await response.json()
-        setMessages(data)
+        // Handle both array and object responses with proper validation
+        let messagesArray = []
+        if (data && Array.isArray(data.messages)) {
+          messagesArray = data.messages.filter(msg => msg && msg._id)
+        } else if (Array.isArray(data)) {
+          messagesArray = data.filter(msg => msg && msg._id)
+        } else {
+          console.warn('Invalid messages data format:', data)
+          messagesArray = []
+        }
+        setMessages(messagesArray)
+      } else {
+        console.warn('Failed to load messages, starting with empty chat')
+        setMessages([])
       }
     } catch (error) {
       console.error('Failed to load messages:', error)
+      setMessages([])
     } finally {
       setLoading(false)
     }
@@ -213,33 +227,59 @@ export default function ChatWindow({ room, onClose, onBack, currentUserId }: Cha
     if (!newMessage.trim() || sending) return
 
     setSending(true)
+    const messageContent = newMessage.trim()
+    setNewMessage('') // Clear input immediately
+    
     try {
-      const messageId = socketManager.sendMessage(
-        room._id,
-        newMessage.trim(),
-        'text',
-        (status) => {
-          if (status === 'failed') {
-            loadPendingMessages() // Refresh pending messages
+      if (socket && socket.connected) {
+        // Send via socket
+        const messageId = socketManager.sendMessage(
+          room._id,
+          messageContent,
+          'text',
+          (status) => {
+            if (status === 'failed') {
+              loadPendingMessages()
+            }
           }
-        }
-      )
+        )
 
-      // Add to pending messages for immediate UI feedback
-      const pendingMsg: QueuedMessage = {
-        id: messageId,
-        roomId: room._id,
-        content: newMessage.trim(),
-        type: 'text',
-        timestamp: Date.now(),
-        status: 'pending',
-        retryCount: 0
+        // Add to pending messages for immediate UI feedback
+        const pendingMsg: QueuedMessage = {
+          id: messageId,
+          roomId: room._id,
+          content: messageContent,
+          type: 'text',
+          timestamp: Date.now(),
+          status: 'pending',
+          retryCount: 0
+        }
+        
+        setPendingMessages(prev => [...prev, pendingMsg])
+      } else {
+        // Fallback to HTTP if socket not connected
+        const token = getAuthToken()
+        const response = await fetch(`${BACKEND_URL}/api/chat/room/${room._id}/message`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ content: messageContent, type: 'text' })
+        })
+
+        if (response.ok) {
+          const message = await response.json()
+          setMessages(prev => [...prev, message])
+        } else {
+          throw new Error('Failed to send message via HTTP')
+        }
       }
-      
-      setPendingMessages(prev => [...prev, pendingMsg])
-      setNewMessage('')
     } catch (error) {
       console.error('Failed to send message:', error)
+      // Restore message to input on error
+      setNewMessage(messageContent)
+      alert('Failed to send message. Please try again.')
     } finally {
       setSending(false)
     }

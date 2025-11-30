@@ -25,27 +25,38 @@ class SocketManager {
     try {
       const socketOptions: any = {
         auth: { token },
-        transports: ['websocket', 'polling'],
-        timeout: 20000,
-        forceNew: true,
+        transports: ['polling', 'websocket'], // Polling first for better compatibility
+        timeout: 30000,
+        forceNew: false,
         withCredentials: true,
         upgrade: true,
-        rememberUpgrade: true
+        rememberUpgrade: false, // Don't remember upgrade for cross-domain
+        autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000
       };
 
-      // Add production-specific options
+      // Production-specific options for Vercel-Render
       if (process.env.NODE_ENV === 'production') {
         socketOptions.secure = true;
         socketOptions.rejectUnauthorized = false;
+        socketOptions.transports = ['polling']; // Use polling only in production
       }
 
       this.socket = io(BACKEND_URL, socketOptions);
 
       this.socket.on('connect', () => {
-        console.log('Connected to chat server at:', BACKEND_URL);
+        console.log('✅ Chat connected to:', BACKEND_URL);
         this.reconnectAttempts = 0;
         this.processQueuedMessages();
-        chatHealth.startHealthCheck(this.socket);
+        // Don't start health check immediately, wait for stability
+        setTimeout(() => {
+          if (this.socket?.connected) {
+            chatHealth.startHealthCheck(this.socket);
+          }
+        }, 2000);
       });
 
       // Handle pong responses

@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST='{"app/login/page.tsx -> @/lib/auth":{"id":8209,"files":["static/chunks/8209.09267be4d3516dbb.js"]},"app/report-found/page.tsx -> @/lib/auth":{"id":8209,"files":[]},"app/report-lost/page.tsx -> @/lib/auth":{"id":8209,"files":[]}}';
+self.__REACT_LOADABLE_MANIFEST="{}"

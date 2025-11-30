@@ -118,12 +118,29 @@ export const notificationHelpers = {
 }
 
 // Chat notification manager for compatibility
-export const notificationManager = {
-  initialize: () => {
-    // Initialize notifications if needed
-  },
+class NotificationManager {
+  initialize() {
+    // Request notification permission if available
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }
   
-  showChatNotification: (senderName: string, content: string, roomId: string, itemTitle: string) => {
-    notificationHelpers.newMessage(senderName, itemTitle, roomId)
+  showChatNotification(senderName: string, content: string, roomId: string, itemTitle: string) {
+    // Add to notification store
+    notificationHelpers.newMessage(senderName, itemTitle, roomId);
+    
+    // Show browser notification if permission granted
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification(`${senderName} - ${itemTitle}`, {
+        body: content,
+        icon: '/favicon.ico',
+        tag: roomId
+      });
+    }
   }
 }
+
+export const notificationManager = new NotificationManager();

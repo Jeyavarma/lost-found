@@ -76,13 +76,34 @@ export default function EnhancedFloatingChat() {
       setCurrentUserId(userData?.id || '')
       initializeChat()
     } else {
-      // Allow guest mode with limited functionality
       setIsGuest(true)
     }
 
+    // Check auth status periodically
+    const authCheckInterval = setInterval(() => {
+      const currentAuth = isAuthenticated()
+      if (currentAuth !== authenticated) {
+        if (!currentAuth) {
+          // User logged out, disconnect chat
+          socketManager.disconnect()
+          setAuthenticated(false)
+          setIsGuest(true)
+          setIsOpen(false)
+        } else {
+          // User logged in, reconnect
+          setAuthenticated(true)
+          setIsGuest(false)
+          initializeChat()
+        }
+      }
+    }, 30000) // Check every 30 seconds
+
     return () => {
+      clearInterval(authCheckInterval)
       if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
       if (healthCheckRef.current) clearTimeout(healthCheckRef.current)
+      // Cleanup socket connection
+      socketManager.disconnect()
     }
   }, [])
 
@@ -90,6 +111,12 @@ export default function EnhancedFloatingChat() {
   const initializeChat = useCallback(async () => {
     try {
       setError(null)
+      // Check if token is still valid before connecting
+      if (!isAuthenticated()) {
+        setAuthenticated(false)
+        setIsGuest(true)
+        return
+      }
       await connectToChat()
       await loadChatRooms()
       startHealthCheck()
@@ -111,6 +138,7 @@ export default function EnhancedFloatingChat() {
 
       // Listen for connection events
       socket.on('connect', () => {
+        console.log('Enhanced chat connected')
         setConnectionState({
           status: 'connected',
           lastConnected: Date.now(),
@@ -119,12 +147,16 @@ export default function EnhancedFloatingChat() {
         setError(null)
       })
 
-      socket.on('disconnect', () => {
+      socket.on('disconnect', (reason) => {
+        console.log('Enhanced chat disconnected:', reason)
         setConnectionState(prev => ({ ...prev, status: 'disconnected' }))
-        scheduleReconnect()
+        if (reason !== 'io client disconnect') {
+          scheduleReconnect()
+        }
       })
 
       socket.on('connect_error', (error) => {
+        console.error('Enhanced chat connection error:', error)
         setConnectionState(prev => ({ 
           ...prev, 
           status: 'error',
@@ -188,37 +220,91 @@ export default function EnhancedFloatingChat() {
       })
 
       if (response.ok) {
-        const rooms: ChatRoom[] = await response.json()
+        const data = await response.json()
+        // Ensure data is always an array with proper validation
+        let rooms: ChatRoom[] = []
+        if (Array.isArray(data)) {
+          rooms = data.filter(room => room && room._id)
+        } else if (data && typeof data === 'object' && Array.isArray(data.rooms)) {
+          rooms = data.rooms.filter(room => room && room._id)
+        } else {
+          console.warn('Invalid chat rooms data format:', data)
+          rooms = []
+        }
+        
         setHasChats(rooms.length > 0)
         
         const unreadCount = rooms.reduce((total, room) => 
           total + (room.unreadCount || 0), 0
         )
         setTotalUnread(unreadCount)
+      } else {
+        console.warn('Failed to fetch chat rooms:', response.status)
+        setHasChats(false)
+        setTotalUnread(0)
       }
     } catch (err) {
       console.error('Failed to load chat rooms:', err)
+      setHasChats(false)
+      setTotalUnread(0)
     }
   }, [])
 
-  // Show browser notification
+  // Show browser notification with better error handling
   const showNotification = useCallback((message: any) => {
-    if (!notificationsEnabled) return
-
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('New Message', {
-        body: message.content,
-        icon: '/favicon.ico',
-        tag: 'chat-message'
-      })
+    if (!notificationsEnabled || !('Notification' in window)) return
+    
+    if (Notification.permission === 'granted') {
+      try {
+        const notification = new Notification('New Message', {
+          body: message.content.substring(0, 100), // Limit length
+          icon: '/favicon.ico',
+          tag: 'chat-message',
+          requireInteraction: false,
+          silent: false
+        })
+        
+        // Auto-close after 5 seconds
+        setTimeout(() => notification.close(), 5000)
+        
+        // Handle click to focus chat
+        notification.onclick = () => {
+          window.focus()
+          setIsOpen(true)
+          notification.close()
+        }
+      } catch (error) {
+        console.error('Failed to show notification:', error)
+      }
     }
   }, [notificationsEnabled])
 
-  // Request notification permission
+  // Request notification permission with better UX
   const requestNotificationPermission = useCallback(async () => {
-    if ('Notification' in window) {
+    if (!('Notification' in window)) {
+      console.log('Notifications not supported')
+      return
+    }
+    
+    if (Notification.permission === 'granted') {
+      setNotificationsEnabled(true)
+      return
+    }
+    
+    if (Notification.permission === 'denied') {
+      setNotificationsEnabled(false)
+      return
+    }
+    
+    try {
       const permission = await Notification.requestPermission()
       setNotificationsEnabled(permission === 'granted')
+      if (permission === 'denied') {
+        console.log('Notification permission denied')
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error)
+      setNotificationsEnabled(false)
     }
   }, [])
 
@@ -266,15 +352,15 @@ export default function EnhancedFloatingChat() {
     setTimeout(() => setError(null), 3000)
   }, [])
 
-  // Responsive sizing
+  // Responsive sizing with mobile-first approach
   const getChatDimensions = () => {
     if (isMaximized) {
-      return 'w-96 h-[600px] md:w-[500px] md:h-[700px]'
+      return 'w-full h-full sm:w-96 sm:h-[600px] md:w-[500px] md:h-[700px] fixed sm:relative inset-0 sm:inset-auto'
     }
     if (isMinimized) {
-      return 'w-80 h-12'
+      return 'w-72 sm:w-80 h-12'
     }
-    return 'w-80 h-96 md:w-96 md:h-[500px]'
+    return 'w-full h-[400px] sm:w-80 sm:h-96 md:w-96 md:h-[500px] max-w-sm sm:max-w-none'
   }
 
   // Don't render if no chats and not authenticated (unless error)
@@ -297,15 +383,16 @@ export default function EnhancedFloatingChat() {
                   requestNotificationPermission()
                 }
               }}
-              className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50 p-0 transition-all duration-300 ${
+              className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-xl z-50 p-0 transition-all duration-300 border-2 border-white touch-manipulation ${
                 connectionState.status === 'connected' 
-                  ? 'bg-blue-600 hover:bg-blue-700' 
-                  : 'bg-gray-500 hover:bg-gray-600'
+                  ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white' 
+                  : 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white'
               }`}
+              style={{ backgroundColor: connectionState.status === 'connected' ? '#2563eb' : '#4b5563' }}
               aria-label="Open chat"
             >
               <div className="relative">
-                <MessageCircle className="w-6 h-6 text-white" />
+                <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 {totalUnread > 0 && (
                   <Badge 
                     className="absolute -top-2 -right-2 w-5 h-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs"
@@ -333,7 +420,7 @@ export default function EnhancedFloatingChat() {
       {/* Chat Window */}
       {isOpen && (
         <div className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${getChatDimensions()}`}>
-          <Card className="h-full shadow-xl border-2 flex flex-col">
+          <Card className="h-full shadow-xl border-2 flex flex-col bg-white" style={{ backgroundColor: '#ffffff' }}>
             {/* Header */}
             <CardHeader className="p-3 bg-blue-600 text-white rounded-t-lg flex-shrink-0">
               <div className="flex items-center justify-between">

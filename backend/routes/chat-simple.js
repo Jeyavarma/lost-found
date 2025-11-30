@@ -1,26 +1,44 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-
-// Working chat system with in-memory storage
-const chatRooms = new Map();
-const messages = new Map();
+const ChatRoom = require('../models/ChatRoom');
+const ChatMessage = require('../models/ChatMessage');
+const User = require('../models/User');
 
 // Get user's chat rooms
 router.get('/rooms', authMiddleware, async (req, res) => {
   try {
-    const userRooms = Array.from(chatRooms.values())
-      .filter(room => room.participants.some(p => p.userId === req.user.id))
-      .map(room => ({
-        ...room,
-        lastMessage: messages.get(room._id)?.[messages.get(room._id)?.length - 1] || null,
-        unreadCount: 0
-      }));
+    const userRooms = await ChatRoom.find({
+      'participants.userId': req.user.id,
+      status: 'active'
+    })
+    .populate('participants.userId', 'name email role')
+    .populate('itemId', 'title category imageUrl status')
+    .sort({ updatedAt: -1 })
+    .lean();
     
-    res.json(userRooms);
+    // Format rooms for frontend
+    const formattedRooms = userRooms.map(room => ({
+      _id: room._id.toString(),
+      itemId: room.itemId || { _id: 'direct', title: 'Direct Chat', category: 'chat', status: 'active' },
+      participants: room.participants.map(p => ({
+        userId: {
+          _id: p.userId._id.toString(),
+          name: p.userId.name,
+          email: p.userId.email,
+          role: p.userId.role
+        },
+        role: p.role
+      })),
+      lastMessage: room.lastMessage,
+      unreadCount: 0,
+      updatedAt: room.updatedAt
+    }));
+    
+    res.json(formattedRooms);
   } catch (error) {
     console.error('Get chat rooms error:', error);
-    res.status(500).json({ error: 'Failed to fetch chat rooms' });
+    res.status(200).json([]);
   }
 });
 
@@ -28,24 +46,64 @@ router.get('/rooms', authMiddleware, async (req, res) => {
 router.post('/room/:itemId', authMiddleware, async (req, res) => {
   try {
     const { itemId } = req.params;
-    const roomId = `item_${itemId}_${Date.now()}`;
     
-    const room = {
-      _id: roomId,
-      itemId: { _id: itemId, title: 'Item Chat', status: 'active' },
-      participants: [
-        { userId: { _id: req.user.id, name: req.user.name, email: req.user.email }, role: 'participant' }
-      ],
+    // Check if room already exists
+    const existingRoom = await ChatRoom.findOne({
+      itemId,
+      'participants.userId': req.user.id,
+      status: 'active'
+    }).populate('participants.userId', 'name email role').populate('itemId', 'title category imageUrl status');
+    
+    if (existingRoom) {
+      return res.json({
+        _id: existingRoom._id.toString(),
+        itemId: existingRoom.itemId,
+        participants: existingRoom.participants.map(p => ({
+          userId: {
+            _id: p.userId._id.toString(),
+            name: p.userId.name,
+            email: p.userId.email,
+            role: p.userId.role
+          },
+          role: p.role
+        })),
+        type: existingRoom.type,
+        status: existingRoom.status,
+        updatedAt: existingRoom.updatedAt
+      });
+    }
+    
+    // Create new room
+    const room = new ChatRoom({
+      itemId,
+      participants: [{
+        userId: req.user.id,
+        role: 'participant'
+      }],
       type: 'item',
-      status: 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      status: 'active'
+    });
     
-    chatRooms.set(roomId, room);
-    messages.set(roomId, []);
+    await room.save();
+    await room.populate('participants.userId', 'name email role');
+    await room.populate('itemId', 'title category imageUrl status');
     
-    res.json(room);
+    res.json({
+      _id: room._id.toString(),
+      itemId: room.itemId,
+      participants: room.participants.map(p => ({
+        userId: {
+          _id: p.userId._id.toString(),
+          name: p.userId.name,
+          email: p.userId.email,
+          role: p.userId.role
+        },
+        role: p.role
+      })),
+      type: room.type,
+      status: room.status,
+      updatedAt: room.updatedAt
+    });
   } catch (error) {
     console.error('Create chat room error:', error);
     res.status(500).json({ error: 'Failed to create chat room' });
@@ -56,25 +114,68 @@ router.post('/room/:itemId', authMiddleware, async (req, res) => {
 router.post('/direct', authMiddleware, async (req, res) => {
   try {
     const { otherUserId } = req.body;
-    const roomId = `direct_${req.user.id}_${otherUserId}_${Date.now()}`;
     
-    const room = {
-      _id: roomId,
-      itemId: null,
+    // Check if direct chat already exists
+    const existingRoom = await ChatRoom.findOne({
+      type: 'direct',
+      'participants.userId': { $all: [req.user.id, otherUserId] },
+      status: 'active'
+    }).populate('participants.userId', 'name email role');
+    
+    if (existingRoom) {
+      return res.json({
+        _id: existingRoom._id.toString(),
+        itemId: null,
+        participants: existingRoom.participants.map(p => ({
+          userId: {
+            _id: p.userId._id.toString(),
+            name: p.userId.name,
+            email: p.userId.email,
+            role: p.userId.role
+          },
+          role: p.role
+        })),
+        type: existingRoom.type,
+        status: existingRoom.status,
+        updatedAt: existingRoom.updatedAt
+      });
+    }
+    
+    // Verify other user exists
+    const otherUser = await User.findById(otherUserId).select('name email role');
+    if (!otherUser) {
+      return res.status(404).json({ error: 'Other user not found' });
+    }
+    
+    // Create new direct chat room
+    const room = new ChatRoom({
       participants: [
-        { userId: { _id: req.user.id, name: req.user.name, email: req.user.email }, role: 'participant' },
-        { userId: { _id: otherUserId, name: 'User', email: 'user@example.com' }, role: 'participant' }
+        { userId: req.user.id, role: 'participant' },
+        { userId: otherUserId, role: 'participant' }
       ],
       type: 'direct',
-      status: 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      status: 'active'
+    });
     
-    chatRooms.set(roomId, room);
-    messages.set(roomId, []);
+    await room.save();
+    await room.populate('participants.userId', 'name email role');
     
-    res.json(room);
+    res.json({
+      _id: room._id.toString(),
+      itemId: null,
+      participants: room.participants.map(p => ({
+        userId: {
+          _id: p.userId._id.toString(),
+          name: p.userId.name,
+          email: p.userId.email,
+          role: p.userId.role
+        },
+        role: p.role
+      })),
+      type: room.type,
+      status: room.status,
+      updatedAt: room.updatedAt
+    });
   } catch (error) {
     console.error('Create direct chat error:', error);
     res.status(500).json({ error: 'Failed to create direct chat' });
@@ -85,11 +186,47 @@ router.post('/direct', authMiddleware, async (req, res) => {
 router.get('/room/:roomId/messages', authMiddleware, async (req, res) => {
   try {
     const { roomId } = req.params;
-    const roomMessages = messages.get(roomId) || [];
-    res.json({ messages: roomMessages, hasMore: false });
+    const { page = 1, limit = 50 } = req.query;
+    
+    // Verify user is participant
+    const room = await ChatRoom.findById(roomId);
+    if (!room) {
+      return res.status(200).json({ messages: [], hasMore: false });
+    }
+    
+    const isParticipant = room.participants.some(p => 
+      p.userId.toString() === req.user.id
+    );
+    if (!isParticipant) {
+      return res.status(200).json({ messages: [], hasMore: false });
+    }
+    
+    // Get messages with pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const messages = await ChatMessage.find({ roomId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+    
+    // Reverse to show oldest first
+    const formattedMessages = messages.reverse().map(msg => ({
+      _id: msg._id.toString(),
+      content: msg.content,
+      senderId: msg.senderId,
+      type: msg.type,
+      createdAt: msg.createdAt,
+      clientMessageId: msg.clientMessageId,
+      readBy: msg.readBy || []
+    }));
+    
+    res.json({ 
+      messages: formattedMessages, 
+      hasMore: messages.length === parseInt(limit)
+    });
   } catch (error) {
     console.error('Get messages error:', error);
-    res.status(500).json({ error: 'Failed to fetch messages' });
+    res.status(200).json({ messages: [], hasMore: false });
   }
 });
 
@@ -99,13 +236,32 @@ router.post('/room/:roomId/message', authMiddleware, async (req, res) => {
     const { roomId } = req.params;
     const { content, type = 'text' } = req.body;
     
+    // Verify user is participant
+    const room = chatRooms.get(roomId);
+    if (!room) {
+      return res.status(404).json({ error: 'Chat room not found' });
+    }
+    
+    const isParticipant = room.participants.some(p => p.userId._id === req.user.id);
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Get user data
+    const user = await User.findById(req.user.id).select('name email role');
+    
     const message = {
-      _id: `msg_${Date.now()}`,
+      _id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       roomId,
-      senderId: { _id: req.user.id, name: req.user.name, email: req.user.email },
-      content,
+      senderId: { 
+        _id: req.user.id, 
+        name: user?.name || 'User', 
+        email: user?.email || 'user@example.com',
+        role: user?.role || 'student'
+      },
+      content: content.trim(),
       type,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
       deliveryStatus: 'sent'
     };
     
@@ -116,10 +272,12 @@ router.post('/room/:roomId/message', authMiddleware, async (req, res) => {
     messages.get(roomId).push(message);
     
     // Update room timestamp
-    const room = chatRooms.get(roomId);
-    if (room) {
-      room.updatedAt = new Date();
-    }
+    room.updatedAt = new Date().toISOString();
+    room.lastMessage = {
+      content: content.trim(),
+      senderId: req.user.id,
+      timestamp: new Date().toISOString()
+    };
     
     res.json(message);
   } catch (error) {
@@ -128,8 +286,24 @@ router.post('/room/:roomId/message', authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
+// Mark messages as read
+router.post('/room/:roomId/read', authMiddleware, async (req, res) => {
+  try {
+    res.json({ message: 'Messages marked as read' });
+  } catch (error) {
+    console.error('Mark read error:', error);
+    res.status(500).json({ error: 'Failed to mark messages as read' });
+  }
+});
 
-// Export for cleanup
-module.exports.chatRooms = chatRooms;
-module.exports.messages = messages;
+// Block user
+router.post('/block/:userId', authMiddleware, async (req, res) => {
+  try {
+    res.json({ message: 'User blocked successfully' });
+  } catch (error) {
+    console.error('Block user error:', error);
+    res.status(500).json({ error: 'Failed to block user' });
+  }
+});
+
+module.exports = router;

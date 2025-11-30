@@ -64,13 +64,22 @@ export default function ChatList({ onSelectRoom, currentUserId }: ChatListProps)
 
       if (response.ok) {
         const data = await response.json()
-        // Ensure data is an array
-        setRooms(Array.isArray(data) ? data : [])
+        // Ensure data is always an array with proper validation
+        if (Array.isArray(data)) {
+          setRooms(data.filter(room => room && room._id))
+        } else if (data && typeof data === 'object' && Array.isArray(data.rooms)) {
+          setRooms(data.rooms.filter(room => room && room._id))
+        } else {
+          console.warn('Invalid chat rooms data format:', data)
+          setRooms([])
+        }
       } else {
+        console.warn('Failed to fetch chat rooms:', response.status)
         setRooms([])
       }
     } catch (error) {
       console.error('Failed to load chat rooms:', error)
+      setRooms([])
     } finally {
       setLoading(false)
     }

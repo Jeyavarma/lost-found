@@ -4,7 +4,7 @@ const chatRoomSchema = new mongoose.Schema({
   itemId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Item',
-    required: true
+    default: null
   },
   participants: [{
     userId: {
@@ -12,40 +12,38 @@ const chatRoomSchema = new mongoose.Schema({
       ref: 'User',
       required: true
     },
+    role: {
+      type: String,
+      enum: ['participant', 'owner'],
+      default: 'participant'
+    },
     joinedAt: {
       type: Date,
       default: Date.now
-    },
-    role: {
-      type: String,
-      enum: ['owner', 'finder', 'admin'],
-      required: true
     }
   }],
-  lastMessage: {
-    content: String,
-    senderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    timestamp: Date
+  type: {
+    type: String,
+    enum: ['item', 'direct'],
+    required: true
   },
   status: {
     type: String,
-    enum: ['active', 'closed', 'archived'],
+    enum: ['active', 'archived', 'blocked'],
     default: 'active'
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  lastMessage: {
+    content: String,
+    senderId: mongoose.Schema.Types.ObjectId,
+    timestamp: Date
   }
+}, {
+  timestamps: true
 });
 
-chatRoomSchema.index({ itemId: 1 });
+// Indexes for efficient queries
 chatRoomSchema.index({ 'participants.userId': 1 });
+chatRoomSchema.index({ itemId: 1 });
+chatRoomSchema.index({ type: 1, status: 1 });
 
 module.exports = mongoose.model('ChatRoom', chatRoomSchema);

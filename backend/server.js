@@ -13,7 +13,7 @@ const notificationRoutes = require('./routes/notifications');
 const feedbackRoutes = require('./routes/feedback');
 const healthRoutes = require('./routes/health');
 const adminRoutes = require('./routes/admin');
-const { authLimiter, apiLimiter, securityHeaders, csrfProtection } = require('./middleware/security');
+const { authLimiter, apiLimiter, chatLimiter, securityHeaders, csrfProtection } = require('./middleware/security');
 
 const app = express();
 const server = http.createServer(app);
@@ -145,12 +145,28 @@ app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
 app.use('/api/messaging', apiLimiter, require('./routes/messaging'));
 app.use('/api/system-flow', apiLimiter, require('./routes/system-flow'));
 app.use('/api/visual-ai', apiLimiter, require('./routes/visual-ai'));
-app.use('/api/chat', apiLimiter, require('./routes/chat'));
+app.use('/api/chat', require('./middleware/security').chatLimiter, require('./routes/chat-simple'));
 app.use('/api/presence', apiLimiter, require('./routes/presence'));
 
-// Socket.io chat handler
-const { handleConnection } = require('./socket/chatHandler');
-handleConnection(io);
+// MongoDB-based chat persistence is now handled automatically
+console.log('Using MongoDB for chat persistence');
+
+// Socket.io chat handler - use simple version for reliability
+try {
+  const { handleConnection } = require('./socket/chatHandler-simple');
+  handleConnection(io);
+  console.log('Using simple chat handler');
+} catch (error) {
+  console.error('Failed to load simple chat handler:', error.message);
+  // Fallback to main handler
+  try {
+    const { handleConnection } = require('./socket/chatHandler');
+    handleConnection(io);
+    console.log('Using main chat handler as fallback');
+  } catch (fallbackError) {
+    console.error('All chat handlers failed:', fallbackError.message);
+  }
+}
 
 // Start message cleanup job (with error handling)
 try {

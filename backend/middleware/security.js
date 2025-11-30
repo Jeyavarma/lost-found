@@ -27,6 +27,16 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Chat-specific rate limiter (more permissive)
+const chatLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // 30 messages per minute
+  message: { error: 'Too many messages. Please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV !== 'production'
+});
+
 // Security headers middleware
 const securityHeaders = (req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -66,4 +76,4 @@ const csrfProtection = (req, res, next) => {
   next();
 };
 
-module.exports = { authLimiter, apiLimiter, securityHeaders, csrfProtection };
+module.exports = { authLimiter, apiLimiter, chatLimiter, securityHeaders, csrfProtection };

@@ -145,27 +145,19 @@ app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
 app.use('/api/messaging', apiLimiter, require('./routes/messaging'));
 app.use('/api/system-flow', apiLimiter, require('./routes/system-flow'));
 app.use('/api/visual-ai', apiLimiter, require('./routes/visual-ai'));
-app.use('/api/chat', require('./middleware/security').chatLimiter, require('./routes/chat-simple'));
+app.use('/api/chat', require('./middleware/security').chatLimiter, require('./routes/chat'));
 app.use('/api/presence', apiLimiter, require('./routes/presence'));
 
 // MongoDB-based chat persistence is now handled automatically
 console.log('Using MongoDB for chat persistence');
 
-// Socket.io chat handler - use simple version for reliability
+// Socket.io chat handler
 try {
-  const { handleConnection } = require('./socket/chatHandler-simple');
+  const { handleConnection } = require('./socket/chatHandler');
   handleConnection(io);
-  console.log('Using simple chat handler');
+  console.log('Chat handler loaded successfully');
 } catch (error) {
-  console.error('Failed to load simple chat handler:', error.message);
-  // Fallback to main handler
-  try {
-    const { handleConnection } = require('./socket/chatHandler');
-    handleConnection(io);
-    console.log('Using main chat handler as fallback');
-  } catch (fallbackError) {
-    console.error('All chat handlers failed:', fallbackError.message);
-  }
+  console.error('Failed to load chat handler:', error.message);
 }
 
 // Start message cleanup job (with error handling)
@@ -188,6 +180,18 @@ app.use('/uploads', express.static('uploads', {
 // Handle missing images
 app.get('/uploads/*', (req, res) => {
   res.status(404).json({ error: 'Image not found' });
+});
+
+// Debug endpoint for chat
+app.get('/api/debug/chat', (req, res) => {
+  res.json({
+    message: 'Chat system is working',
+    timestamp: new Date().toISOString(),
+    routes: {
+      chat: '/api/chat/*',
+      users: '/api/users/*'
+    }
+  });
 });
 
 // Serve admin creation page

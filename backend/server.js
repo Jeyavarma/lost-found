@@ -182,15 +182,90 @@ app.get('/uploads/*', (req, res) => {
   res.status(404).json({ error: 'Image not found' });
 });
 
-// Debug endpoint for chat
+// Temporary inline chat routes for immediate functionality
+const authMiddleware = require('./middleware/authMiddleware');
+const User = require('./models/User');
+
+// Simple in-memory storage
+const tempChatRooms = new Map();
+const tempMessages = new Map();
+
+// Chat routes
+app.get('/api/chat/rooms', authMiddleware, async (req, res) => {
+  try {
+    const userRooms = Array.from(tempChatRooms.values())
+      .filter(room => room.participants.some(p => p.userId._id === req.user.id))
+      .map(room => ({ ...room, lastMessage: null, unreadCount: 0 }));
+    res.json(userRooms);
+  } catch (error) {
+    res.status(200).json([]);
+  }
+});
+
+app.post('/api/chat/direct', authMiddleware, async (req, res) => {
+  try {
+    const { otherUserId } = req.body;
+    const roomId = `direct_${req.user.id}_${otherUserId}_${Date.now()}`;
+    
+    const [currentUser, otherUser] = await Promise.all([
+      User.findById(req.user.id).select('name email role'),
+      User.findById(otherUserId).select('name email role')
+    ]);
+    
+    if (!otherUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const room = {
+      _id: roomId,
+      itemId: null,
+      participants: [
+        { userId: { _id: req.user.id, name: currentUser?.name || 'User', email: currentUser?.email || '', role: currentUser?.role || 'student' }, role: 'participant' },
+        { userId: { _id: otherUserId, name: otherUser.name, email: otherUser.email, role: otherUser.role }, role: 'participant' }
+      ],
+      type: 'direct',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    tempChatRooms.set(roomId, room);
+    tempMessages.set(roomId, []);
+    res.json(room);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create chat' });
+  }
+});
+
+app.get('/api/users/search', authMiddleware, async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.trim().length < 2) {
+      return res.status(400).json({ error: 'Search query too short' });
+    }
+    
+    const searchRegex = new RegExp(q.trim(), 'i');
+    const users = await User.find({
+      $and: [
+        { _id: { $ne: req.user.id } },
+        { $or: [{ name: searchRegex }, { email: searchRegex }] }
+      ]
+    }).select('name email role').limit(20).sort({ name: 1 });
+    
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+// Debug endpoint
 app.get('/api/debug/chat', (req, res) => {
   res.json({
     message: 'Chat system is working',
     timestamp: new Date().toISOString(),
-    routes: {
-      chat: '/api/chat/*',
-      users: '/api/users/*'
-    }
+    routes: { chat: '/api/chat/*', users: '/api/users/*' },
+    rooms: tempChatRooms.size,
+    messages: tempMessages.size
   });
 });
 

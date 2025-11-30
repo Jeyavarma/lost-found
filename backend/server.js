@@ -202,6 +202,39 @@ app.get('/api/chat/rooms', authMiddleware, async (req, res) => {
   }
 });
 
+app.post('/api/chat/rooms', authMiddleware, async (req, res) => {
+  try {
+    const { itemId } = req.body;
+    const roomId = `item_${itemId}_${Date.now()}`;
+    
+    const user = await User.findById(req.user.id).select('name email role');
+    
+    const room = {
+      _id: roomId,
+      itemId: { _id: itemId, title: 'Item Chat', status: 'active' },
+      participants: [{
+        userId: {
+          _id: req.user.id,
+          name: user?.name || 'User',
+          email: user?.email || '',
+          role: user?.role || 'student'
+        },
+        role: 'participant'
+      }],
+      type: 'item',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    tempChatRooms.set(roomId, room);
+    tempMessages.set(roomId, []);
+    res.json(room);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create room' });
+  }
+});
+
 app.post('/api/chat/direct', authMiddleware, async (req, res) => {
   try {
     const { otherUserId } = req.body;
@@ -255,6 +288,48 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+app.get('/api/chat/room/:roomId/messages', authMiddleware, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const roomMessages = tempMessages.get(roomId) || [];
+    res.json({ messages: roomMessages, hasMore: false });
+  } catch (error) {
+    res.status(200).json({ messages: [], hasMore: false });
+  }
+});
+
+app.post('/api/chat/room/:roomId/message', authMiddleware, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { content, type = 'text' } = req.body;
+    
+    const user = await User.findById(req.user.id).select('name email role');
+    
+    const message = {
+      _id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      roomId,
+      senderId: {
+        _id: req.user.id,
+        name: user?.name || 'User',
+        email: user?.email || '',
+        role: user?.role || 'student'
+      },
+      content: content.trim(),
+      type,
+      createdAt: new Date().toISOString()
+    };
+    
+    if (!tempMessages.has(roomId)) {
+      tempMessages.set(roomId, []);
+    }
+    tempMessages.get(roomId).push(message);
+    
+    res.json(message);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 

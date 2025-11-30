@@ -396,12 +396,11 @@ export default function EnhancedFloatingChat() {
                   requestNotificationPermission()
                 }
               }}
-              className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-xl z-50 p-0 transition-all duration-300 border-2 border-white touch-manipulation ${
-                connectionState.status === 'connected' 
-                  ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white' 
-                  : 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white'
-              }`}
-              style={{ backgroundColor: connectionState.status === 'connected' ? '#2563eb' : '#4b5563' }}
+              className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-xl z-50 p-0 transition-all duration-300 border-2 border-white touch-manipulation text-white`}
+              style={{ 
+                backgroundColor: connectionState.status === 'connected' ? '#2563eb' : '#4b5563',
+                opacity: 1
+              }}
               aria-label="Open chat"
             >
               <div className="relative">
@@ -433,7 +432,7 @@ export default function EnhancedFloatingChat() {
       {/* Chat Window */}
       {isOpen && (
         <div className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${getChatDimensions()}`}>
-          <Card className="h-full shadow-xl border-2 flex flex-col bg-white" style={{ backgroundColor: '#ffffff' }}>
+          <Card className="h-full shadow-xl border-2 flex flex-col" style={{ backgroundColor: '#ffffff', opacity: 1 }}>
             {/* Header */}
             <CardHeader className="p-3 bg-blue-600 text-white rounded-t-lg flex-shrink-0">
               <div className="flex items-center justify-between">

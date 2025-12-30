@@ -9,7 +9,12 @@
     "seed": "node scripts/seedData.js",
     "seed-prod": "node seed-production.js",
     "test": "node test-auth.js",
-    "autotest": "node auto-test.js"
+    "autotest": "node auto-test.js",
+    "add-indexes": "node scripts/add-indexes.js",
+    "security-audit": "node scripts/security-audit.js",
+    "security-fix": "npm audit fix && npm update",
+    "performance-test": "node scripts/performance-test.js",
+    "optimize": "npm run security-audit && npm run add-indexes"
   },
   "dependencies": {
     "@tensorflow-models/mobilenet": "^2.1.1",
@@ -17,7 +22,7 @@
     "axios": "^1.12.2",
     "bcryptjs": "^2.4.3",
     "canvas": "^3.2.0",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.8.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "csrf": "^3.1.0",
@@ -28,7 +33,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
     "multer": "^1.4.5-lts.1",
-    "multer-storage-cloudinary": "^4.0.0",
+    "multer-storage-cloudinary": "^2.2.1",
     "nodemailer": "^7.0.9",
     "sharp": "^0.33.5",
     "socket.io": "^4.8.1",

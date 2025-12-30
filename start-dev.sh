@@ -1,57 +1,45 @@
 #!/bin/bash
-set -e  # Exit on any error
 
-# Function to cleanup processes
-cleanup() {
-    echo "Stopping servers..."
-    if [ ! -z "$BACKEND_PID" ]; then
-        kill $BACKEND_PID 2>/dev/null || true
-    fi
-    if [ ! -z "$FRONTEND_PID" ]; then
-        kill $FRONTEND_PID 2>/dev/null || true
-    fi
-    exit
-}
-
-# Trap SIGINT and SIGTERM
-trap cleanup SIGINT SIGTERM EXIT
+echo "🚀 Starting MCC Lost & Found Development Environment..."
 
 # Check if backend directory exists
 if [ ! -d "backend" ]; then
-    echo "Error: backend directory not found"
+    echo "❌ Backend directory not found!"
     exit 1
 fi
 
-# Start the backend server
-echo "Starting backend server..."
-cd backend
-npm run dev &
-BACKEND_PID=$!
-if ! kill -0 $BACKEND_PID 2>/dev/null; then
-    echo "Error: Failed to start backend server"
+# Check if frontend directory exists  
+if [ ! -d "frontend" ]; then
+    echo "❌ Frontend directory not found!"
     exit 1
 fi
+
+# Start backend in background
+echo "📡 Starting backend server..."
+cd backend && npm run dev &
 BACKEND_PID=$!
-cd ..
 
 # Wait for backend to start
-echo "Waiting for backend to initialize..."
-sleep 5
+sleep 3
 
-# Start the frontend server
-echo "Starting frontend server..."
-npm run dev &
+# Start frontend
+echo "🌐 Starting frontend server..."
+cd ../frontend && npm run dev &
 FRONTEND_PID=$!
-if ! kill -0 $FRONTEND_PID 2>/dev/null; then
-    echo "Error: Failed to start frontend server"
-    cleanup
-    exit 1
-fi
 
-echo "✅ Both servers are running!"
-echo "📱 Frontend: http://localhost:3002"
-echo "🔧 Backend: http://localhost:5000"
+echo "✅ Both servers started!"
+echo "📡 Backend: http://localhost:5000"
+echo "🌐 Frontend: http://localhost:3002"
 echo "⏹️  Press Ctrl+C to stop both servers"
+
+# Function to cleanup on exit
+cleanup() {
+    echo "🛑 Stopping servers..."
+    kill $BACKEND_PID $FRONTEND_PID 2>/dev/null
+    exit
+}
+
+trap cleanup SIGINT SIGTERM
 
 # Wait for processes
 wait

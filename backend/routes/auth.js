@@ -7,6 +7,9 @@ const OTP = require('../models/OTP');
 const LoginAttempt = require('../models/LoginAttempt');
 const UserActivity = require('../models/UserActivity');
 const emailService = require('../services/emailService');
+const config = require('../config/environment');
+const { SessionManager, blacklistToken } = require('../middleware/sessionManager');
+const { passwordResetLimiter } = require('../middleware/security');
 const router = express.Router();
 
 // Input sanitization helper
@@ -20,9 +23,32 @@ const isValidEmail = (email) => {
   return validator.isEmail(email) && email.length <= 254;
 };
 
-// Password validation helper
+// Strong password validation helper
 const isValidPassword = (password) => {
-  return password && password.length >= 6 && password.length <= 128;
+  if (!password || password.length < 8 || password.length > 128) return false;
+  
+  // Must contain at least one uppercase, lowercase, number, and special character
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  
+  return hasUpper && hasLower && hasNumber && hasSpecial;
+};
+
+// Password strength checker
+const getPasswordStrength = (password) => {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
+  
+  if (score < 3) return 'weak';
+  if (score < 5) return 'medium';
+  return 'strong';
 };
 
 router.post('/login', async (req, res) => {
@@ -160,7 +186,7 @@ router.post('/login', async (req, res) => {
     user.loginAttempts = 0; // Reset failed attempts
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, config.JWT_SECRET, { expiresIn: '7d' });
     
     res.json({
       token,
@@ -198,9 +224,11 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Invalid email format' });
     }
     
-    // Validate password
+    // Validate password strength
     if (!isValidPassword(password)) {
-      return res.status(400).json({ message: 'Password must be 6-128 characters long' });
+      return res.status(400).json({ 
+        message: 'Password must be 8-128 characters with uppercase, lowercase, number, and special character' 
+      });
     }
     
     // Validate name length
@@ -235,7 +263,7 @@ router.post('/register', async (req, res) => {
       console.error('Failed to send welcome email:', err)
     );
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, config.JWT_SECRET, { expiresIn: '7d' });
     
     res.status(201).json({
       token,
@@ -249,7 +277,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', passwordResetLimiter, async (req, res) => {
   try {
     let { email } = req.body;
     
@@ -297,7 +325,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', passwordResetLimiter, async (req, res) => {
   try {
     let { email, otp, password } = req.body;
     
@@ -315,7 +343,9 @@ router.post('/reset-password', async (req, res) => {
     }
     
     if (!isValidPassword(password)) {
-      return res.status(400).json({ error: 'Password must be 6-128 characters long' });
+      return res.status(400).json({ 
+        error: 'Password must be 8-128 characters with uppercase, lowercase, number, and special character' 
+      });
     }
     
     if (otp.length !== 6) {
@@ -370,7 +400,7 @@ router.post('/create-first-admin', async (req, res) => {
     });
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, config.JWT_SECRET, { expiresIn: '7d' });
     
     res.status(201).json({
       message: 'First admin account created successfully',
@@ -393,7 +423,7 @@ router.get('/validate', async (req, res) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = SessionManager.verifyToken(token);
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
@@ -411,6 +441,21 @@ router.get('/validate', async (req, res) => {
     });
   } catch (error) {
     res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+// Logout endpoint
+router.post('/logout', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (token) {
+      blacklistToken(token);
+    }
+    
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Logout failed' });
   }
 });
 

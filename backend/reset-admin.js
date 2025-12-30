@@ -17,7 +17,7 @@ const resetAdminPassword = async () => {
     }
 
     // Set new password
-    const newPassword = 'admin123';
+    const newPassword = process.env.ADMIN_RESET_PASSWORD || Math.random().toString(36).slice(-12) + 'Admin@' + new Date().getFullYear();
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     
     admin.password = hashedPassword;
@@ -25,7 +25,7 @@ const resetAdminPassword = async () => {
 
     console.log('Admin password reset successfully');
     console.log('Email: admin@mcc.edu.in');
-    console.log('Password: admin123');
+    console.log('Password:', newPassword);
     
     process.exit(0);
   } catch (error) {

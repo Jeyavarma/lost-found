@@ -1,7 +1,0 @@
-
-> lost-found-backend@1.0.0 start
-> node server.js
-
-Server running on port 5000
-Connected to MongoDB
-Killed

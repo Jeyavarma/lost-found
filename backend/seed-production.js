@@ -17,7 +17,7 @@ const seedData = async () => {
     const adminUser = new User({
       name: 'Admin User',
       email: 'admin@mcc.edu',
-      password: 'admin123',
+      password: process.env.ADMIN_PASSWORD || Math.random().toString(36).slice(-12) + 'Admin@' + new Date().getFullYear(),
       role: 'admin',
       department: 'Administration'
     });
@@ -30,7 +30,7 @@ const seedData = async () => {
       const user = new User({
         name: `Student ${i}`,
         email: `student${i}@mcc.edu`,
-        password: 'password123',
+        password: process.env.STUDENT_PASSWORD || Math.random().toString(36).slice(-8) + '123',
         role: 'student',
         department: i % 2 === 0 ? 'Computer Science' : 'Mathematics',
         year: ['I', 'II', 'III', 'IV'][i % 4],

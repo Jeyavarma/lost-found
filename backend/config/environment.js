@@ -4,7 +4,7 @@ const config = {
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/lost-found',
   
   // JWT
-  JWT_SECRET: process.env.JWT_SECRET || 'fallback-secret-key-change-in-production',
+  JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   
   // Server
@@ -36,20 +36,39 @@ const config = {
   EMAIL_PASS: process.env.EMAIL_PASS || '',
 }
 
-// Validation
+// Enhanced validation
 const validateConfig = () => {
   const required = ['MONGODB_URI', 'JWT_SECRET']
-  const missing = required.filter(key => !config[key] || config[key] === 'fallback-secret-key-change-in-production')
+  const production = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET']
   
-  if (missing.length > 0 && config.NODE_ENV === 'production') {
-    console.error('Missing required environment variables:', missing)
+  const missing = required.filter(key => !config[key])
+  
+  if (missing.length > 0) {
+    console.error('❌ Missing required environment variables:', missing)
+    console.error('❌ Please set these in your .env file or environment')
     process.exit(1)
   }
   
-  if (config.NODE_ENV === 'production' && config.JWT_SECRET === 'fallback-secret-key-change-in-production') {
-    console.error('JWT_SECRET must be set in production')
+  // JWT Secret validation
+  if (!config.JWT_SECRET) {
+    console.error('❌ JWT_SECRET is required for security')
     process.exit(1)
   }
+  
+  if (config.JWT_SECRET.length < 32) {
+    console.error('❌ JWT_SECRET must be at least 32 characters for security')
+    process.exit(1)
+  }
+  
+  // Production-specific validation
+  if (config.NODE_ENV === 'production') {
+    const missingProd = production.filter(key => !config[key])
+    if (missingProd.length > 0) {
+      console.warn('⚠️  Missing production environment variables:', missingProd)
+    }
+  }
+  
+  console.log('✅ Environment configuration validated')
 }
 
 // Validate on load

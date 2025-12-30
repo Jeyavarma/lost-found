@@ -7,6 +7,7 @@ const UserActivity = require('../models/UserActivity');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/cloudinaryUpload');
 const { trackActivity } = require('../middleware/activityTracker');
+const config = require('../config/environment');
 const router = express.Router();
 
 // Text-based matching only - stable and effective
@@ -14,7 +15,18 @@ console.log('✅ Using text-based matching for item suggestions');
 
 router.get('/', trackActivity('search'), async (req, res) => {
   try {
-    const items = await Item.find().populate('reportedBy', 'name email').sort({ createdAt: -1 });
+    const { page = 1, limit = 20, status, category } = req.query;
+    const filter = {};
+    
+    if (status) filter.status = status;
+    if (category) filter.category = category;
+    
+    const query = Item.find(filter)
+      .populate('reportedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    const items = await req.paginate(query, parseInt(page), parseInt(limit));
     res.json(items);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -23,11 +35,12 @@ router.get('/', trackActivity('search'), async (req, res) => {
 
 router.get('/recent', async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const items = await Item.find()
       .populate('reportedBy', 'name email')
       .sort({ createdAt: -1 })
-      .limit(limit);
+      .limit(limit)
+      .lean();
     res.json(items);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -236,7 +249,7 @@ const optionalAuth = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       console.log('🔑 Token extracted, verifying...');
       
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, config.JWT_SECRET);
       console.log('✅ Token decoded, user ID:', decoded.userId || decoded.id);
       
       const userId = decoded.userId || decoded.id;
@@ -277,15 +290,18 @@ router.post('/', uploadFields, optionalAuth, trackActivity('report_lost'), async
       return res.status(400).json({ message: 'Contact name and email are required' });
     }
     
-    // Use safer email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // Use safer email validation - prevent ReDoS
+    const emailRegex = /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]{1,253}\.[a-zA-Z]{2,6}$/;
     if (!emailRegex.test(contactEmail)) {
       console.log('❌ Invalid email format:', contactEmail);
       return res.status(400).json({ message: 'Valid email address is required' });
     }
     
-    // Sanitize inputs
-    const sanitize = (str) => String(str).replace(/[<>"'&]/g, '').trim();
+    // Sanitize inputs - prevent XSS and NoSQL injection
+    const sanitize = (str) => {
+      if (typeof str !== 'string') return String(str);
+      return str.replace(/[<>"'&${}]/g, '').trim();
+    };
     const sanitizedData = {
       contactName: sanitize(contactName),
       contactEmail: sanitize(contactEmail),

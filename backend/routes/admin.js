@@ -1,4 +1,5 @@
 const express = require('express');
+const validator = require('validator');
 const router = express.Router();
 const User = require('../models/User');
 const Item = require('../models/Item');
@@ -6,6 +7,17 @@ const UserActivity = require('../models/UserActivity');
 const LoginAttempt = require('../models/LoginAttempt');
 const ItemTransaction = require('../models/ItemTransaction');
 const auth = require('../middleware/authMiddleware');
+
+// Input sanitization helper
+const sanitizeInput = (input) => {
+  if (typeof input !== 'string') return input;
+  return validator.escape(input.trim());
+};
+
+// Validate MongoDB ObjectId
+const isValidObjectId = (id) => {
+  return /^[0-9a-fA-F]{24}$/.test(id);
+};
 
 // Admin middleware
 const adminAuth = (req, res, next) => {
@@ -126,6 +138,15 @@ router.get('/flagged-items', auth, adminAuth, async (req, res) => {
 router.post('/moderate-item/:id', auth, adminAuth, async (req, res) => {
   try {
     const { action } = req.body;
+    
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid item ID' });
+    }
+    
+    if (!action || !['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ error: 'Valid action (approve/reject) required' });
+    }
+    
     const item = await Item.findById(req.params.id);
     
     if (!item) {
@@ -293,7 +314,37 @@ router.put('/items/:id', auth, adminAuth, async (req, res) => {
 // Create new user
 router.post('/users', auth, adminAuth, async (req, res) => {
   try {
-    const { name, email, password, role, phone, studentId, department, year, shift, rollNumber } = req.body;
+    let { name, email, password, role, phone, studentId, department, year, shift, rollNumber } = req.body;
+    
+    // Input validation
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email and password are required' });
+    }
+    
+    // Sanitize inputs
+    name = sanitizeInput(name);
+    email = email.toLowerCase().trim();
+    phone = phone ? sanitizeInput(phone) : undefined;
+    studentId = studentId ? sanitizeInput(studentId) : undefined;
+    department = department ? sanitizeInput(department) : undefined;
+    year = year ? sanitizeInput(year) : undefined;
+    shift = shift ? sanitizeInput(shift) : undefined;
+    rollNumber = rollNumber ? sanitizeInput(rollNumber) : undefined;
+    
+    // Validate email
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Validate password
+    if (password.length < 6 || password.length > 128) {
+      return res.status(400).json({ error: 'Password must be 6-128 characters long' });
+    }
+    
+    // Validate role
+    if (role && !['student', 'admin', 'staff'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
     
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -448,106 +499,7 @@ router.post('/claims/:itemId/:action', auth, adminAuth, async (req, res) => {
 
 
 
-// Admin: Create new user
-router.post('/users', auth, adminAuth, async (req, res) => {
-  try {
-    const { name, email, password, role, phone, studentId, department } = req.body;
-    
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
 
-    const user = new User({
-      name,
-      email,
-      password,
-      role: role || 'student',
-      phone,
-      studentId,
-      department
-    });
-    
-    await user.save();
-    res.json({ message: `${role || 'Student'} account created successfully` });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Admin: Get single user
-router.get('/users/:id', auth, adminAuth, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Admin: Update user
-router.put('/users/:id', auth, adminAuth, async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    ).select('-password');
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    res.json({ message: 'User updated successfully', user });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Admin: Delete user
-router.delete('/users/:id', auth, adminAuth, async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Admin: Reset user password
-router.post('/reset-password', auth, adminAuth, async (req, res) => {
-  try {
-    const { email, newPassword } = req.body;
-    
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    user.password = newPassword || 'MCC@2024';
-    await user.save();
-    
-    // Log activity
-    await UserActivity.create({
-      userId: req.user._id,
-      action: 'password_reset',
-      details: {
-        targetUserId: user._id,
-        metadata: { email }
-      }
-    });
-    
-    res.json({ message: 'Password reset successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Suspend/unsuspend user
 router.post('/users/:id/suspend', auth, adminAuth, async (req, res) => {

@@ -13,7 +13,14 @@ const notificationRoutes = require('./routes/notifications');
 const feedbackRoutes = require('./routes/feedback');
 const healthRoutes = require('./routes/health');
 const adminRoutes = require('./routes/admin');
-const { authLimiter, apiLimiter, chatLimiter, securityHeaders, csrfProtection } = require('./middleware/security');
+const { authLimiter, apiLimiter, chatLimiter, passwordResetLimiter, adminLimiter, securityHeaders, csrfProtection } = require('./middleware/security');
+const requestTracker = require('./middleware/requestTracker');
+const { apiVersioning } = require('./middleware/apiVersioning');
+const queryOptimizer = require('./middleware/queryOptimizer');
+const memoryMonitor = require('./middleware/memoryMonitor');
+const performanceMonitor = require('./middleware/performanceMonitor');
+const gracefulShutdown = require('./middleware/gracefulShutdown');
+const { cacheMiddleware } = require('./middleware/simpleCache');
 
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +42,17 @@ const io = socketIo(server, {
 // Trust proxy for rate limiting on Render
 app.set('trust proxy', 1);
 
+// Performance and monitoring middleware
+app.use(requestTracker);
+app.use(memoryMonitor());
+app.use(performanceMonitor());
+app.use('/api', apiVersioning);
+app.use('/api', queryOptimizer);
+
+// Cache frequently accessed endpoints
+app.use('/api/items/recent', cacheMiddleware(60000)); // 1 minute
+app.use('/api/items/events', cacheMiddleware(300000)); // 5 minutes
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -53,34 +71,47 @@ app.use(cors({
     const allowedOrigins = [
       'https://lost-found-mcc.vercel.app',
       'https://mcc-lost-found.vercel.app', 
-      'https://lost-found-79xn.onrender.com',
+      'https://lost-found-79xn.onrender.com'
+    ];
+    
+    // Development origins
+    const devOrigins = [
       'http://localhost:3000',
       'http://localhost:3002',
       'http://localhost:3001'
     ];
     
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Allow any vercel.app subdomain
-    if (origin.match(/https:\/\/.*\.vercel\.app$/)) {
-      return callback(null, true);
+    // Strict origin checking in production
+    if (config.NODE_ENV === 'production') {
+      // No origin for mobile apps/Postman - require specific header
+      if (!origin) {
+        return req.get('X-API-Key') === config.API_KEY ? callback(null, true) : callback(new Error('Origin required'));
+      }
+      
+      // Only allow exact matches or verified Vercel subdomains
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Strict Vercel subdomain validation
+      if (origin.match(/^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/)) {
+        return callback(null, true);
+      }
+      
+      return callback(new Error('Not allowed by CORS'));
+    } else {
+      // Development - allow dev origins and no origin
+      if (!origin || devOrigins.includes(origin) || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
     }
-    
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    // In development, allow all origins
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-    
-    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept', 'X-Request-ID'],
+  exposedHeaders: ['X-Request-ID'],
+  maxAge: 86400 // 24 hours preflight cache
 }));
 app.use(express.json({ limit: '10mb' }));
 
@@ -117,7 +148,7 @@ app.post('/api/auth/create-first-admin', express.json(), async (req, res) => {
     const user = new User({ name, email, password, role: 'admin' });
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, config.JWT_SECRET, { expiresIn: '7d' });
     
     res.status(201).json({
       message: 'Admin created successfully',
@@ -138,7 +169,7 @@ app.use('/api/claims', apiLimiter, require('./routes/claims'));
 app.use('/api/ai', apiLimiter, require('./routes/ai-search'));
 app.use('/api/notifications', apiLimiter, notificationRoutes);
 app.use('/api/feedback', apiLimiter, feedbackRoutes);
-app.use('/api/admin', apiLimiter, adminRoutes);
+app.use('/api/admin', adminLimiter, adminRoutes);
 app.use('/api/users', apiLimiter, require('./routes/users'));
 app.use('/api/analytics', apiLimiter, require('./routes/analytics'));
 app.use('/api/moderation', apiLimiter, require('./routes/moderation'));
@@ -182,129 +213,14 @@ app.get('/uploads/*', (req, res) => {
   res.status(404).json({ error: 'Image not found' });
 });
 
-// Temporary inline chat routes for immediate functionality
+// Chat routes using MongoDB persistence
 const authMiddleware = require('./middleware/authMiddleware');
 const User = require('./models/User');
 
-// Simple in-memory storage
-const tempChatRooms = new Map();
-const tempMessages = new Map();
+// Use dedicated chat routes
+app.use('/api/chat', chatLimiter, require('./routes/chat-simple'));
 
-// Chat routes
-app.get('/api/chat/rooms', authMiddleware, async (req, res) => {
-  try {
-    const userRooms = Array.from(tempChatRooms.values())
-      .filter(room => room.participants.some(p => p.userId._id === req.user.id))
-      .map(room => ({ ...room, lastMessage: null, unreadCount: 0 }));
-    res.json(userRooms);
-  } catch (error) {
-    res.status(200).json([]);
-  }
-});
-
-// Create item-based chat room
-app.post('/api/chat/room/:itemId', authMiddleware, async (req, res) => {
-  try {
-    const { itemId } = req.params;
-    
-    // Check if room already exists for this item and user
-    const existingRoom = Array.from(tempChatRooms.values())
-      .find(room => room.itemId?._id === itemId && 
-                   room.participants.some(p => p.userId._id === req.user.id));
-    
-    if (existingRoom) {
-      return res.json(existingRoom);
-    }
-    
-    // Get item details
-    const Item = require('./models/Item');
-    const item = await Item.findById(itemId).populate('reportedBy', 'name email role');
-    if (!item) {
-      return res.status(404).json({ error: 'Item not found' });
-    }
-    
-    const user = await User.findById(req.user.id).select('name email role');
-    const roomId = `item_${itemId}_${Date.now()}`;
-    
-    const room = {
-      _id: roomId,
-      itemId: {
-        _id: itemId,
-        title: item.title,
-        category: item.category,
-        imageUrl: item.itemImageUrl || item.imageUrl,
-        status: item.status
-      },
-      participants: [
-        {
-          userId: {
-            _id: req.user.id,
-            name: user?.name || 'User',
-            email: user?.email || '',
-            role: user?.role || 'student'
-          },
-          role: 'participant'
-        },
-        {
-          userId: {
-            _id: item.reportedBy._id.toString(),
-            name: item.reportedBy.name,
-            email: item.reportedBy.email,
-            role: item.reportedBy.role
-          },
-          role: 'owner'
-        }
-      ],
-      type: 'item',
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    tempChatRooms.set(roomId, room);
-    tempMessages.set(roomId, []);
-    res.json(room);
-  } catch (error) {
-    console.error('Create item chat error:', error);
-    res.status(500).json({ error: 'Failed to create item chat' });
-  }
-});
-
-app.post('/api/chat/direct', authMiddleware, async (req, res) => {
-  try {
-    const { otherUserId } = req.body;
-    const roomId = `direct_${req.user.id}_${otherUserId}_${Date.now()}`;
-    
-    const [currentUser, otherUser] = await Promise.all([
-      User.findById(req.user.id).select('name email role'),
-      User.findById(otherUserId).select('name email role')
-    ]);
-    
-    if (!otherUser) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    const room = {
-      _id: roomId,
-      itemId: null,
-      participants: [
-        { userId: { _id: req.user.id, name: currentUser?.name || 'User', email: currentUser?.email || '', role: currentUser?.role || 'student' }, role: 'participant' },
-        { userId: { _id: otherUserId, name: otherUser.name, email: otherUser.email, role: otherUser.role }, role: 'participant' }
-      ],
-      type: 'direct',
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    tempChatRooms.set(roomId, room);
-    tempMessages.set(roomId, []);
-    res.json(room);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create chat' });
-  }
-});
-
+// User search endpoint
 app.get('/api/users/search', authMiddleware, async (req, res) => {
   try {
     const { q } = req.query;
@@ -312,7 +228,7 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Search query too short' });
     }
     
-    const searchRegex = new RegExp(q.trim(), 'i');
+    const searchRegex = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     const users = await User.find({
       $and: [
         { _id: { $ne: req.user.id } },
@@ -324,59 +240,6 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Search failed' });
   }
-});
-
-app.get('/api/chat/room/:roomId/messages', authMiddleware, async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    const roomMessages = tempMessages.get(roomId) || [];
-    res.json({ messages: roomMessages, hasMore: false });
-  } catch (error) {
-    res.status(200).json({ messages: [], hasMore: false });
-  }
-});
-
-app.post('/api/chat/room/:roomId/message', authMiddleware, async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    const { content, type = 'text' } = req.body;
-    
-    const user = await User.findById(req.user.id).select('name email role');
-    
-    const message = {
-      _id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      roomId,
-      senderId: {
-        _id: req.user.id,
-        name: user?.name || 'User',
-        email: user?.email || '',
-        role: user?.role || 'student'
-      },
-      content: content.trim(),
-      type,
-      createdAt: new Date().toISOString()
-    };
-    
-    if (!tempMessages.has(roomId)) {
-      tempMessages.set(roomId, []);
-    }
-    tempMessages.get(roomId).push(message);
-    
-    res.json(message);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to send message' });
-  }
-});
-
-// Debug endpoint
-app.get('/api/debug/chat', (req, res) => {
-  res.json({
-    message: 'Chat system is working',
-    timestamp: new Date().toISOString(),
-    routes: { chat: '/api/chat/*', users: '/api/users/*' },
-    rooms: tempChatRooms.size,
-    messages: tempMessages.size
-  });
 });
 
 // Serve admin creation page
@@ -391,7 +254,13 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Socket.io chat enabled`);
-  console.log(`Message cleanup job started`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`💬 Socket.io chat enabled`);
+  console.log(`🧹 Message cleanup job started`);
+  console.log(`📊 Performance monitoring active`);
+  console.log(`🛡️  Security middleware loaded`);
+  console.log(`✅ System ready`);
 });
+
+// Setup graceful shutdown
+gracefulShutdown(server);

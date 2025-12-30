@@ -234,15 +234,17 @@ router.get('/room/:roomId/messages', authMiddleware, async (req, res) => {
 router.post('/room/:roomId/message', authMiddleware, async (req, res) => {
   try {
     const { roomId } = req.params;
-    const { content, type = 'text' } = req.body;
+    const { content, type = 'text', clientMessageId } = req.body;
     
-    // Verify user is participant
-    const room = chatRooms.get(roomId);
+    // Verify room exists and user is participant
+    const room = await ChatRoom.findById(roomId);
     if (!room) {
       return res.status(404).json({ error: 'Chat room not found' });
     }
     
-    const isParticipant = room.participants.some(p => p.userId._id === req.user.id);
+    const isParticipant = room.participants.some(p => 
+      p.userId.toString() === req.user.id
+    );
     if (!isParticipant) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -250,36 +252,40 @@ router.post('/room/:roomId/message', authMiddleware, async (req, res) => {
     // Get user data
     const user = await User.findById(req.user.id).select('name email role');
     
-    const message = {
-      _id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    // Create and save message
+    const message = new ChatMessage({
       roomId,
-      senderId: { 
-        _id: req.user.id, 
-        name: user?.name || 'User', 
+      senderId: {
+        _id: req.user.id,
+        name: user?.name || 'User',
         email: user?.email || 'user@example.com',
         role: user?.role || 'student'
       },
       content: content.trim(),
       type,
-      createdAt: new Date().toISOString(),
+      clientMessageId,
       deliveryStatus: 'sent'
-    };
+    });
     
-    if (!messages.has(roomId)) {
-      messages.set(roomId, []);
-    }
+    await message.save();
     
-    messages.get(roomId).push(message);
-    
-    // Update room timestamp
-    room.updatedAt = new Date().toISOString();
+    // Update room with last message
     room.lastMessage = {
       content: content.trim(),
       senderId: req.user.id,
-      timestamp: new Date().toISOString()
+      timestamp: new Date()
     };
+    await room.save();
     
-    res.json(message);
+    res.json({
+      _id: message._id.toString(),
+      content: message.content,
+      senderId: message.senderId,
+      type: message.type,
+      createdAt: message.createdAt,
+      clientMessageId: message.clientMessageId,
+      deliveryStatus: message.deliveryStatus
+    });
   } catch (error) {
     console.error('Send message error:', error);
     res.status(500).json({ error: 'Failed to send message' });
@@ -289,6 +295,25 @@ router.post('/room/:roomId/message', authMiddleware, async (req, res) => {
 // Mark messages as read
 router.post('/room/:roomId/read', authMiddleware, async (req, res) => {
   try {
+    const { roomId } = req.params;
+    
+    // Update all unread messages in the room
+    await ChatMessage.updateMany(
+      { 
+        roomId, 
+        'senderId._id': { $ne: req.user.id },
+        'readBy.userId': { $ne: req.user.id }
+      },
+      { 
+        $push: { 
+          readBy: { 
+            userId: req.user.id, 
+            readAt: new Date() 
+          } 
+        } 
+      }
+    );
+    
     res.json({ message: 'Messages marked as read' });
   } catch (error) {
     console.error('Mark read error:', error);

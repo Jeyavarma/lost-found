@@ -19,10 +19,11 @@ router.post('/populate', async (req, res) => {
     }
 
     // Create admin user
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || Math.random().toString(36).slice(-12) + 'Admin@' + new Date().getFullYear();
     const admin = new User({
       name: 'Admin User',
       email: 'admin@mcc.edu',
-      password: 'admin123',
+      password: adminPassword,
       role: 'admin',
       department: 'Administration'
     });
@@ -30,11 +31,12 @@ router.post('/populate', async (req, res) => {
 
     // Create sample users
     const users = [];
+    const userPassword = process.env.SEED_USER_PASSWORD || Math.random().toString(36).slice(-12);
     for (let i = 1; i <= 15; i++) {
       users.push({
         name: `Student ${i}`,
         email: `student${i}@mcc.edu`,
-        password: 'password123',
+        password: userPassword,
         role: 'student',
         department: ['Computer Science', 'Mathematics', 'Physics'][i % 3],
         year: ['I', 'II', 'III'][i % 3],

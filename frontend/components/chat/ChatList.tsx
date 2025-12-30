@@ -66,9 +66,9 @@ export default function ChatList({ onSelectRoom, currentUserId }: ChatListProps)
         const data = await response.json()
         // Ensure data is always an array with proper validation
         if (Array.isArray(data)) {
-          setRooms(data.filter(room => room && room._id))
+          setRooms(data.filter((room: any) => room && room._id))
         } else if (data && typeof data === 'object' && Array.isArray(data.rooms)) {
-          setRooms(data.rooms.filter(room => room && room._id))
+          setRooms(data.rooms.filter((room: any) => room && room._id))
         } else {
           console.warn('Invalid chat rooms data format:', data)
           setRooms([])

@@ -15,7 +15,7 @@ import {
   Database
 } from 'lucide-react'
 import Link from 'next/link'
-import Navigation from '@/components/navigation'
+import Navigation from '@/components/layout/navigation'
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState({

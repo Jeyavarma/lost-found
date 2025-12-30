@@ -15,7 +15,7 @@ import {
   CheckCircle
 } from 'lucide-react'
 import Link from 'next/link'
-import Navigation from '@/components/navigation'
+import Navigation from '@/components/layout/navigation'
 import { BACKEND_URL } from '@/lib/config'
 
 export default function AdminNotifications() {

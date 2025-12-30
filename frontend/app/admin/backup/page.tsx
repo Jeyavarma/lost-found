@@ -14,7 +14,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import Link from 'next/link'
-import Navigation from '@/components/navigation'
+import Navigation from '@/components/layout/navigation'
 
 export default function AdminBackup() {
   const [backupInProgress, setBackupInProgress] = useState(false)

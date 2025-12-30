@@ -13,7 +13,7 @@ import {
   Package
 } from 'lucide-react'
 import Link from 'next/link'
-import Navigation from '@/components/navigation'
+import Navigation from '@/components/layout/navigation'
 
 export default function AdminReports() {
   const [generating, setGenerating] = useState(false)

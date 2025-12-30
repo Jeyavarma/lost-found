@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Image from "next/image"
 import { ArrowLeft, Upload, Search, User, GraduationCap, CheckCircle, Home } from "lucide-react"
-import Navigation from "@/components/navigation"
+import Navigation from "@/components/layout/navigation"
 
 const categories = ["ID Card", "Mobile Phone", "Laptop", "Wallet", "Keys", "Books", "Clothing", "Jewelry", "Other"]
 

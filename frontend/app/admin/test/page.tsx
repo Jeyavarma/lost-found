@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import Navigation from '@/components/navigation'
+import Navigation from '@/components/layout/navigation'
 import { isAuthenticated, getUserData, getAuthToken } from '@/lib/auth'
 import { BACKEND_URL } from '@/lib/config'
 

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, CheckCircle } from "lucide-react"
-import Navigation from "@/components/navigation"
+import Navigation from "@/components/layout/navigation"
 import emailjs from '@emailjs/browser'
 import { BACKEND_URL } from "@/lib/config"
 

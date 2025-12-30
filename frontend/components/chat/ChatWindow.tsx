@@ -198,9 +198,9 @@ export default function ChatWindow({ room, onClose, onBack, currentUserId }: Cha
         // Handle both array and object responses with proper validation
         let messagesArray = []
         if (data && Array.isArray(data.messages)) {
-          messagesArray = data.messages.filter(msg => msg && msg._id)
+          messagesArray = data.messages.filter((msg: any) => msg && msg._id)
         } else if (Array.isArray(data)) {
-          messagesArray = data.filter(msg => msg && msg._id)
+          messagesArray = data.filter((msg: any) => msg && msg._id)
         } else {
           console.warn('Invalid messages data format:', data)
           messagesArray = []

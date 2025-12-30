@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar, MapPin, Users, Eye, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react"
 import { BACKEND_URL } from "@/lib/config"
-import ItemDetailModal from "@/components/item-detail-modal"
+import ItemDetailModal from "@/components/features/item-detail-modal"
 import { getUserData, isAuthenticated } from "@/lib/auth"
 
 const eventTemplates = [

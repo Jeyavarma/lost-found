@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Package, Edit, Trash2, Search, Filter, Eye, Plus, RefreshCw } from 'lucide-react'
-import Navigation from '@/components/navigation'
+import Navigation from '@/components/layout/navigation'
 import { isAuthenticated, getUserData, getAuthToken } from '@/lib/auth'
 import { BACKEND_URL } from '@/lib/config'
 

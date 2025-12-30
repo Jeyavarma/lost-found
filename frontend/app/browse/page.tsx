@@ -24,7 +24,7 @@ import {
 } from "lucide-react"
 import { BACKEND_URL } from "@/lib/config"
 import { isAuthenticated, getUserData, getAuthToken } from "@/lib/auth"
-import ItemDetailModal from "@/components/item-detail-modal"
+import ItemDetailModal from "@/components/features/item-detail-modal"
 import EnhancedFloatingChat from "@/components/enhanced-floating-chat"
 
 

@@ -27,7 +27,7 @@ import {
   Power,
   HardDrive
 } from 'lucide-react'
-import Navigation from '@/components/navigation'
+import Navigation from '@/components/layout/navigation'
 import { isAuthenticated, getUserData, getAuthToken } from '@/lib/auth'
 import { BACKEND_URL } from '@/lib/config'
 

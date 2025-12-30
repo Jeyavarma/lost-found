@@ -14,10 +14,10 @@ import {
   Eye,
   Trash2
 } from "lucide-react"
-import Navigation from "@/components/navigation"
-import AIMatches from "@/components/ai-matches"
-import AISearchButton from "@/components/ai-search-button"
-import ItemDetailModal from "@/components/item-detail-modal"
+import Navigation from "@/components/layout/navigation"
+import AIMatches from "@/components/features/ai-matches"
+import AISearchButton from "@/components/features/ai-search-button"
+import ItemDetailModal from "@/components/features/item-detail-modal"
 import FloatingChat from "@/components/floating-chat"
 import ChatWindow from "@/components/chat/ChatWindow"
 import { isAuthenticated, getUserData, getAuthToken, type User as AuthUser } from "@/lib/auth"
